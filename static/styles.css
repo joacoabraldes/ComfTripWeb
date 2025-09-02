@@ -1,0 +1,157 @@
+/* Fondo con mapa */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: url("mapa.png") no-repeat center center fixed;
+    background-size: cover;
+}
+
+/* Contenedor principal en dos columnas */
+.container {
+    display: flex;
+    height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Columna izquierda */
+.left {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Caja del formulario */
+.formulario {
+    max-width: 350px;
+    width: 100%;
+}
+
+form .username,
+form .mail,
+form .contraseña,
+form .repita-contraseña,
+form .nacionalidad,
+form .nacimiento {
+    position: relative;
+    margin: 20px 0;
+}
+
+.username input,
+.mail input,
+.contraseña input,
+.repita-contraseña input,
+.nacionalidad input,
+.nacimiento input {
+    width: 100%;
+    padding: 0 5px;
+    height: 40px;
+    font-size: 16px;
+    border: 1px solid;
+    border-radius: 20px;
+    background: white;
+    outline: none;
+}
+
+.username span::before,
+.mail span::before,
+.contraseña span::before,
+.repita-contraseña span::before,
+.nacionalidad span::before,
+.nacimiento span::before {
+    content: '';
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #00152b;
+    transition: .5s;
+}
+
+.username input:focus~label,
+.mail input:focus~label,
+.contraseña input:focus~label,
+.repita-contraseña input:focus~label,
+.nacionalidad input:focus~label,
+.nacimiento input:focus~label{
+    top: -5px;
+    color: #00152b;
+}
+
+.username input:focus~span::before,
+.mail input:focus~span::before,
+.contraseña input:focus~span::before, 
+.repita-contraseña input:focus~span::before,
+.nacionalidad input:focus~span::before,
+.nacimiento input:focus~span::before {
+    width: 100%;
+}
+
+.recordar {
+    margin: -5px 0 20px 5px;
+    text-align: left;
+    color: black;   
+}
+
+.recordar a {
+    color: blue;   
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.recordar a:hover {
+    text-decoration: underline; 
+}
+
+
+input[type="submit"] {
+    width: 100%;
+    height: 50px;
+    border: 1px solid;
+    background:  #83d062;
+    border-radius: 25px;
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+    outline: none;
+    margin-top: 20px;
+}
+
+input[type="submit"]:hover {
+    border-color: #43991d;
+    transition: .5s;
+}
+
+.registrarse {
+    margin: -5px 0 20px 5px;
+    margin-top: 30px;
+    text-align: center;
+    color: black;   /* 🔹 El texto "¿No estás registrado?" queda en negro */
+}
+
+.registrarse a {
+    color: blue;    /* 🔹 El enlace "Registrarse" queda en azul */
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.registrarse a:hover {
+    text-decoration: underline; /* opcional, para resaltar al pasar el mouse */
+}
+
+/* Columna derecha */
+.right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.right img {
+    max-width: 500px;
+}

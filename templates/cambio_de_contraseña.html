@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>CORRELATIVAS ITBA - Cambio de Contraseña</title>
+</head>
+<body>
+    <div class="container">
+        <div class="formulario">
+        <h1>Cambio de Contraseña</h1>
+        <form method="post" action="/procesar_cambio_contrasena">
+            <div class="username">
+                <input type="text" name="username" required>
+                <label>Nombre de Usuario</label>
+            </div>
+            <div class="contraseña">
+                <input type="password" name="new_password" required>
+                <label>Nueva Contraseña</label>
+            </div>
+            <div class="repita-contraseña">
+                <input type="password" name="repeat_password" required>
+                <label>Repita Nueva Contraseña</label>
+            </div>
+            <input type="submit" value="Cambiar Contraseña">
+        </form>
+        </div>
+    </div>
+</body>
+</html>

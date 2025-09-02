@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ConfTrip - Iniciar Sesión</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Columna izquierda: formulario -->
+        <div class="left">
+            <div class="formulario">
+                <h1>Iniciar Sesion</h1>
+                <form action="{{ url_for('login') }}" method="post">
+
+                    <div class="username">
+                        <label>Nombre de Usuario o Mail</label>
+                        <input type="text" name="username" required>
+                        
+                        
+                    </div>
+
+                    <div class="contraseña">
+                        <label>Contraseña</label>
+                        <input type="password" name="password" required>
+
+                    </div>
+
+                    <div class="recordar">
+                        <a href="{{ url_for('cambio_de_contraseña') }}">¿Olvidó su contraseña?</a>
+                    </div>
+
+                    <input type="submit" value="Ingresar">
+
+                    <div class="registrarse">
+                        ¿No estás registrado? <a href="{{ url_for('registro') }}">Registrarse</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Columna derecha: logo -->
+        <div class="right">
+            <img src="{{ url_for('static', filename='../static/logo.png') }}" alt="ConfTrip Logo">
+        </div>
+    </div>
+</body>
+</html>

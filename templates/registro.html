@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>ConfTrip - Registro de Usuario</title>
+</head>
+<body>
+    <div class="container">
+        <div class="formulario">
+        <h1>Registro de Usuario</h1>
+        <form method="post" action="/procesar_registro_usuario">
+            <div class="username">
+                <label>Nombre de Usuario</label>
+                <input type="text" name="username" required>
+                
+            </div>
+            <div class="mail">
+                <label>Mail</label>
+                <input type="email" name="mail" required>
+            </div>
+            <div class="contraseña">
+                <label>Contraseña</label>
+                <input type="password" name="password" required>
+                
+            </div>
+            <div class="repita-contraseña">
+                <label>Comprobar Contraseña</label>
+                <input type="password" name="repeat_password" required>
+                
+            </div>
+            
+            <div class="nacionalidad">
+                <label>Nacionalidad</label>
+                <input type="text" name="nacionalidad" required>
+                
+            </div>
+            <div class="nacimiento">
+                <label>Nacimiento</label>
+                <input type="date" name="nacimiento" required>
+            </div>
+            
+            <input type="submit" value="Registrarse">
+        </form>
+        </div>
+    </div>
+</body>
+</html>

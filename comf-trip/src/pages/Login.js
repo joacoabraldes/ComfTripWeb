@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiPost } from '../api';
+import { apiPost } from './api';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login(){

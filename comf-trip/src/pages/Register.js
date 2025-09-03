@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from './api';
+import { apiPost } from './api';
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -12,14 +12,14 @@ export default function Register() {
   };
 
   const handleSubmit = async e => {
-    e.preventDefault();
-    try {
-      const res = await api.post('/register', form);
-      setMessage(res.data.message || 'Usuario registrado correctamente');
-    } catch (err) {
-      setMessage(err.response?.data?.error || 'Error al registrar');
-    }
-  };
+  e.preventDefault();
+  try {
+    const res = await apiPost('/auth/register', form);
+    setMessage(res.message || 'Usuario registrado correctamente');
+  } catch (err) {
+    setMessage(err.message || 'Error al registrar');
+  }
+};
 
   return (
     <form onSubmit={handleSubmit}>

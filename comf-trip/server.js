@@ -16,12 +16,5 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/trips', tripRoutes);
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
-
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Backend escuchando en http://localhost:${PORT}`));
-// ...existing code...
-//const userController = require('./controllers/user.controller');
-// ...existing code...
-//app.post('/api/register', userController.register);
-// ...existing code...

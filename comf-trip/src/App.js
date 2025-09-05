@@ -9,7 +9,6 @@ function App() {
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        {/* Puedes agregar más rutas aquí */}
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,5 @@
 // src/api.js
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const API_BASE = 'https://comf-trip-backend.vercel.app/api';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('token');

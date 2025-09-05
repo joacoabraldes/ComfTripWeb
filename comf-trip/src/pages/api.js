@@ -1,10 +1,11 @@
 // src/api.js
-const API_BASE = 'https://comf-trip-backend.vercel.app/api';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://comf-trip-backend.vercel.app/api';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('token');
   const headers = options.headers || {};
 
+  // si body no es FormData, asumimos JSON
   if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
@@ -24,6 +25,7 @@ async function request(path, options = {}) {
   try { data = text ? JSON.parse(text) : {}; } catch (e) { data = text; }
 
   if (!res.ok) {
+    // lanza el error para manejarlo en los componentes
     throw data;
   }
   return data;

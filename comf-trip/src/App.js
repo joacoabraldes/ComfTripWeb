@@ -6,7 +6,7 @@ import Login from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import Trips from "./pages/Trips";
 import Error from "./pages/Error";
-import Profile from "./components/Profile";
+import Profile from "./pages/Profile";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";

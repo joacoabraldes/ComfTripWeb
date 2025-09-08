@@ -1,0 +1,42 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -500px; /* completamente fuera de la pantalla */
+    width: 250px;
+    height: 100%;
+    background: #ff3b58;
+    color: white;
+    padding: 20px;
+    transition: left 0.3s ease;
+    z-index: 1000;
+    overflow: hidden; /* evita que algo se vea mientras está cerrado */
+}
+
+.sidebar.open {
+    left: 0; /* visible */
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 60px 0 0 0; /* espacio para la flecha */
+}
+
+.sidebar li {
+    margin: 20px 0;
+    font-size: 25px;
+    cursor: pointer;
+}
+
+/* Botón de cierre (solo visible cuando open = true) */
+.sidebar-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+    transform: rotate(180deg); /* apunta hacia la derecha */
+}

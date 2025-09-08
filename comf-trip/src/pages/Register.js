@@ -62,7 +62,7 @@ export default function RegisterPage() {
             </label>
 
             <label className="field">
-              <span className="field-label">Phone number</span>
+              <span className="field-label">Número de telefono</span>
               <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Phone number" />
             </label>
 
@@ -86,7 +86,7 @@ export default function RegisterPage() {
             <label className="agree">
               <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} />
               <span style={{ fontSize: 15 }}>
-                By checking the box you agree to our <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Terms</a> and <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Conditions</a>.
+                Al marcar la casilla, acepta nuestros <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Términos</a> y <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Condiciones</a>.
               </span>
             </label>
 
@@ -98,8 +98,8 @@ export default function RegisterPage() {
           </form>
 
           <div className="footer-cta">
-            <span>Already a member?</span>
-            <a href="/login" style={{ marginLeft: 6 }}>Log In</a>
+            <span>¿Ya eres miembro?</span>
+            <a href="/login" style={{ marginLeft: 6 }}>Iniciar sesión</a>
           </div>
         </div>
 

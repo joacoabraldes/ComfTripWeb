@@ -36,7 +36,7 @@ export default function Login() {
 
           <form className="form" onSubmit={submit}>
             <label className="field">
-              <span className="field-label">Nombre de Usuario o mail</span>
+              <span className="field-label">Nombre de usuario o Mail</span>
               <input
                 className="input"
                 name="email"
@@ -59,7 +59,7 @@ export default function Login() {
               />
             </label>
 
-            <div className="forgot">¿Olvidare tu contraseña?</div>
+            <div className="forgot">¿Olvidaste tu contraseña?</div>
 
             <button type="submit" className="btn-primary login" disabled={loading}>
               {loading ? "Entrando..." : "Iniciar"}

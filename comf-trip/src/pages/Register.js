@@ -1,7 +1,8 @@
-// src/pages/RegisterPage.jsx (or src/pages/Register.js)
+// src/pages/RegisterPage.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiPost } from "./api";
-import "../styles/register.css";
+import "../styles/auth.css";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -29,6 +31,7 @@ export default function RegisterPage() {
     try {
       const res = await apiPost("/auth/register", form);
       setMessage(res?.message || "Usuario registrado correctamente");
+      navigate("/trips"); // Redirect after successful registration
     } catch (err) {
       setMessage(err?.message || "Error al registrar");
     } finally {
@@ -37,115 +40,80 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="register-root">
-      {/* Topbar */}
-      <header className="topbar">
-        <div className="topbar-inner">
-          <div className="topbar-left-buttons">
-            <button aria-label="left-1" className="icon-small" style={{ background: "transparent", border: "none" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-500">
-                <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </button>
-            <button aria-label="left-2" className="icon-small" style={{ background: "transparent", border: "none" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-500">
-                <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </button>
-            <button aria-label="left-3" className="icon-small" style={{ background: "transparent", border: "none" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-500">
-                <rect x="4" y="4" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </button>
-          </div>
+    <div className="auth-root">
+      <div className="auth-container">
 
-          <div className="brand-pill">
-            <div className="brand-left">
-              <svg width="16" height="16" viewBox="0 0 24 24" className="opacity-60" style={{ marginRight: 6 }}>
-                <path d="M10 3v2" stroke="#49454F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="brand-url">www.url.com</span>
-            </div>
-            <div style={{ width: 28 }} aria-hidden />
-          </div>
+        {/* LEFT: form */}
+        <div className="auth-left">
+          <h1 className="auth-title">Registrarse</h1>
+          <p className="auth-sub">Crea tu cuenta para empezar a disfrutar de nuestros servicios.</p>
 
-          <div className="avatar">M</div>
-          <button style={{ background: "transparent", border: "none", marginLeft: 8 }} aria-hidden>
-            <div style={{ width: 4, height: 16, background: "#79747E" }} />
-          </button>
-        </div>
-      </header>
+          <form className="form" onSubmit={handleSubmit}>
 
-      {/* Content */}
-      <main className="main">
-        <section className="left-column">
-          <h1 className="title-big">Registrarse</h1>
+            <label className="field">
+              <span className="field-label">Nombre</span>
+              <input className="input" name="name" value={form.name} onChange={handleChange} placeholder="Nombre" required />
+            </label>
 
-          <p style={{ color: "#6B7280" }}>Crea tu cuenta para empezar a disfrutar de nuestros servicios.</p>
+            <label className="field">
+              <span className="field-label">Email</span>
+              <input className="input" name="email" type="email" value={form.email} onChange={handleChange} placeholder="Email" required />
+            </label>
 
-          <div>
-            <div className="info-card">
-              <p style={{ margin: 0, color: "#4B5563" }}>Añade tus datos personales y revisa los términos antes de continuar.</p>
-            </div>
-          </div>
+            <label className="field">
+              <span className="field-label">Phone number</span>
+              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Phone number" />
+            </label>
 
-          <div className="footer-cta">
-            <span>Already a member? </span>
-            <a href="#" style={{ color: "#FF3951", marginLeft: 6 }}>Log In</a>
-          </div>
-        </section>
-
-        <section className="right-column">
-          <form onSubmit={handleSubmit} className="form">
-            <Field label="Nombre" name="name" value={form.name} onChange={handleChange} placeholder="Nombre" required />
-
-            <Field label="Email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="Email" required />
-
-            <Field label="Phone number" name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="Phone number" />
-
-            <Field label="Contraseña" name="password" type="password" value={form.password} onChange={handleChange} placeholder="Contraseña" required />
+            <label className="field">
+              <span className="field-label">Contraseña</span>
+              <input className="input" name="password" type="password" value={form.password} onChange={handleChange} placeholder="Contraseña" required />
+            </label>
 
             <div className="grid-2">
-              <Field label="Nacionalidad" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Nacionalidad" />
-              <Field label="Fecha de nacimiento" name="birthdate" type="date" value={form.birthdate} onChange={handleChange} placeholder="Fecha de nacimiento" />
-            </div>
+              <label className="field">
+                <span className="field-label">Nacionalidad</span>
+                <input className="input" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Nacionalidad" />
+              </label>
 
-            <div className="agree">
-              <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} />
-              <label htmlFor="agree" style={{ margin: 0 }}>
-                By checking the box you agree to our <a href="#" style={{ color: "#FF3951" }}>Terms</a> and <a href="#" style={{ color: "#FF3951" }}>Conditions</a>.
+              <label className="field">
+                <span className="field-label">Fecha de nacimiento</span>
+                <input className="input" name="birthdate" type="date" value={form.birthdate} onChange={handleChange} />
               </label>
             </div>
 
-            <div>
-              <button type="submit" disabled={loading} className="btn-primary">
-                {loading ? "Registrando…" : "Registrarme"}
-              </button>
-            </div>
+            <label className="agree">
+              <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} />
+              <span style={{fontSize:15}}>
+                By checking the box you agree to our <a href="#" style={{ color: "#FF3951", textDecoration:'none' }}>Terms</a> and <a href="#" style={{ color: "#FF3951", textDecoration:'none' }}>Conditions</a>.
+              </span>
+            </label>
+
+            <button type="submit" disabled={loading} className="btn-primary">
+              {loading ? "Registrando…" : "Registrarme"}
+            </button>
 
             {message && <div className="message">{message}</div>}
           </form>
-        </section>
-      </main>
-    </div>
-  );
-}
 
-function Field({ label, name, type = "text", value, onChange, placeholder, required = false }) {
-  return (
-    <label className="field">
-      <span className="field-label">{label}</span>
-      <div>
-        <input
-          name={name}
-          type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          required={required}
-          className="input"
-        />
+          <div className="footer-cta">
+            <span>Already a member?</span>
+            <a href="#" style={{marginLeft:6}}>Log In</a>
+          </div>
+        </div>
+
+        {/* RIGHT: art + logo */}
+        <div className="auth-right">
+          <div>
+            <div className="hero-art" aria-hidden>
+              {/* Replace this div with your exported SVG/PNG from Figma if you have it.
+                  Example: <img src="/images/comftrip-art.svg" alt="" style={{width:'100%'}} /> */}
+            </div>
+            <div className="brand">ComfTrip</div>
+          </div>
+        </div>
+
       </div>
-    </label>
+    </div>
   );
 }

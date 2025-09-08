@@ -1,0 +1,198 @@
+/* src/styles/auth.css */
+
+:root{
+  --accent: #FF3951;
+  --muted-bg: rgba(196,196,196,0.20);
+  --text-dark: #252525;
+  --muted-text: rgba(0,0,0,0.5);
+  --input-radius: 10px;
+  --btn-radius: 10px;
+}
+
+/* Page root */
+.auth-root {
+  min-height: 100vh;
+  background: #ffffff;
+  color: var(--text-dark);
+  font-family: "Mulish", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  box-sizing: border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 40px 20px;
+}
+
+/* central container roughly matches Figma page width */
+.auth-container {
+  width: 1200px;          /* adjust if you want larger canvas */
+  max-width: calc(100% - 40px);
+  display: grid;
+  grid-template-columns: 560px 1fr; /* left narrow form, right art */
+  gap: 80px;
+  align-items: start;
+}
+
+/* Left column: the form area */
+.auth-left {
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  padding-top: 20px;
+}
+
+/* Title */
+.auth-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+/* small helper paragraph */
+.auth-sub {
+  color: #6B7280;
+  margin: 0;
+  font-size: 15px;
+}
+
+/* stacked inputs form */
+.form {
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  margin-top: 8px;
+}
+
+/* each input row uses the pale rounded rectangle that Figma shows */
+.field {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.field-label {
+  color: var(--muted-text);
+  font-size: 14px;
+  font-weight: 300;
+  margin-left: 6px; /* small left spacing like Figma */
+}
+
+/* the visible input box: use pale background and big height */
+.input {
+  width: 100%;
+  padding: 20px 18px;
+  border-radius: var(--input-radius);
+  border: none;
+  background: var(--muted-bg);
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* big register button (Figma big pill) */
+.btn-primary {
+  width: 100%;
+  height: 82px; /* matches Figma visual */
+  border-radius: var(--btn-radius);
+  background: var(--accent);
+  color: #FCFCFC;
+  font-weight: 600;
+  border: none;
+  font-size: 30px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* smaller login button uses slightly different font-size in login screen */
+.btn-primary.login {
+  height: 82px;
+  font-size: 35px;
+}
+
+/* grid two small fields (nationality + birthdate) */
+.grid-2 {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+
+/* agree row */
+.agree {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color: #252525;
+  font-size: 15px;
+}
+
+.agree input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  border-radius:6px;
+  border:1px solid #CBCBCB;
+  appearance: none;
+  -webkit-appearance: none;
+  display:inline-block;
+  vertical-align:middle;
+  background:white;
+}
+.agree input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* message */
+.message { font-size:14px; text-align:center; color:#333; margin-top:6px; }
+
+/* small footer link row */
+.footer-cta { font-size:20px; color:#252525; margin-top:12px; display:flex; align-items:center; gap:6px; }
+.footer-cta a { color: var(--accent); font-weight:700; text-decoration:none; }
+
+/* Right column: illustration & logo */
+.auth-right {
+  position: relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height: 520px;
+  padding-top: 20px;
+}
+
+/* artwork container placeholder — replace inner content with exported Figma SVG or PNG */
+.hero-art {
+  width: 546px;
+  height: 415px;
+  background: transparent; /* remove or set to image */
+  position: relative;
+}
+
+/* Large brand/logo below art */
+.brand {
+  margin-top: 18px;
+  color: var(--accent);
+  font-size: 96px;
+  font-family: "Nico Moji", "Mulish", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* Forgot password small link (login screen) */
+.forgot {
+  color: var(--accent);
+  font-size: 14px;
+  text-align: left;
+  margin-top: 8px;
+}
+
+/* small responsive tweaks */
+@media (max-width: 1024px){
+  .auth-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .auth-right { order: -1; } /* show art above form on smaller screens */
+  .brand { font-size: 48px; }
+  .btn-primary { height: 64px; font-size: 22px; }
+}

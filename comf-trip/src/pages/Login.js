@@ -1,6 +1,8 @@
+// src/pages/Login.jsx
 import React, { useState } from 'react';
 import { apiPost } from './api';
 import { useNavigate } from 'react-router-dom';
+import "../styles/auth.css";
 
 export default function Login(){
   const [form, setForm] = useState({email:'', password:''});
@@ -18,13 +20,41 @@ export default function Login(){
   };
 
   return (
-    <div style={{maxWidth:420, margin:'30px auto', padding:20}}>
-      <h2>Iniciar sesión</h2>
-      <form onSubmit={submit} style={{display:'grid', gap:10}}>
-        <input name="email" placeholder="Email" onChange={handle} type="email" required />
-        <input name="password" placeholder="Contraseña" type="password" onChange={handle} required />
-        <button type="submit">Ingresar</button>
-      </form>
+    <div className="auth-root">
+      <div className="auth-container">
+
+        {/* LEFT: login form */}
+        <div className="auth-left">
+          <h1 className="auth-title">Iniciar Sesion</h1>
+
+          <form className="form" onSubmit={submit}>
+            <label className="field">
+              <span className="field-label">Nombre de Usuario o mail</span>
+              <input className="input" name="email" placeholder="Nombre de Usuario o mail" onChange={handle} type="email" required />
+            </label>
+
+            <label className="field">
+              <span className="field-label">Contraseña</span>
+              <input className="input" name="password" placeholder="Contraseña" type="password" onChange={handle} required />
+            </label>
+
+            <div className="forgot">¿Olvidare tu contraseña?</div>
+
+            <button type="submit" className="btn-primary login">Iniciar</button>
+          </form>
+        </div>
+
+        {/* RIGHT: artwork + logo */}
+        <div className="auth-right">
+          <div>
+            <div className="hero-art" aria-hidden>
+              {/* Replace with exported Figma SVG/PNG */}
+            </div>
+            <div className="brand">ComfTrip</div>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

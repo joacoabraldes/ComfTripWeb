@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiPost } from "./api";
 import "../styles/auth.css";
+import LogoSvg from "../components/LogoSvg";
+
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -103,11 +105,10 @@ export default function RegisterPage() {
         </div>
 
         {/* RIGHT: art + logo */}
-        <div className="auth-right">
+         <div className="auth-right">
           <div>
             <div className="hero-art" aria-hidden>
-              {/* Replace this div with your exported SVG/PNG from Figma if you have it.
-                  Example: <img src="/images/comftrip-art.svg" alt="" style={{width:'100%'}} /> */}
+              <LogoSvg />
             </div>
             <div className="brand">ComfTrip</div>
           </div>

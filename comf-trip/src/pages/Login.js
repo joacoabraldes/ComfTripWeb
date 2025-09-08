@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { apiPost } from './api';
 import { useNavigate } from 'react-router-dom';
 import "../styles/auth.css";
+import LogoSvg from "../components/LogoSvg";
+
+
 
 export default function Login(){
   const [form, setForm] = useState({email:'', password:''});
@@ -48,7 +51,7 @@ export default function Login(){
         <div className="auth-right">
           <div>
             <div className="hero-art" aria-hidden>
-              {/* Replace with exported Figma SVG/PNG */}
+              <LogoSvg />
             </div>
             <div className="brand">ComfTrip</div>
           </div>

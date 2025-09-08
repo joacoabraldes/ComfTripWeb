@@ -164,8 +164,15 @@
 .hero-art {
   width: 546px;
   height: 415px;
-  background: transparent; /* remove or set to image */
+  background: transparent;
   position: relative;
+}
+
+.hero-art img,
+.hero-art svg {
+  width: 100%;
+  height: auto;
+  display:block;
 }
 
 /* Large brand/logo below art */

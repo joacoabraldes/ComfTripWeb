@@ -63,7 +63,7 @@ export default function RegisterPage() {
 
             <label className="field">
               <span className="field-label">Número de telefono</span>
-              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Phone number" />
+              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Número de telefono" />
             </label>
 
             <label className="field">

@@ -36,11 +36,11 @@ export default function Login() {
 
           <form className="form" onSubmit={submit}>
             <label className="field">
-              <span className="field-label">Nombre de usuario o Mail</span>
+              <span className="field-label">Nombre de usuario o Email</span>
               <input
                 className="input"
                 name="email"
-                placeholder="Nombre de Usuario o mail"
+                placeholder="Nombre de usuario o Email"
                 onChange={handle}
                 type="email"
                 required

@@ -1,10 +1,9 @@
 // src/pages/RegisterPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiPost } from "./api";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
-
+import { useAuth } from "../auth/AuthProvider";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -19,6 +18,7 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -31,9 +31,10 @@ export default function RegisterPage() {
     setLoading(true);
     setMessage("");
     try {
-      const res = await apiPost("/auth/register", form);
+      const res = await register(form);
+      // If the register endpoint returns a token, AuthProvider saved it and we can navigate
       setMessage(res?.message || "Usuario registrado correctamente");
-      navigate("/trips"); // Redirect after successful registration
+      navigate("/trips");
     } catch (err) {
       setMessage(err?.message || "Error al registrar");
     } finally {
@@ -44,14 +45,12 @@ export default function RegisterPage() {
   return (
     <div className="auth-root">
       <div className="auth-container">
-
         {/* LEFT: form */}
         <div className="auth-left">
           <h1 className="auth-title">Registrarse</h1>
           <p className="auth-sub">Crea tu cuenta para empezar a disfrutar de nuestros servicios.</p>
 
           <form className="form" onSubmit={handleSubmit}>
-
             <label className="field">
               <span className="field-label">Nombre</span>
               <input className="input" name="name" value={form.name} onChange={handleChange} placeholder="Nombre" required />
@@ -86,8 +85,8 @@ export default function RegisterPage() {
 
             <label className="agree">
               <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} />
-              <span style={{fontSize:15}}>
-                By checking the box you agree to our <a href="#" style={{ color: "#FF3951", textDecoration:'none' }}>Terms</a> and <a href="#" style={{ color: "#FF3951", textDecoration:'none' }}>Conditions</a>.
+              <span style={{ fontSize: 15 }}>
+                By checking the box you agree to our <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Terms</a> and <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Conditions</a>.
               </span>
             </label>
 
@@ -100,12 +99,12 @@ export default function RegisterPage() {
 
           <div className="footer-cta">
             <span>Already a member?</span>
-            <a href="#" style={{marginLeft:6}}>Log In</a>
+            <a href="/login" style={{ marginLeft: 6 }}>Log In</a>
           </div>
         </div>
 
         {/* RIGHT: art + logo */}
-         <div className="auth-right">
+        <div className="auth-right">
           <div>
             <div className="hero-art" aria-hidden>
               <LogoSvg />
@@ -113,7 +112,6 @@ export default function RegisterPage() {
             <div className="brand">ComfTrip</div>
           </div>
         </div>
-
       </div>
     </div>
   );

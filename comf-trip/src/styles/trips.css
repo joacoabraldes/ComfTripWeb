@@ -1,0 +1,192 @@
+/* src/styles/Trips.css */
+
+.trips-root {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #1d1b20;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* header icons (top-left and top-right) */
+.trips-header {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 24px;
+  pointer-events: none; /* children enable their own pointer-events */
+}
+
+.icon-btn {
+  width: 50px;
+  height: 50px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* left: hamburger button has no extra border */
+.icon-left {
+  padding-left: 6px;
+}
+
+/* right: small rounded square border (like your figma) */
+.icon-right {
+  border: 2px solid #1d1b20;
+  border-radius: 6px;
+  padding: 6px;
+  box-sizing: border-box;
+  background: white;
+}
+
+/* control actual sizes of the inline svgs */
+.icon-left svg {
+  width: 37.5px;
+  height: 25px;
+  display: block;
+}
+
+.icon-right svg {
+  width: 33.33px;
+  height: 33.33px;
+  display: block;
+}
+
+/* main layout (two columns centered horizontally) */
+.trips-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 120px; /* push content down like figma */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: 24px;
+  min-height: calc(100vh - 180px);
+}
+
+/* left message */
+.trips-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 40px;
+}
+
+.trips-message {
+  width: 577px;
+  height: 343px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgba(0,0,0,0.6);
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 70px;
+  letter-spacing: 0.48px;
+  font-family: Roboto, Inter, Arial, sans-serif;
+}
+
+/* right: map wrapper that matches Figma box */
+.trips-right {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20px;
+}
+
+/* ensure the svg container dimensions match the figma area */
+.map-wrapper {
+  width: 799px;
+  height: 600px;
+  overflow: hidden;
+  position: relative;
+  display: block;
+}
+
+/* CTA area bottom-center */
+.trips-cta {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  pointer-events: auto;
+}
+
+.btn-newtrip {
+  width: 491px;
+  height: 87px;
+  background: #FF3951;
+  color: #FFF7F7;
+  border: none;
+  border-radius: 8px;
+  font-size: 32px;
+  font-weight: 400;
+  font-family: Inter, Arial, sans-serif;
+  cursor: pointer;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-newtrip:active {
+  transform: translateY(1px);
+}
+
+/* responsive adjustments */
+@media (max-width: 1100px) {
+  .trips-main {
+    grid-template-columns: 1fr;
+    padding-top: 72px;
+  }
+
+  .trips-message {
+    width: 100%;
+    font-size: 28px;
+    line-height: 40px;
+    padding: 0 20px;
+  }
+
+  .map-wrapper {
+    width: 100%;
+    max-width: 700px;
+    height: auto;
+  }
+
+  .btn-newtrip {
+    width: 320px;
+    height: 64px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trips-message {
+    font-size: 18px;
+    line-height: 28px;
+  }
+
+  .btn-newtrip {
+    width: 260px;
+    height: 52px;
+    font-size: 16px;
+  }
+
+  .trips-header {
+    padding: 0 12px;
+  }
+}

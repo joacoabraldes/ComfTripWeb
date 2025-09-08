@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import Trips from "./pages/Trips";
 import Error from "./pages/Error";
+import Profile from "./components/Profile";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -28,6 +29,14 @@ function App() {
           />
           <Route path="/error" element={<Error />} />
           <Route path="*" element={<Navigate to="/error" replace />} />
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute>
+                        <Profile />
+                    </ProtectedRoute>
+                }
+            />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

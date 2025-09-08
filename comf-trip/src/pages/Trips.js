@@ -1,23 +1,40 @@
 // src/pages/Trips.jsx
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MapSvg from "../components/MapSvg";
 import "../styles/trips.css";
 import Hamburger from "../components/icons/Hamburger";
 import UserIcon from "../components/icons/UserIcon";
+import Sidebar from "../components/Sidebar";
+
 
 export default function Trips() {
+    const [menuAbierto, setMenuAbierto] = useState(false);
+    const navigate = useNavigate();
   return (
     <div className="trips-root">
-      {/* header icons */}
-      <div className="trips-header">
-        <button className="icon-btn icon-left" aria-label="menu">
-          <Hamburger />
-        </button>
+        {/* Sidebar */}
+        <Sidebar open={menuAbierto} onClose={() => setMenuAbierto(false)} />
 
-        <button className="icon-btn icon-right" aria-label="profile">
-          <UserIcon />
-        </button>
-      </div>
+        {/* Header icons */}
+        <div className="trips-header">
+            <button
+                className="icon-btn icon-left"
+                aria-label="menu"
+                onClick={() => setMenuAbierto(!menuAbierto)}
+            >
+                <Hamburger />
+            </button>
+
+            {/* Botón perfil: va a la página de perfil */}
+            <button
+                className="icon-btn icon-right"
+                aria-label="profile"
+                onClick={() => navigate("/profile")}
+            >
+                <UserIcon />
+            </button>
+        </div>
 
       {/* main content area */}
       <main className="trips-main">

@@ -12,6 +12,12 @@ import Profile from "./pages/Profile";
 import ChangePassword from "./pages/ChangePassword";
 import MapPage from "./pages/Map";
 import Home from "./pages/Home";
+// src/App.jsx (snippet)
+import InterestsPage from "./pages/Interests"; // add this import
+
+// ... inside <Routes>
+
+
 
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -68,6 +74,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/interests" element={<ProtectedRoute><InterestsPage /></ProtectedRoute>} />
 
           <Route path="/error" element={<ErrorPage />} />
 

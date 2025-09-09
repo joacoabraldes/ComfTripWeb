@@ -1,11 +1,11 @@
-// src/pages/RegisterPage.jsx
+// src/pages/Register.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiPost } from "./api";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
-import { useAuth } from "../auth/AuthProvider";
 
-export default function RegisterPage() {
+export default function Register() {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -18,7 +18,6 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { register } = useAuth();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -30,13 +29,32 @@ export default function RegisterPage() {
     if (!form.agree) return setMessage("Por favor acepta los términos y condiciones.");
     setLoading(true);
     setMessage("");
+
     try {
-      const res = await register(form);
-      // If the register endpoint returns a token, AuthProvider saved it and we can navigate
-      setMessage(res?.message || "Usuario registrado correctamente");
-      navigate("/trips");
+      // call backend register
+      const res = await apiPost("/auth/register", {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        nationality: form.nationality,
+        birthdate: form.birthdate || null,
+      });
+
+      // backend should return { token, user } according to your controller
+      if (res.token) {
+        localStorage.setItem("token", res.token);
+      }
+      if (res.user) {
+        localStorage.setItem("user", JSON.stringify(res.user));
+      }
+
+      // navigate to interests so the user chooses interests first
+      navigate("/interests");
     } catch (err) {
-      setMessage(err?.message || "Error al registrar");
+      // backend may return { message } or { error } or plain string
+      const errMsg = err?.message || err?.error || (typeof err === "string" ? err : null);
+      setMessage(errMsg || "Error al registrar");
     } finally {
       setLoading(false);
     }
@@ -62,8 +80,8 @@ export default function RegisterPage() {
             </label>
 
             <label className="field">
-              <span className="field-label">Número de telefono</span>
-              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Número de telefono" />
+              <span className="field-label">Teléfono</span>
+              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Teléfono" />
             </label>
 
             <label className="field">
@@ -85,8 +103,8 @@ export default function RegisterPage() {
 
             <label className="agree">
               <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} />
-              <span style={{ fontSize: 15 }}>
-                Al marcar la casilla, acepta nuestros <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Términos</a> y <a href="#" style={{ color: "#FF3951", textDecoration: "none" }}>Condiciones</a>.
+              <span style={{fontSize:15}}>
+                By checking the box you agree to our <button type="button" className="linkish" onClick={() => alert('Términos')}>Terms</button> and <button type="button" className="linkish" onClick={() => alert('Conditions')}>Conditions</button>.
               </span>
             </label>
 
@@ -98,8 +116,8 @@ export default function RegisterPage() {
           </form>
 
           <div className="footer-cta">
-            <span>¿Ya eres miembro?</span>
-            <a href="/login" style={{ marginLeft: 6 }}>Iniciar sesión</a>
+            <span>Already a member?</span>
+            <button className="linkish" onClick={() => navigate("/login")} style={{marginLeft:6}}>Log In</button>
           </div>
         </div>
 

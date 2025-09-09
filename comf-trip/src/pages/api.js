@@ -5,11 +5,13 @@ async function request(path, options = {}) {
   const token = localStorage.getItem('token');
   const headers = options.headers || {};
 
-  // si body no es FormData, asumimos JSON
-  if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+  // if body is not FormData, assume JSON
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
-  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (token) {
+    headers['Authorization'] = 'Bearer ' + token;
+  }
 
   const res = await fetch(API_BASE + path, {
     ...options,
@@ -25,7 +27,9 @@ async function request(path, options = {}) {
   try { data = text ? JSON.parse(text) : {}; } catch (e) { data = text; }
 
   if (!res.ok) {
-    // lanza el error para manejarlo en los componentes
+    // Attach status for easier handling in UI
+    if (typeof data === "object") data.status = res.status;
+    else data = { message: data, status: res.status };
     throw data;
   }
   return data;

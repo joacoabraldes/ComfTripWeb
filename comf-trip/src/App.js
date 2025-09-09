@@ -7,8 +7,9 @@ import RegisterPage from "./pages/Register";
 import Trips from "./pages/Trips";
 import AddTrip from "./pages/AddTrip";
 import LoadTrip from "./pages/LoadTrip";
-import Error from "./pages/Error";
+import ErrorPage from "./pages/Error";
 import Profile from "./pages/Profile";
+import ChangePassword from "./pages/ChangePassword";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -23,6 +24,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/add-trip" element={<AddTrip />} />
           <Route path="/load-trip" element={<LoadTrip />} />
+
           <Route
             path="/trips"
             element={
@@ -31,16 +33,29 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/error" element={<Error />} />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/error" element={<ErrorPage />} />
+
+          {/* fallback: send to error */}
           <Route path="*" element={<Navigate to="/error" replace />} />
-            <Route
-                path="/profile"
-                element={
-                    <ProtectedRoute>
-                        <Profile />
-                    </ProtectedRoute>
-                }
-            />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

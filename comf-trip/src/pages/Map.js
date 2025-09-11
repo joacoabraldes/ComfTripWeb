@@ -75,7 +75,7 @@ export default function MapPage() {
     <div className="map-root">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <div className="trips-header">
+      <div className="map-header">
         <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
           <Hamburger />
         </button>

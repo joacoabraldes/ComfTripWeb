@@ -9,7 +9,8 @@ import Hamburger from "../components/icons/Hamburger";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+  //const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [profile, setProfile] = useState({
@@ -149,10 +150,14 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-root">
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <Sidebar open={menuAbierto} onClose={() => setMenuAbierto(false)} />
 
-      <div className="trips-header">
-        <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
+      <div className="profile-header">
+        <button
+            className="icon-btn icon-left"
+            aria-label="menu"
+            onClick={() => setMenuAbierto(!menuAbierto)}
+        >
           <Hamburger />
         </button>
 

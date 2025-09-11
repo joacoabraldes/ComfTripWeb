@@ -6,22 +6,56 @@
   background: #fff;
 }
 
-/* header icons area (same as other pages) */
-.trips-header {
+/* header icons (top-left and top-right) */
+.map-header {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
+  left: 0;
+  right: 0;
+  top: 18px;
   display: flex;
   justify-content: space-between;
-  z-index: 1000;
+  padding: 0 24px;
+  pointer-events: none; /* children enable their own pointer-events */
 }
 
 .icon-btn {
+  width: 50px;
+  height: 50px;
   background: transparent;
   border: none;
-  padding: 8px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
   cursor: pointer;
+}
+
+/* left: hamburger button has no extra border */
+.icon-left {
+  padding-left: 6px;
+}
+
+/* right: small rounded square border (like your figma) */
+.icon-right {
+  border: 2px solid #1d1b20;
+  border-radius: 6px;
+  padding: 6px;
+  box-sizing: border-box;
+  background: white;
+}
+
+/* control actual sizes of the inline svgs */
+.icon-left svg {
+  width: 37.5px;
+  height: 25px;
+  display: block;
+}
+
+.icon-right svg {
+  width: 33.33px;
+  height: 33.33px;
+  display: block;
 }
 
 /* main layout: left text + right map */

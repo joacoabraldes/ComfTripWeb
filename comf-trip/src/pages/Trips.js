@@ -17,7 +17,7 @@ export default function Trips() {
         <Sidebar open={menuAbierto} onClose={() => setMenuAbierto(false)} />
 
         {/* Header icons */}
-        <div className="trips-header">
+        <div className="home-header">
             <button
                 className="icon-btn icon-left"
                 aria-label="menu"

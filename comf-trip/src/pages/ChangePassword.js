@@ -85,7 +85,7 @@ export default function ChangePassword() {
   return (
     <div className="change-root">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className="trips-header">
+      <div className="home-header">
         <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
           <Hamburger />
         </button>

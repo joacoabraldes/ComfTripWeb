@@ -80,7 +80,7 @@ export default function InterestsPage() {
   return (
     <div className="interests-root">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className="trips-header">
+      <div className="home-header">
         <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
           <Hamburger />
         </button>

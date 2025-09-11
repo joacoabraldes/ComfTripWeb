@@ -101,6 +101,8 @@ export default function Register() {
               <label className="field">
                 <span className="field-label">Nacionalidad</span>
                 <Select
+                    className="country-select"
+                    classNamePrefix="react-select"
                     options={options}
                     value={options.find(opt => opt.label === form.nationality) || null}
                     onChange={handleCountryChange}

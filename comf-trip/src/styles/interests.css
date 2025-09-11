@@ -5,20 +5,6 @@
   font-family: Inter, Arial, sans-serif;
 }
 
-.trips-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 18px 22px;
-  align-items: center;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  padding: 8px;
-  cursor: pointer;
-}
-
 .interests-container {
   max-width: 1200px;
   margin: 24px auto;

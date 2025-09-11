@@ -92,7 +92,7 @@ export default function EditProfile() {
     return (
         <div className="edit-root">
             <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-            <div className="trips-header">
+            <div className="home-header">
                 <button
                     className="icon-btn icon-left"
                     aria-label="menu"
@@ -171,6 +171,8 @@ export default function EditProfile() {
                     {/* Aquí reemplazamos el input de nacionalidad */}
                     <label className="field">
                         <Select
+                            className="country-select"
+                            classNamePrefix="react-select"
                             options={options}
                             value={options.find(opt => opt.label === form.nationality) || null}
                             onChange={handleCountryChange}

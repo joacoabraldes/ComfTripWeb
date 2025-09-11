@@ -181,7 +181,7 @@
   color: var(--accent);
   font-size: 96px;
   font-family: "Nico Moji", "Mulish", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   text-align: center;
 }
 
@@ -191,6 +191,55 @@
   font-size: 14px;
   text-align: left;
   margin-top: 8px;
+}
+
+/* Contenedor principal del select */
+.country-select .react-select__control {
+  background: #fcf7f7;       /* mismo fondo que los inputs */
+  border: 1px solid #e8d1d1; /* mismo borde */
+  border-radius: 8px;
+  min-height: 56px;
+  box-shadow: none;
+}
+
+.country-select .react-select__control--is-focused {
+  border-color: #ff3951;     /* borde rojo cuando está enfocado */
+  box-shadow: 0 0 0 1px #ff3951;
+}
+
+/* Texto del placeholder */
+.country-select .react-select__placeholder {
+  color: #964f4f;
+}
+
+/* Texto seleccionado */
+.country-select .react-select__single-value {
+  color: #1e1e1e;
+  font-size: 16px;
+}
+
+/* Indicador de la flechita */
+.country-select .react-select__dropdown-indicator {
+  color: #964f4f;
+}
+
+.country-select .react-select__dropdown-indicator:hover {
+  color: #ff3951;
+}
+
+/* El separador de la flechita lo sacamos */
+.country-select .react-select__indicator-separator {
+  display: none;
+}
+
+.country-select .react-select__option--is-focused {
+  background-color: #ffe5e8; /* color de hover */
+  color: #1e1e1e;           /* color de texto */
+}
+
+.country-select .react-select__option--is-selected {
+  background-color: #ff3951; /* color cuando está seleccionado */
+  color: #fff;
 }
 
 /* small responsive tweaks */

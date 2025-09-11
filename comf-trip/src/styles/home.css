@@ -48,39 +48,50 @@ body {
   z-index: 100;
 }
 
-.home-header .left,
-.home-header .right {
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* generic icon button used by header / profile */
 .icon-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+  width: 50px;
+  height: 50px;
   background: transparent;
-  border: 1px solid rgba(0,0,0,0); /* keep layout consistent */
+  border: none;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
   cursor: pointer;
-  transition: background .12s ease, transform .08s ease;
-  box-shadow: none;
 }
 
-.icon-btn:focus { outline: 2px solid rgba(0,0,0,0.06); outline-offset: 2px; }
-.icon-btn:hover { transform: translateY(-1px); background: rgba(0,0,0,0.02); }
+/* left: hamburger button has no extra border */
+.icon-left {
+  padding-left: 6px;
+}
 
-/* profile button style - rounded square with thin border */
-.icon-btn.profile {
-  border: 2px solid rgba(0,0,0,0.12);
+/* right: small rounded square border (like your figma) */
+.icon-right {
   border-radius: 6px;
-  width: 44px;
-  height: 44px;
-  background: #fff;
+  padding: 6px;
+  box-sizing: border-box;
+  background: white;
+}
+
+/* control actual sizes of the inline svgs */
+.icon-left svg {
+  width: 38px;
+  height: 25px;
+  display: block;
+}
+
+.icon-right svg {
+  width: 34px;
+  height: 34px;
+  display: block;
+}
+
+.icon-left:hover,
+.icon-right:hover {
+  background-color: #f2f2f2; /* gris claro */
+  border-radius: 6px;        /* para que quede igual que el diseño */
+  transition: background 0.2s ease-in-out;
 }
 
 /* hero layout: centered content with left text and right artwork */

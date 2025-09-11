@@ -9,6 +9,7 @@ import AddTrip from "./pages/AddTrip";
 import LoadTrip from "./pages/LoadTrip";
 import ErrorPage from "./pages/Error";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import ChangePassword from "./pages/ChangePassword";
 import MapPage from "./pages/Map";
 import Home from "./pages/Home";
@@ -65,6 +66,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+            <Route
+                path="/edit-profile"
+                element={
+                    <ProtectedRoute>
+                        <EditProfile />
+                    </ProtectedRoute>
+                }
+            />
 
           <Route
             path="/change-password"

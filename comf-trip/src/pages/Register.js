@@ -1,6 +1,8 @@
 // src/pages/Register.jsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
+import countryList from "react-select-country-list";
 import { apiPost } from "./api";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
@@ -18,11 +20,17 @@ export default function Register() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  // opciones de países
+  const options = useMemo(() => countryList().getData(), []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
+
+  function handleCountryChange(value) {
+    setForm(f => ({ ...f, nationality: value.label }));
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +100,12 @@ export default function Register() {
             <div className="grid-2">
               <label className="field">
                 <span className="field-label">Nacionalidad</span>
-                <input className="input" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Nacionalidad" />
+                <Select
+                    options={options}
+                    value={options.find(opt => opt.label === form.nationality) || null}
+                    onChange={handleCountryChange}
+                    placeholder="Selecciona tu nacionalidad"
+                />
               </label>
 
               <label className="field">

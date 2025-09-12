@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState,  useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPut } from "./api";
 import Select from "react-select";
@@ -21,7 +21,7 @@ export default function EditProfile() {
         email: "",
         phone: "",
         birthdate: "",
-        nationality: ""
+        nationality: "",
     });
 
     // cargar datos del perfil al montar

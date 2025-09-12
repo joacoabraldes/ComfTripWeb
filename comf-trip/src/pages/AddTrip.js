@@ -1,16 +1,32 @@
 // src/pages/AddTrip.js
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AddTrip.css';
 import LogoSvg from '../components/LogoSvg';
+import Select from 'react-select'
+import countryList from "react-select-country-list";
+import { allCountries  } from "country-region-data";
 
 export default function AddTrip() {
-  const [destinations, setDestinations] = useState([{ destination: null, startDate: null, endDate: null }]);
+  const [destinations, setDestinations] = useState([
+    { country: null, region: null, startDate: null, endDate: null }
+  ]);
   const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
   const [currentMonth, setCurrentMonth] = useState(8); // Septiembre 2025
   const [currentYear, setCurrentYear] = useState(2025);
   const [loading, setLoading] = useState(false);
+  const [country, setCountry] = useState("");
+  const [region, setRegion] = useState("");
   const nav = useNavigate();
+
+  const countries = useMemo(() => countryList().getData(), []);
+
+  const regions = useMemo(() => {
+    if (!country) return [];
+    const countryData = allCountries.find(c => c[0] === country.label);
+    if (!countryData) return [];
+    return countryData[2].map(r => ({ value: r[1], label: r[0] }));
+  }, [country]);
 
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
@@ -149,14 +165,53 @@ export default function AddTrip() {
           <form className="form" onSubmit={handleSubmit}>
             <label className="field">
               <h2 className="add-trip-subtitle">Selecciona a donde vas a viajar</h2>
-              <input
-                className="input"
-                value={currentDestination.destination}
-                onChange={handleDestinationChange}
-                placeholder="Destino"
-                required
+
+              {/* Selector de País */}
+              <Select
+                  className="country-select"
+                  classNamePrefix="react-select"
+                  options={countries}
+                  value={currentDestination.country}
+                  onChange={(val) => {
+                    setCountry(val);
+                    setRegion(null);
+                    setDestinations((prev) => {
+                      const newDestinations = [...prev];
+                      newDestinations[currentDestinationIndex] = {
+                        ...newDestinations[currentDestinationIndex],
+                        country: val,
+                        region: null,
+                      };
+                      return newDestinations;
+                    });
+                  }}
+                  placeholder="Escribe o selecciona un país"
+                  isClearable
               />
             </label>
+            <label className="field">
+              <Select
+                  className="country-select"
+                  classNamePrefix="react-select"
+                  options={regions}
+                  value={currentDestination.region}
+                  onChange={(val) => {
+                    setRegion(val);
+                    setDestinations((prev) => {
+                      const newDestinations = [...prev];
+                      newDestinations[currentDestinationIndex] = {
+                        ...newDestinations[currentDestinationIndex],
+                        region: val,
+                      };
+                      return newDestinations;
+                    });
+                  }}
+                  placeholder="Escribe o selecciona una región"
+                  isClearable
+                  isDisabled={!country}
+              />
+            </label>
+
 
             <h2 className="add-trip-subtitle">Selecciona las fechas que vas a estar</h2>
 

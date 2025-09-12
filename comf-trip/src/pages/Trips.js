@@ -57,10 +57,7 @@ export default function Trips() {
       <div className="trips-cta">
         <button
           className="btn-newtrip"
-          onClick={() => {
-            /* replace with your navigation logic */
-            alert("Nuevo Viaje - implement navigation");
-          }}
+          onClick={() => navigate("/add-trip")}
         >
           Nuevo Viaje &nbsp; &gt;
         </button>

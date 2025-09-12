@@ -19,7 +19,7 @@ export default function Login() {
     try {
       await login(form);
       // on success, go to trips
-      nav("/trips");
+      nav("/home");
     } catch (err) {
       alert(err.message || JSON.stringify(err));
     } finally {

@@ -148,14 +148,29 @@ export default function AddTrip() {
   };
 
 
-  const handleDestinationChange = (e) => {
-    const text = e.target.value;
+  const handleChangeCountry = (val) => {
     setDestinations((prev) => {
       const newDestinations = [...prev];
-      newDestinations[currentDestinationIndex] = { ...newDestinations[currentDestinationIndex], destination: text };
+      newDestinations[currentDestinationIndex] = {
+        ...newDestinations[currentDestinationIndex],
+        country: val,
+        region: null, // resetear región cuando cambia el país
+      };
       return newDestinations;
     });
   };
+
+  const handleChangeRegion = (val) => {
+    setDestinations((prev) => {
+      const newDestinations = [...prev];
+      newDestinations[currentDestinationIndex] = {
+        ...newDestinations[currentDestinationIndex],
+        region: val,
+      };
+      return newDestinations;
+    });
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -213,23 +228,12 @@ export default function AddTrip() {
               <h2 className="add-trip-subtitle">Selecciona a donde vas a viajar</h2>
 
               {/* Selector de País */}
-              {/* Selector de País */}
               <Select
                   className="country-select"
                   classNamePrefix="react-select"
                   options={countries}
                   value={currentDestination.country}
-                  onChange={(val) => {
-                    setDestinations((prev) => {
-                      const newDestinations = [...prev];
-                      newDestinations[currentDestinationIndex] = {
-                        ...newDestinations[currentDestinationIndex],
-                        country: val,
-                        region: null, // al cambiar país, se resetea región
-                      };
-                      return newDestinations;
-                    });
-                  }}
+                  onChange={handleChangeCountry}
                   placeholder="Escribe o selecciona un país"
                   isClearable
               />
@@ -242,16 +246,7 @@ export default function AddTrip() {
                   classNamePrefix="react-select"
                   options={regions}
                   value={currentDestination.region}
-                  onChange={(val) => {
-                    setDestinations((prev) => {
-                      const newDestinations = [...prev];
-                      newDestinations[currentDestinationIndex] = {
-                        ...newDestinations[currentDestinationIndex],
-                        region: val,
-                      };
-                      return newDestinations;
-                    });
-                  }}
+                  onChange={handleChangeRegion}
                   placeholder="Escribe o selecciona una región"
                   isClearable
                   isDisabled={!currentDestination?.country}

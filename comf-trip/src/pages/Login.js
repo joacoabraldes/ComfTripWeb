@@ -6,7 +6,7 @@ import LogoSvg from "../components/LogoSvg";
 import { useAuth } from "../auth/AuthProvider";
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" }); // 'email' here is the identifier (username or email)
   const nav = useNavigate();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,13 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(form);
+      const identifier = (form.email || "").trim();
+      // If identifier contains '@' treat it as an email, otherwise as username
+      const payload = identifier.includes("@")
+        ? { email: identifier, password: form.password }
+        : { username: identifier, password: form.password };
+
+      await login(payload);
       // on success, go to trips
       nav("/home");
     } catch (err) {
@@ -39,10 +45,12 @@ export default function Login() {
               <span className="field-label">Nombre de usuario o Email</span>
               <input
                 className="input"
-                name="email"
+                name="email" // kept the same name to minimize other changes; this is the identifier
                 placeholder="Nombre de usuario o Email"
                 onChange={handle}
-                type="email"
+                type="text"         // <-- changed from "email" to "text"
+                autoComplete="username"
+                aria-label="Nombre de usuario o Email"
                 required
               />
             </label>
@@ -55,6 +63,7 @@ export default function Login() {
                 placeholder="Contraseña"
                 type="password"
                 onChange={handle}
+                autoComplete="current-password"
                 required
               />
             </label>

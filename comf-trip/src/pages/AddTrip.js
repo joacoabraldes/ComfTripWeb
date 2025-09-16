@@ -24,7 +24,7 @@ export default function AddTrip() {
 
   const countries = useMemo(() => countryList().getData(), []);
 
-// Luego lo usamos en regions
+// Luego lo usamos en provinces
   const provinces = useMemo(() => {
     const country = currentDestination?.country;
     if (!country) return [];

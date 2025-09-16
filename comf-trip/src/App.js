@@ -13,7 +13,7 @@ import EditProfile from "./pages/EditProfile";
 import ChangePassword from "./pages/ChangePassword";
 import MapPage from "./pages/Map";
 import Home from "./pages/Home";
-// src/App.jsx (snippet)
+import TripItinerary from "./pages/TripItinerary";
 import InterestsPage from "./pages/Interests"; // add this import
 
 // ... inside <Routes>
@@ -86,6 +86,15 @@ function App() {
           <Route path="/interests" element={<ProtectedRoute><InterestsPage /></ProtectedRoute>} />
 
           <Route path="/error" element={<ErrorPage />} />
+
+          <Route
+            path="/trip_itinerary/:tripId"
+            element={
+              <ProtectedRoute>
+                <TripItinerary />
+              </ProtectedRoute>
+            }
+          />
 
           {/* fallback: send to error */}
           <Route path="*" element={<Navigate to="/error" replace />} />

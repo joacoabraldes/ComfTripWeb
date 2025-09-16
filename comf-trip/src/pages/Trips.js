@@ -109,7 +109,7 @@ export default function Trips() {
                     key={t.id}
                     type="button"
                     className={`trips-list-item ${selectedTrip && selectedTrip.id === t.id ? "active" : ""}`}
-                    onClick={() => setSelectedTrip(t)}
+                    onClick={() => navigate(`/trip_itinerary/${t.id}`)}
                     role="listitem"
                   >
                     <div className="trip-item-main">

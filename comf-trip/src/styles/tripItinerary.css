@@ -1,0 +1,31 @@
+/* src/styles/tripItinerary.css */
+.trip-it-root { min-height: 100vh; background: #fff; font-family: Inter, Arial, sans-serif; }
+.home-header { position: relative; }
+.trip-it-main {
+  max-width: 1180px;
+  margin: 28px auto;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.trip-it-left { padding: 20px; border-radius: 8px; }
+.back-link { background:none; border:none; color:#1978c8; cursor:pointer; margin-bottom:10px; }
+.trip-it-title { margin: 8px 0; font-size: 20px; font-weight: 700; }
+.trip-it-dates { color:#666; font-size: 14px; }
+.trip-it-form { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.trip-it-form select, .trip-it-form input, .trip-it-form textarea { padding:8px; border:1px solid #e6e6e6; border-radius:6px; font-size:14px; }
+.btn-primary { background:#FF3951; color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
+.places-list { margin-top:8px; display:flex; flex-direction:column; gap:8px; }
+.place-item { display:flex; justify-content:space-between; align-items:flex-start; padding:10px; border-radius:8px; border:1px solid #f1f1f1; background:#fff; }
+.place-title { font-weight:600; }
+.place-meta { font-size:13px; color:#666; margin-top:6px; }
+.place-notes { margin-top:6px; color:#444; font-size:13px; }
+.btn-link { background:none; border:1px solid #ddd; padding:6px 8px; border-radius:6px; cursor:pointer; }
+.muted { color:#999; font-size:14px; }
+.map-panel { border-radius:8px; overflow:hidden; }
+.error { color:#b00020; margin-top:6px; font-size:14px; }
+@media (max-width: 980px) {
+  .trip-it-main { grid-template-columns: 1fr; padding: 12px; }
+  .map-panel { height: 320px; }
+}

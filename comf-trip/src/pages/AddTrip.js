@@ -10,7 +10,7 @@ import { allCountries  } from "country-region-data";
 
 export default function AddTrip() {
   const [destinations, setDestinations] = useState([
-    { country: null, region: null, startDate: null, endDate: null }
+    { country: null, province: null, startDate: null, endDate: null }
   ]);
   const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
   const today = new Date();
@@ -25,7 +25,7 @@ export default function AddTrip() {
   const countries = useMemo(() => countryList().getData(), []);
 
 // Luego lo usamos en regions
-  const regions = useMemo(() => {
+  const provinces = useMemo(() => {
     const country = currentDestination?.country;
     if (!country) return [];
     const countryData = allCountries.find(c => c[0] === country.label);
@@ -137,7 +137,7 @@ export default function AddTrip() {
     setDestinations((prev) => {
       const newDest = [
         ...prev,
-        { country: null, region: null, startDate: null, endDate: null }
+        { country: null, province: null, startDate: null, endDate: null }
       ];
       // ponemos el índice en la nueva última posición
       setCurrentDestinationIndex(newDest.length - 1);
@@ -154,18 +154,18 @@ export default function AddTrip() {
       newDestinations[currentDestinationIndex] = {
         ...newDestinations[currentDestinationIndex],
         country: val,
-        region: null, // resetear región cuando cambia el país
+        province: null, // resetear región cuando cambia el país
       };
       return newDestinations;
     });
   };
 
-  const handleChangeRegion = (val) => {
+  const handleChangeProvince = (val) => {
     setDestinations((prev) => {
       const newDestinations = [...prev];
       newDestinations[currentDestinationIndex] = {
         ...newDestinations[currentDestinationIndex],
-        region: val,
+        province: val,
       };
       return newDestinations;
     });
@@ -185,13 +185,13 @@ export default function AddTrip() {
       }
 
       for (const dest of destinations) {
-        if (!dest.country || !dest.region || !dest.startDate || !dest.endDate) {
+        if (!dest.country || !dest.province || !dest.startDate || !dest.endDate) {
           throw new Error("Por favor completa todos los destinos y fechas.");
         }
 
         // 👇 armar el payload que espera tu backend
         const payload = {
-          destination: `${dest.region.label}, ${dest.country.label}`,
+          destination: `${dest.province.label}, ${dest.country.label}`,
           start_date: dest.startDate,
           end_date: dest.endDate,
           budget: null,
@@ -244,10 +244,10 @@ export default function AddTrip() {
               <Select
                   className="country-select"
                   classNamePrefix="react-select"
-                  options={regions}
-                  value={currentDestination.region}
-                  onChange={handleChangeRegion}
-                  placeholder="Escribe o selecciona una región"
+                  options={provinces}
+                  value={currentDestination.province}
+                  onChange={handleChangeProvince}
+                  placeholder="Escribe o selecciona una provincia"
                   isClearable
                   isDisabled={!currentDestination?.country}
               />

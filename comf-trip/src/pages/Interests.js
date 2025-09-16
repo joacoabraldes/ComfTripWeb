@@ -7,6 +7,52 @@ import Sidebar from "../components/Sidebar";
 import Hamburger from "../components/icons/Hamburger";
 import UserIcon from "../components/icons/UserIcon";
 
+// --- image loader: compatible Vite (import.meta.glob) y CRA/webpack (require.context)
+const imagesMap = (() => {
+  // Vite (import.meta.glob)
+  try {
+    // import.meta.glob with eager+as:'url' returns a map of path->url strings
+    if (typeof import.meta !== "undefined" && import.meta.glob) {
+      const modules = import.meta.glob('../assets/images/interests/*.png', { eager: true, as: 'url' });
+      const map = {};
+      for (const path in modules) {
+        const filename = path.split('/').pop(); // e.g. 'cultura.png'
+        const slug = filename.replace('.png', '');
+        map[slug] = modules[path];
+      }
+      return map;
+    }
+  } catch (e) {
+    // ignore — try webpack next
+  }
+
+  // Webpack / CRA: require.context
+  try {
+    // eslint-disable-next-line no-undef
+    const req = require.context('../assets/images/interests', false, /\.png$/);
+    const keys = req.keys();
+    const map = {};
+    keys.forEach((k) => {
+      const filename = k.replace('./', ''); // 'cultura.png'
+      const slug = filename.replace('.png', '');
+      const resolved = req(k);
+      // depending on setup req(k) may already be a url or an object with .default
+      map[slug] = resolved?.default || resolved;
+    });
+    return map;
+  } catch (e) {
+    // no loader available
+    return {};
+  }
+})();
+
+// optional: data-url tiny placeholder (gray box) to avoid broken image look
+const PLACEHOLDER =
+  'data:image/svg+xml;charset=UTF-8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160"><rect width="100%" height="100%" fill="#efefef"/><text x="50%" y="50%" alignment-baseline="middle" text-anchor="middle" fill="#bbb" font-size="14">Imagen</text></svg>`
+  );
+
 export default function InterestsPage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -42,7 +88,6 @@ export default function InterestsPage() {
   }
 
   async function submitInterests() {
-    // need user id + token in localStorage
     const stored = JSON.parse(localStorage.getItem("user") || "null");
     if (!stored || !stored.id) {
       alert("No authenticated user. Please log in.");
@@ -60,7 +105,6 @@ export default function InterestsPage() {
     try {
       setLoading(true);
       await apiPost(`/users/${userId}/interests`, { interestIds });
-      // Optionally update user in localStorage to include interests
       const newStored = { ...stored, interests: interestIds };
       localStorage.setItem("user", JSON.stringify(newStored));
       navigate("/home");
@@ -95,6 +139,10 @@ export default function InterestsPage() {
         <div className="interests-grid">
           {interests.map((it) => {
             const isSel = selected.has(it.id);
+            // try slug first (recommended), fallback to id or title
+            const slug = it.slug ?? String(it.id ?? it.title ?? "");
+            const src = imagesMap[slug] || imagesMap[slug.toLowerCase?.()] || PLACEHOLDER;
+
             return (
               <button
                 key={it.id}
@@ -103,7 +151,15 @@ export default function InterestsPage() {
                 onClick={() => toggle(it.id)}
                 aria-pressed={isSel}
               >
-                <div className="interest-image" aria-hidden />
+                <div className="interest-image" aria-hidden>
+                  <img
+                    src={src}
+                    alt={it.title || slug}
+                    onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }}
+                  />
+                </div>
+
                 <div className="interest-info">
                   <div className="interest-title">{it.title}</div>
                   <div className="interest-desc">{it.description}</div>

@@ -3,9 +3,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/home.css";
 
-import Sidebar from "../components/Sidebar";
-import Hamburger from "../components/icons/Hamburger";
 import UserIcon from "../components/icons/UserIcon";
+import Header from "../components/Header";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -14,32 +13,7 @@ export default function Home() {
   return (
     <div className="home-root">
       {/* Sidebar that slides in/out */}
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-
-      {/* Header (fixed) */}
-      <header className="home-header">
-        <div className="left">
-          <button
-            className="icon-btn"
-            aria-label="Abrir menú"
-            onClick={() => setMenuOpen((v) => !v)}
-            title="Menú"
-          >
-            <Hamburger />
-          </button>
-        </div>
-
-        <div className="right">
-          <button
-            className="icon-btn profile"
-            aria-label="Perfil"
-            title="Perfil"
-            onClick={() => navigate("/profile")}
-          >
-            <UserIcon />
-          </button>
-        </div>
-      </header>
+      <Header/>
 
       {/* Main hero content */}
       <main className="hero">

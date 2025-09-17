@@ -34,65 +34,6 @@ body {
   padding-top: calc(var(--header-height) + 8px);
 }
 
-/* header (menu / profile icons) */
-.home-header {
-  position: fixed;
-  top: 12px;
-  left: var(--gutter);
-  right: var(--gutter);
-  height: var(--header-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  pointer-events: none; /* allow inner buttons to opt-in */
-  z-index: 100;
-}
-
-.icon-btn {
-  width: 50px;
-  height: 50px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-/* left: hamburger button has no extra border */
-.icon-left {
-  padding-left: 6px;
-}
-
-/* right: small rounded square border (like your figma) */
-.icon-right {
-  border-radius: 6px;
-  padding: 6px;
-  box-sizing: border-box;
-  background: white;
-}
-
-/* control actual sizes of the inline svgs */
-.icon-left svg {
-  width: 38px;
-  height: 25px;
-  display: block;
-}
-
-.icon-right svg {
-  width: 34px;
-  height: 34px;
-  display: block;
-}
-
-.icon-left:hover,
-.icon-right:hover {
-  background-color: #f2f2f2; /* gris claro */
-  border-radius: 6px;        /* para que quede igual que el diseño */
-  transition: background 0.2s ease-in-out;
-}
 
 /* hero layout: centered content with left text and right artwork */
 .hero {

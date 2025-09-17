@@ -7,7 +7,7 @@
 .app-header {
     position: fixed;
     top: 0;
-    padding-top: 40px;
+    padding-top: 30px;
     left: var(--gutter);
     right: var(--gutter);
     height: var(--header-height);

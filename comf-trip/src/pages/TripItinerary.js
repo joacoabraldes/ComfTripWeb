@@ -145,8 +145,13 @@ export default function TripItinerary() {
     return (
       <div className="trip-it-root">
         <Header/>
-        <main className="trip-it-main">
-          <div> Cargando itinerario… </div>
+        <main className="trip-it-main" style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "80vh" // ocupa casi toda la pantalla
+        }}>
+          <div style={{fontSize:25}}> Cargando itinerario… </div>
         </main>
       </div>
     );

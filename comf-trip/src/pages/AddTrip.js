@@ -196,6 +196,7 @@ export default function AddTrip() {
           end_date: dest.endDate,
           budget: null,
           notes: "",
+          created_at: today,
         };
 
         await apiPost("/trips", payload);

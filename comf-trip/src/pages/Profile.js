@@ -3,13 +3,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPut } from "./api";
 import "../styles/profile.css";
-import UserIcon from "../components/icons/UserIcon";
-import Sidebar from "../components/Sidebar";
-import Hamburger from "../components/icons/Hamburger";
+import { FaUser } from "react-icons/fa";
+import Header from "../components/Header";
+import "../styles/header.css";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [profile, setProfile] = useState({
@@ -149,27 +148,13 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-root">
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-
-      <div className="home-header">
-        <button
-            className="icon-btn icon-left"
-            aria-label="menu"
-            onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <Hamburger />
-        </button>
-
-        <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-          <UserIcon />
-        </button>
-      </div>
+      <Header/>
 
       <div className="profile-card">
         <div className="profile-main">
           <div className="profile-left">
             <div className="profile-photo">
-              {profile.photo ? <img src={profile.photo} alt="Foto perfil" /> : <UserIcon className="default-photo" />}
+              {profile.photo ? <img src={profile.photo} alt="Foto perfil" /> : <FaUser className="default-photo" />}
             </div>
             <h2 className="profile-name">{profile.name || "Sin nombre"}</h2>
           </div>

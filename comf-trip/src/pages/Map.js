@@ -4,9 +4,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import Map, { Marker, NavigationControl, Popup } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "../styles/map.css";
-import Sidebar from "../components/Sidebar";
-import Hamburger from "../components/icons/Hamburger";
-import UserIcon from "../components/icons/UserIcon";
+import Header from "../components/Header";
+import "../styles/header.css";
 import { useNavigate } from "react-router-dom";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
@@ -54,7 +53,6 @@ function parseImagesField(imgField) {
 
 export default function MapPage() {
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   // picker marker (draggable)
   const [pickerPos, setPickerPos] = useState([-34.6037, -58.3816]); // [lat, lng]
@@ -224,17 +222,7 @@ export default function MapPage() {
 
   return (
     <div className="map-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-
-      <div className="home-header">
-        <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
-          <Hamburger />
-        </button>
-
-        <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-          <UserIcon />
-        </button>
-      </div>
+      <Header/>
 
       <main className="map-main" style={{ display: "flex", flex: 1 }}>
         <section className="map-left" style={{ width: 320, padding: 16, boxSizing: "border-box" }}>

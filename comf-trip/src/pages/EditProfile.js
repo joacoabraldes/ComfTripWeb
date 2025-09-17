@@ -4,13 +4,12 @@ import { apiGet, apiPut } from "./api";
 import Select from "react-select";
 import countryList from "react-select-country-list";
 import "../styles/editProfile.css";
-import Sidebar from "../components/Sidebar";
-import Hamburger from "../components/icons/Hamburger";
-import UserIcon from "../components/icons/UserIcon";
+import { FaUser } from "react-icons/fa";
+import Header from "../components/Header";
+import "../styles/header.css";
 
 export default function EditProfile() {
     const navigate = useNavigate();
-    const [menuOpen, setMenuOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
     // opciones de países
@@ -91,24 +90,7 @@ export default function EditProfile() {
 
     return (
         <div className="edit-root">
-            <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-            <div className="home-header">
-                <button
-                    className="icon-btn icon-left"
-                    aria-label="menu"
-                    onClick={() => setMenuOpen(v => !v)}
-                >
-                    <Hamburger />
-                </button>
-
-                <button
-                    className="icon-btn icon-right"
-                    aria-label="profile"
-                    onClick={() => navigate("/profile")}
-                >
-                    <UserIcon />
-                </button>
-            </div>
+            <Header/>
 
             <main className="edit-container">
                 <button
@@ -122,7 +104,7 @@ export default function EditProfile() {
                 <h1 className="edit-title">Editar Datos</h1>
 
                 <div className="edit-photo">
-                    <UserIcon className="edit-photo-icon" />
+                    <FaUser className="edit-photo-icon" />
                 </div>
 
                 <form className="edit-form" onSubmit={handleSubmit}>

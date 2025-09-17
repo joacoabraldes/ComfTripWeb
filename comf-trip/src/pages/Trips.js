@@ -3,13 +3,11 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MapSvg from "../components/MapSvg";
 import "../styles/trips.css";
-import Hamburger from "../components/icons/Hamburger";
-import UserIcon from "../components/icons/UserIcon";
-import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+import "../styles/header.css";
 import { apiGet } from "./api";
 
 export default function Trips() {
-  const [menuAbierto, setMenuAbierto] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState([]);
   const [selectedTrip, setSelectedTrip] = useState(null);
@@ -54,15 +52,7 @@ export default function Trips() {
   if (loading) {
     return (
       <div className="trips-root">
-        <Sidebar open={menuAbierto} onClose={() => setMenuAbierto(false)} />
-        <div className="home-header">
-          <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuAbierto(!menuAbierto)}>
-            <Hamburger />
-          </button>
-          <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-            <UserIcon />
-          </button>
-        </div>
+        <Header/>
 
         <main className="trips-main">
           <section className="trips-left">
@@ -80,16 +70,7 @@ export default function Trips() {
 
   return (
     <div className="trips-root">
-      <Sidebar open={menuAbierto} onClose={() => setMenuAbierto(false)} />
-
-      <div className="home-header">
-        <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuAbierto(!menuAbierto)}>
-          <Hamburger />
-        </button>
-        <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-          <UserIcon />
-        </button>
-      </div>
+      <Header/>
 
       <main className="trips-main">
         <section className="trips-left">

@@ -3,13 +3,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiPut } from "./api";
 import "../styles/changePassword.css";
-import Sidebar from "../components/Sidebar";
-import Hamburger from "../components/icons/Hamburger";
-import UserIcon from "../components/icons/UserIcon";
+import Header from "../components/Header";
+import "../styles/header.css";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -84,16 +82,7 @@ export default function ChangePassword() {
 
   return (
     <div className="change-root">
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className="home-header">
-        <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
-          <Hamburger />
-        </button>
-
-        <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-          <UserIcon />
-        </button>
-      </div>
+      <Header/>
 
       <main className="change-container">
         <button className="back-btn" onClick={() => navigate(-1)} aria-label="volver">←</button>

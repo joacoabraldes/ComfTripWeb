@@ -3,9 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MapSvg from "../components/MapSvg";
 import "../styles/tripItinerary.css";
-import Sidebar from "../components/Sidebar";
-import Hamburger from "../components/icons/Hamburger";
-import UserIcon from "../components/icons/UserIcon";
+import Header from "../components/Header";
+import "../styles/header.css";
 import { apiGet, apiPost } from "./api"; // tus helpers
 
 const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
@@ -31,7 +30,6 @@ export default function TripItinerary() {
   const tripIdRaw = params.tripId ?? params.id ?? params?.tripId; // tolerate either
   const tripId = Number(tripIdRaw);
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState(null);
   const [locations, setLocations] = useState([]);
@@ -146,15 +144,7 @@ export default function TripItinerary() {
   if (loading) {
     return (
       <div className="trip-it-root">
-        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-        <div className="home-header">
-          <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
-            <Hamburger />
-          </button>
-          <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-            <UserIcon />
-          </button>
-        </div>
+        <Header/>
         <main className="trip-it-main">
           <div> Cargando itinerario… </div>
         </main>
@@ -165,15 +155,7 @@ export default function TripItinerary() {
   if (error) {
     return (
       <div className="trip-it-root">
-        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-        <div className="home-header">
-          <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
-            <Hamburger />
-          </button>
-          <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-            <UserIcon />
-          </button>
-        </div>
+        <Header/>
         <main className="trip-it-main">
           <div style={{ padding: 24 }}>
             <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
@@ -187,33 +169,14 @@ export default function TripItinerary() {
   if (!trip) {
     return (
       <div className="trip-it-root">
-        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-        <div className="home-header">
-          <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
-            <Hamburger />
-          </button>
-          <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-            <UserIcon />
-          </button>
+        <Header/>
         </div>
-        <main className="trip-it-main">
-          <div className="trip-it-empty">No se encontró el viaje.</div>
-        </main>
-      </div>
     );
   }
 
   return (
     <div className="trip-it-root">
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className="home-header">
-        <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
-          <Hamburger />
-        </button>
-        <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
-          <UserIcon />
-        </button>
-      </div>
+      <Header/>
 
       <main className="trip-it-main">
         <aside className="trip-it-left">

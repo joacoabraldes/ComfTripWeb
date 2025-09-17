@@ -1,0 +1,54 @@
+/* src/styles/header.css */
+:root {
+    --header-height: 60px;
+    --gutter: 24px;
+}
+
+.app-header {
+    position: fixed;
+    top: 0;
+    padding-top: 40px;
+    left: var(--gutter);
+    right: var(--gutter);
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.icon-btn {
+    width: 50px;
+    height: 50px;
+
+    background: transparent;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.icon-left svg {
+    width: 25px;
+    height: 25px;
+
+}
+
+.icon-right {
+    border-radius: 6px;
+    background: white;
+}
+
+.icon-right svg {
+    width: 25px;
+    height: 25px;
+}
+
+.icon-btn:hover {
+    background-color: #f2f2f2;
+    border-radius: 6px;
+    transition: background 0.2s ease-in-out;
+}

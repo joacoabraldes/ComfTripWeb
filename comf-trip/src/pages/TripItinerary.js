@@ -33,13 +33,6 @@ export default function TripItinerary() {
 
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState(null);
-  const [locations, setLocations] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [date, setDate] = useState("");
-  const [startHour, setStartHour] = useState("");
-  const [endHour, setEndHour] = useState("");
-  const [notes, setNotes] = useState("");
-  const [adding, setAdding] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {

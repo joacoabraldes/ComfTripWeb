@@ -5,7 +5,7 @@ import MapSvg from "../components/MapSvg";
 import "../styles/tripItinerary.css";
 import Header from "../components/Header";
 import "../styles/header.css";
-import {apiDelete, apiGet, apiPost} from "./api"; // tus helpers
+import {apiDelete, apiGet} from "./api"; // tus helpers
 
 const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 

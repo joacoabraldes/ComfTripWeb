@@ -15,6 +15,7 @@ import MapPage from "./pages/Map";
 import Home from "./pages/Home";
 import TripItinerary from "./pages/TripItinerary";
 import InterestsPage from "./pages/Interests"; // add this import
+import Explorar from "./pages/Explorar";
 
 // ... inside <Routes>
 
@@ -35,6 +36,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/explorar" element={<Explorar />} />
 
           {/* Optional: keep add/load-trip public if you want, otherwise wrap with ProtectedRoute */}
           <Route path="/add-trip" element={<AddTrip />} />

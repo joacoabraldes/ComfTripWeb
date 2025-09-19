@@ -4,10 +4,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import MapSvg from "../components/MapSvg";
 import "../styles/tripItinerary.css";
 import Header from "../components/Header";
-import "../styles/header.css";
-import "../styles/AddTrip.css";
+import TimePicker from "../components/TimePicker"
 import "../styles/addPlace.css";
-import "../styles/tripItinerary.css";
+
 import { apiGet, apiPost } from "./api"; // tus helpers
 
 const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
@@ -92,13 +91,35 @@ export default function AddPlace() {
         return () => { mounted = false; };
     }, [tripId]);
 
+    useEffect(() => {
+        setStartHour("");
+        setEndHour("");
+    }, [date]);
+
+
     const bookedDates = new Set(
         (trip?.places || []).map(p =>
             p.date.split("T")[0] // normalizo a YYYY-MM-DD
         )
     );
 
+    // horarios ocupados de la fecha seleccionada
+    const occupiedSlots = React.useMemo(() => {
+        if (!trip?.places || !date) return [];
 
+        return trip.places
+            .filter(p => p.date.split("T")[0] === date) // solo los de la fecha elegida
+            .map(p => ({
+                start: p.start_hour, // ej: "12:00"
+                end: p.end_hour || null // puede que no tenga hora fin
+            }));
+    }, [trip?.places, date]);
+
+    // calculamos el próximo slot ocupado después de startHour
+    const nextOccupiedStart = occupiedSlots
+        .map(s => s.start)
+        .filter(t => t > startHour)
+        .sort()[0]; // primer slot que empieza después de startHour
 
     const monthNames = [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -157,6 +178,15 @@ export default function AddPlace() {
             alert("Seleccione una fecha.");
             return;
         }
+        if(!startHour || !startHour.split(":")[1]){
+            alert("Seleccione hora de inicio");
+            return;
+        }
+
+        if(!endHour || !endHour.split(":")[1]){
+            alert("Seleccione hora de final");
+            return;
+        }
         setAdding(true);
         setError(null);
         try {
@@ -181,6 +211,7 @@ export default function AddPlace() {
             setStartHour("");
             setEndHour("");
             setNotes("");
+            navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Add place error:", err);
             setError("No se pudo añadir el lugar. Intente nuevamente.");
@@ -252,9 +283,6 @@ export default function AddPlace() {
                         </select>
 
                         <label>Fecha</label>
-                        {/*<input type="date"*/}
-                        {/*       style={{background: "#fcf7f7", border: "1px solid #e8d1d1"}}*/}
-                        {/*       value={date} onChange={(e) => setDate(e.target.value)} />*/}
 
                         <div style={ {borderRadius: "12px", padding:"20px", border: "1px solid #e6e6e6"}}>
                         <div className="calendar-header">
@@ -297,22 +325,26 @@ export default function AddPlace() {
                         </div>
 
                         <label >Hora inicio</label>
-                        <input type="time"
-                               value={startHour}
-                               onChange={(e) => setStartHour(e.target.value)} />
-
-                        <label>Hora fin (opcional)</label>
-                        <input type="time"
-                               value={endHour}
-                               onChange={(e) => setEndHour(e.target.value)} />
-
+                        <TimePicker
+                            value={startHour}
+                            onChange={setStartHour}
+                            occupiedSlots={occupiedSlots}
+                            disabled={!date}/>
+                        <label>Hora fin</label>
+                        <TimePicker
+                            value={endHour}
+                            onChange={setEndHour}
+                            occupiedSlots={occupiedSlots}
+                            minTime={startHour}   // <--- no permite horas anteriores a startHour
+                            maxTime={nextOccupiedStart || null} // null = sin límite superior
+                            disabled={!startHour.split(":")[1]}/>
                         <label>Notas (opcional)</label>
                         <textarea value={notes}
                                   style={{background: "#fcf7f7", border: "1px solid #e8d1d1"}}
                                   onChange={(e) => setNotes(e.target.value)} rows={3} />
 
                         <div style={{ marginTop: 10 }}>
-                            <button type="submit" onClick={() => navigate(`/trip_itinerary/${tripId}`)} disabled={adding} className="btn-primary">
+                            <button type="submit" disabled={adding} className="btn-primary">
                                 {adding ? "Agregando…" : "Agregar al itinerario"}
                             </button>
                         </div>

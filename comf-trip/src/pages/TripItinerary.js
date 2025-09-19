@@ -166,7 +166,7 @@ export default function TripItinerary() {
                 <div key={p.id} className="place-item">
                   <div className="place-main">
                     <div className="place-title">{p.location?.titulo ?? `Lugar #${p.fk_location}`}</div>
-                    <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""} {p.start_hour ? ` • ${p.start_hour}` : ""}</div>
+                    <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""} {p.start_hour} {p.end_hour ? ` - ${p.end_hour}` : ""}</div>
                     {p.notes && <div className="place-notes">{p.notes}</div>}
                   </div>
                   <div className="trip-menu-wrapper">

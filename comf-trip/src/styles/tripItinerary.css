@@ -11,7 +11,7 @@
   grid-template-columns: 1fr 1fr; /* mitad izquierda y derecha */
   gap: 30px;
   height: calc(100vh - 140px); /* toda la pantalla menos header + espacio botón */
-  padding: 100px 20px 0 20px;
+  padding: 80px 20px 0 20px;
   box-sizing: border-box;
   width: 100%;
   margin: 28px auto;
@@ -48,7 +48,7 @@
   cursor: pointer;
   font-weight: 800;
   position: fixed;   /* la hace fija en la pantalla */
-  top: 90px;         /* distancia desde arriba */
+  top: 70px;         /* distancia desde arriba */
   left: 100px;        /* distancia desde la izquierda */
   text-align: left;  /* opcional */
   margin-bottom: 0;  /* elimina margin innecesario */
@@ -65,20 +65,21 @@
   margin-top: 8px;
 }
 
-.btn-primary {   display: block;          /* para que respete margin auto */
-  margin: 60px auto;       /* 20px arriba/abajo, auto a los lados */
+.btn-primary {
+  display: block;          /* para que respete margin auto */
+  margin: 20px auto;       /* 20px arriba/abajo, auto a los lados */
   background: #FF3951;
   color: #fff;
   border: none;
   padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600; }
+  font-weight: 600;}
 .places-list { width: 100%;
-  max-height: calc(100vh - 280px);
+  height: 100%;
   padding-top: 10px;
-  overflow: auto;
-  display: flex;
+  overflow-y: auto;
+  flex-grow: 1;
   flex-direction: column;
   gap: 10px;
   margin-top:8px;}

@@ -5,6 +5,7 @@
     gap: 16px;
     padding: 20px;
     background: #ffffff;
+    height: 100%;
 }
 
 .trip-it-form label {

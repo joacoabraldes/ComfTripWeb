@@ -49,13 +49,9 @@ export default function TripItinerary() {
       try {
         // obtener trip (incluye places según tu controller)
         const tripRes = await apiGet(`/trips/${tripId}`);
-        // obtener locations (lista para el dropdown)
-        const locs = await apiGet("/locations");
 
         if (!mounted) return;
         setTrip(tripRes);
-        setLocations(Array.isArray(locs) ? locs : []);
-        setDate(tripRes?.start_date ? tripRes.start_date.split("T")[0] : "");
       } catch (err) {
         console.error("TripItinerary load error:", err);
         // intenta mostrar info útil si el helper apiGet devuelve un objeto con status

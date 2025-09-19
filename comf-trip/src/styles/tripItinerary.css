@@ -1,23 +1,105 @@
 /* src/styles/tripItinerary.css */
-.trip-it-root { min-height: 100vh; background: #fff; font-family: Inter, Arial, sans-serif; }
-.home-header { position: relative; }
+.trip-it-root {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #1d1b20;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  box-sizing: border-box;
+  position: relative;}
 .trip-it-main {
-  max-width: 1180px;
-  margin: 28px auto;
   display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 24px;
+  grid-template-columns: 1fr 1fr; /* mitad izquierda y derecha */
+  gap: 30px;
+  height: calc(100vh - 140px); /* toda la pantalla menos header + espacio botón */
+  padding: 100px 20px 0 20px;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 28px auto;
   align-items: start;
 }
-.trip-it-left { padding: 20px; border-radius: 8px; }
-.back-link { background:none; border:none; color:#1978c8; cursor:pointer; margin-bottom:10px; }
-.trip-it-title { margin: 8px 0; font-size: 20px; font-weight: 700; }
-.trip-it-dates { color:#666; font-size: 14px; }
-.trip-it-form { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
-.trip-it-form select, .trip-it-form input, .trip-it-form textarea { padding:8px; border:1px solid #e6e6e6; border-radius:6px; font-size:14px; }
-.btn-primary { background:#FF3951; color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
-.places-list { margin-top:8px; display:flex; flex-direction:column; gap:8px; }
-.place-item { display:flex; justify-content:space-between; align-items:flex-start; padding:10px; border-radius:8px; border:1px solid #f1f1f1; background:#fff; }
+.trip-it-left { display: flex;
+  flex-direction: column;
+  height: 100%; /* ocupa todo */
+  overflow-y: auto; /* scroll si hay muchos viajes */
+  padding-bottom: 20px;
+  margin-left: 150px;
+}
+
+.trip-it-right{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  padding-left: 50px;
+}
+
+.trip-it-right img{
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* mantiene proporción */
+}
+
+.back-link {
+  background: none;
+  border: none;
+  color: #FF3951;
+  cursor: pointer;
+  font-weight: 800;
+  position: fixed;   /* la hace fija en la pantalla */
+  top: 90px;         /* distancia desde arriba */
+  left: 100px;        /* distancia desde la izquierda */
+  text-align: left;  /* opcional */
+  margin-bottom: 0;  /* elimina margin innecesario */
+  z-index: 1000;     /* para que quede encima de otros elementos */}
+
+.trip-detail-row {
+  margin: 6px 0;
+  color: #555;
+}
+
+.trip-it-created {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+}
+
+.btn-primary {   display: block;          /* para que respete margin auto */
+  margin: 60px auto;       /* 20px arriba/abajo, auto a los lados */
+  background: #FF3951;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600; }
+.places-list { width: 100%;
+  max-height: calc(100vh - 280px);
+  padding-top: 10px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top:8px;}
+.place-item {
+  width: 100%;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #f1f1f1;
+  background: #fff;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between; /* texto a izq, bandera a der */
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow .12s ease, transform .06s ease;
+   }
+.place-item:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+}
 .place-title { font-weight:600; }
 .place-meta { font-size:13px; color:#666; margin-top:6px; }
 .place-notes { margin-top:6px; color:#444; font-size:13px; }

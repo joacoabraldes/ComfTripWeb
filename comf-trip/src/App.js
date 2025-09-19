@@ -22,6 +22,7 @@ import InterestsPage from "./pages/Interests"; // add this import
 
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AddPlace from "./pages/AddPlace";
 
 function App() {
   return (
@@ -95,6 +96,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+            <Route
+                path="/add_place/:tripId"
+                element={
+                    <ProtectedRoute>
+                        <AddPlace/>
+                    </ProtectedRoute>
+                }
+            />
 
           {/* fallback: send to error */}
           <Route path="*" element={<Navigate to="/error" replace />} />

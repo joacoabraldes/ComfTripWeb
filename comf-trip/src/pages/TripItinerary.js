@@ -5,7 +5,7 @@ import MapSvg from "../components/MapSvg";
 import "../styles/tripItinerary.css";
 import Header from "../components/Header";
 import "../styles/header.css";
-import { apiGet, apiPost } from "./api"; // tus helpers
+import {apiDelete, apiGet, apiPost} from "./api"; // tus helpers
 
 const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
@@ -29,6 +29,7 @@ export default function TripItinerary() {
   const navigate = useNavigate();
   const tripIdRaw = params.tripId ?? params.id ?? params?.tripId; // tolerate either
   const tripId = Number(tripIdRaw);
+  const [menuOpen, setMenuOpen] = useState(null); // id del menú abierto
 
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState(null);
@@ -76,65 +77,26 @@ export default function TripItinerary() {
     return () => { mounted = false; };
   }, [tripId]);
 
-  async function handleAddPlace(e) {
-    e?.preventDefault();
-    if (!selectedLocation) {
-      alert("Seleccione una ubicación.");
-      return;
-    }
-    if (!date) {
-      alert("Seleccione una fecha.");
-      return;
-    }
-    setAdding(true);
-    setError(null);
+  const fmtDate = (d) => {
+    if (!d) return "-";
     try {
-      const payload = {
-        places: [
-          {
-            fk_location: Number(selectedLocation),
-            date,
-            start_hour: startHour || null,
-            end_hour: endHour || null,
-            notes: notes || null,
-          },
-        ],
-      };
-      const res = await apiPost(`/trips/${tripId}/places`, payload);
-      const created = res?.places ?? [];
-      setTrip((t) => ({
-        ...t,
-        places: Array.isArray(t?.places) ? [...t.places, ...created] : created,
-      }));
-      setSelectedLocation("");
-      setStartHour("");
-      setEndHour("");
-      setNotes("");
-    } catch (err) {
-      console.error("Add place error:", err);
-      setError("No se pudo añadir el lugar. Intente nuevamente.");
-    } finally {
-      setAdding(false);
+      const date = new Date(d);
+      return date.toLocaleDateString();
+    } catch (e) {
+      return d;
     }
-  }
+  };
 
   async function handleDeletePlace(placeId) {
-    const ok = window.confirm("¿Eliminar este punto del itinerario?");
-    if (!ok) return;
+    if (!window.confirm("¿Eliminar este punto del itinerario?")) return;
+
     try {
-      const token = getAuthToken();
-      const url = `${API_BASE || ""}/trips/${tripId}/places/${placeId}`;
-      const opts = { method: "DELETE", headers: { "Content-Type": "application/json" } };
-      if (token) opts.headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(url, opts);
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`${res.status} ${txt}`);
-      }
+      await apiDelete(`/trips/${tripId}/places/${placeId}`);
       setTrip((t) => ({
         ...t,
         places: (t?.places || []).filter((p) => p.id !== placeId),
       }));
+      setMenuOpen(null);
     } catch (err) {
       console.error("Delete place error:", err);
       setError("No se pudo eliminar el lugar.");
@@ -184,45 +146,27 @@ export default function TripItinerary() {
       <Header/>
 
       <main className="trip-it-main">
-        <aside className="trip-it-left">
-          <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
 
+        <section className="trip-it-left">
+
+          <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
           <h2 className="trip-it-title">{trip.destination}</h2>
           <div className="trip-it-dates">
             {trip.start_date ? new Date(trip.start_date).toLocaleDateString() : "-"} — {trip.end_date ? new Date(trip.end_date).toLocaleDateString() : "-"}
           </div>
-
-          <h3 style={{ marginTop: 18 }}>Agregar punto al itinerario</h3>
-          <form onSubmit={handleAddPlace} className="trip-it-form">
-            <label>Ubicación</label>
-            <select value={selectedLocation} onChange={(e) => setSelectedLocation(e.target.value)}>
-              <option value="">— seleccionar —</option>
-              {locations.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.titulo} ({l.fk_interest})
-                </option>
-              ))}
-            </select>
-
-            <label style={{ marginTop: 8 }}>Fecha</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-
-            <label style={{ marginTop: 8 }}>Hora inicio</label>
-            <input type="time" value={startHour} onChange={(e) => setStartHour(e.target.value)} />
-
-            <label style={{ marginTop: 8 }}>Hora fin (opcional)</label>
-            <input type="time" value={endHour} onChange={(e) => setEndHour(e.target.value)} />
-
-            <label style={{ marginTop: 8 }}>Notas (opcional)</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
-
-            <div style={{ marginTop: 10 }}>
-              <button type="submit" disabled={adding} className="btn-primary">
-                {adding ? "Agregando…" : "Agregar al itinerario"}
-              </button>
-            </div>
-            {error && <div className="error">{error}</div>}
-          </form>
+            {trip?.budget != null && (
+                  <p className="trip-detail-row">
+                    <strong>Presupuesto:</strong> ${trip.budget}
+                  </p>
+              )}
+            {trip?.notes && (
+                  <p className="trip-detail-row">
+                    <strong>Notas:</strong> {trip.notes}
+                  </p>
+              )}
+              <div className="trip-it-created">
+                Creado: {fmtDate(trip.created_at)}
+              </div>
 
           <h3 style={{ marginTop: 18 }}>Itinerario actual</h3>
           <div className="places-list">
@@ -236,18 +180,51 @@ export default function TripItinerary() {
                     <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""} {p.start_hour ? ` • ${p.start_hour}` : ""}</div>
                     {p.notes && <div className="place-notes">{p.notes}</div>}
                   </div>
-                  <div className="place-actions">
-                    <button onClick={() => handleDeletePlace(p.id)} className="btn-link small">Eliminar</button>
+                  <div className="trip-menu-wrapper">
+                    <button
+                        className="trip-menu-btn"
+                        onClick={() =>
+                            setMenuOpen(menuOpen === p.id ? null : p.id)
+                        }
+                    >⋮
+                    </button>
+
+                    {menuOpen === p.id && (
+                        <div className="trip-menu">
+                          <button className="trip-menu-btn"
+                                  onClick={() => {
+                                    navigate(`/trips/editProgram/${p.id}`);
+                                    setMenuOpen(null);
+                                  }}
+                          ><svg width="20" height="20" viewBox="0 0 41 37" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18.7915 6.16667H6.83317C5.92701 6.16667 5.05797 6.49152 4.41722 7.06975C3.77647 7.64799 3.4165 8.43225 3.4165 9.25V30.8333C3.4165 31.6511 3.77647 32.4353 4.41722 33.0136C5.05797 33.5918 5.92701 33.9167 6.83317 33.9167H30.7498C31.656 33.9167 32.525 33.5918 33.1658 33.0136C33.8065 32.4353 34.1665 31.6511 34.1665 30.8333V20.0417M31.604 3.85417C32.2836 3.24085 33.2054 2.8963 34.1665 2.8963C35.1276 2.8963 36.0494 3.24085 36.729 3.85417C37.4086 4.46748 37.7904 5.29931 37.7904 6.16667C37.7904 7.03402 37.4086 7.86585 36.729 8.47917L20.4998 23.125L13.6665 24.6667L15.3748 18.5L31.604 3.85417Z" stroke="#1E1E1E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                          </button>
+                          <button className="trip-menu-btn"
+                                  onClick={() => {handleDeletePlace(p.id);
+                                                        setMenuOpen(null);}}
+                          ><svg width="20" height="20" viewBox="0 0 45 43" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5.625 10.75H9.375M9.375 10.75H39.375M9.375 10.75V35.8333C9.375 36.7837 9.77009 37.6951 10.4733 38.3671C11.1766 39.0391 12.1304 39.4167 13.125 39.4167H31.875C32.8696 39.4167 33.8234 39.0391 34.5266 38.3671C35.2299 37.6951 35.625 36.7837 35.625 35.8333V10.75M15 10.75V7.16667C15 6.21631 15.3951 5.30487 16.0984 4.63287C16.8016 3.96086 17.7554 3.58333 18.75 3.58333H26.25C27.2446 3.58333 28.1984 3.96086 28.9016 4.63287C29.6049 5.30487 30 6.21631 30 7.16667V10.75M18.75 19.7083V30.4583M26.25 19.7083V30.4583" stroke="#1E1E1E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+
+                          </button>
+                        </div>
+                    )}
                   </div>
                 </div>
               ))
             )}
           </div>
-        </aside>
+          <div style={{ marginTop: 10 }}>
+            <button onClick={() => navigate(`/add_place/${tripId}`)} className="btn-primary">
+              Agregar al itinerario
+            </button>
+          </div>
+        </section>
 
         <section className="trip-it-right">
-          <div className="map-panel">
-            <MapSvg width={880} height={600} />
+          <div className="map-wrapper">
+            <MapSvg width={999} height={800} />
           </div>
         </section>
       </main>

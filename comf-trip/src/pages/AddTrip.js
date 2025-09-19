@@ -115,7 +115,7 @@ export default function AddTrip() {
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => {
       if (prev === 0) {
-        setCurrentYear((y) => y - 1);
+        setCurrentYear(currentYear - 1);
         return 11;
       }
       return prev - 1;
@@ -125,7 +125,7 @@ export default function AddTrip() {
   const handleNextMonth = () => {
     setCurrentMonth((prev) => {
       if (prev === 11) {
-        setCurrentYear((y) => y + 1);
+        setCurrentYear(currentYear+ 1);
         return 0;
       }
       return prev + 1;

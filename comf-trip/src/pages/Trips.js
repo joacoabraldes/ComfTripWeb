@@ -78,7 +78,7 @@ export default function Trips() {
             </section>
             <section className="trips-right">
               <div className="map-wrapper" aria-hidden>
-                <MapSvg width={799} height={600} />
+                <MapSvg width={999} height={800} />
               </div>
             </section>
           </main>

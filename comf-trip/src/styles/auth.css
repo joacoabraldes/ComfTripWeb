@@ -147,8 +147,8 @@
 .message { font-size:14px; text-align:center; color:#333; margin-top:6px; }
 
 /* small footer link row */
-.footer-cta { font-size:20px; color:#252525; margin-top:12px; display:flex; align-items:center; gap:6px; }
-.footer-cta a { color: var(--accent); font-weight:700; text-decoration:none; }
+.footer-cta { font-size:20px; color:#252525; margin-top:0; display:flex; align-items:center; gap:6px; }
+.footer-cta a { color: var(--accent); font-weight:700; text-decoration:none; font-size:20px;  }
 
 /* Right column: illustration & logo */
 .auth-right {
@@ -190,7 +190,14 @@
   color: var(--accent);
   font-size: 14px;
   text-align: left;
-  margin-top: 8px;
+  background-color: transparent;
+  border-color: transparent;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.forgot:hover{
+  text-decoration: underline;
 }
 
 /* Contenedor principal del select */

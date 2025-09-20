@@ -1,7 +1,7 @@
 // src/pages/Profile.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiPut } from "./api";
+import { apiGet} from "./api";
 import "../styles/profile.css";
 import { FaUser } from "react-icons/fa";
 import Header from "../components/Header";
@@ -22,8 +22,6 @@ export default function ProfilePage() {
     birthdate: "",
     photo: ""
   });
-
-  const [editing, setEditing] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -80,10 +78,9 @@ export default function ProfilePage() {
         }
       } finally {
         if (mounted) setLoading(false);
+
       }
     })();
-
-    return () => { mounted = false; };
   }, [user, token, hydrated, navigate, setUser]);
 
   function handleFormChange(e) {
@@ -91,62 +88,14 @@ export default function ProfilePage() {
     setForm(f => ({ ...f, [name]: value }));
   }
 
-  async function saveProfile(e) {
-    e?.preventDefault?.();
-    if (!profile.id) return alert("No user id");
-    try {
-      const payload = {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        nationality: form.nationality,
-        birthdate: form.birthdate || null
-      };
-
-      const res = await apiPut(`/users/${profile.id}`, payload);
-      const updatedUser = res.user || { ...payload, id: profile.id };
-
-      setProfile(p => ({
-        ...p,
-        name: updatedUser.name || payload.name,
-        email: updatedUser.email || payload.email,
-        phone: updatedUser.phone || payload.phone,
-        nationality: updatedUser.nationality || payload.nationality,
-        birthdate: updatedUser.birthdate || payload.birthdate
-      }));
-
-      // const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
-      // const newStored = {
-      //   ...stored,
-      //   id: updatedUser.id || stored.id,
-      //   name: updatedUser.name || payload.name,
-      //   email: updatedUser.email || payload.email,
-      //   phone: updatedUser.phone || payload.phone,
-      //   nationality: updatedUser.nationality || payload.nationality,
-      //   birthdate: updatedUser.birthdate || payload.birthdate
-      // };
-      // localStorage.setItem("user", JSON.stringify(newStored));
-
-      setUser(updatedUser);
-
-      setEditing(false);
-      alert("Perfil actualizado");
-    } catch (err) {
-      console.error("Error saving profile", err);
-      const message = err?.message || err?.error || JSON.stringify(err);
-      alert("Error actualizando perfil: " + message);
-    }
-  }
-
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    //logout()
+    logout();
     navigate("/login");
+
   }
 
   if (loading) {
-    return <div className="profile-root">Cargando perfil…</div>;
+    return <div className="profile-root" style={{fontSize:25}}>Cargando perfil…</div>;
   }
 
   return (
@@ -163,7 +112,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="profile-right">
-            {!editing ? (
+
                 <>
                   <div className="profile-field">
                     <span className="field-label">Mail</span>
@@ -185,50 +134,18 @@ export default function ProfilePage() {
                     <span className="field-value">{profile.nationality || "—"}</span>
                   </div>
                 </>
-            ) : (
-              <form className="profile-edit-form" onSubmit={saveProfile}>
-                <label>
-                  <div className="field-label">Nombre</div>
-                  <input name="name" value={form.name} onChange={handleFormChange} />
-                </label>
 
-                <label>
-                  <div className="field-label">Email</div>
-                  <input name="email" value={form.email} onChange={handleFormChange} type="email" />
-                </label>
-
-                <label>
-                  <div className="field-label">Teléfono</div>
-                  <input name="phone" value={form.phone} onChange={handleFormChange} />
-                </label>
-
-                <label>
-                  <div className="field-label">Fecha de nacimiento</div>
-                  <input name="birthdate" value={form.birthdate} onChange={handleFormChange} type="date" />
-                </label>
-
-                <label>
-                  <div className="field-label">Nacionalidad</div>
-                  <input name="nationality" value={form.nationality} onChange={handleFormChange} />
-                </label>
-
-                <div className="profile-edit-actions">
-                  <button type="submit" className="btn-primary">Guardar</button>
-                  <button type="button" className="btn-secondary" onClick={() => setEditing(false)}>Cancelar</button>
-                </div>
-              </form>
-            )}
           </div>
         </div>
 
         <div className="profile-actions">
-          {!editing && (
+
             <button onClick={() => navigate("/edit-profile")} className="btn-edit">
               <svg width="30" height="30" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.9166 8.33336H8.33329C7.22822 8.33336 6.16842 8.77235 5.38701 9.55375C4.60561 10.3351 4.16663 11.395 4.16663 12.5V41.6667C4.16663 42.7718 4.60561 43.8316 5.38701 44.613C6.16842 45.3944 7.22822 45.8334 8.33329 45.8334H37.5C38.605 45.8334 39.6648 45.3944 40.4462 44.613C41.2276 43.8316 41.6666 42.7718 41.6666 41.6667V27.0834M38.5416 5.20836C39.3704 4.37956 40.4945 3.91394 41.6666 3.91394C42.8387 3.91394 43.9628 4.37956 44.7916 5.20836C45.6204 6.03716 46.086 7.16126 46.086 8.33336C46.086 9.50546 45.6204 10.6296 44.7916 11.4584L25 31.25L16.6666 33.3334L18.75 25L38.5416 5.20836Z" stroke="#FF3951" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
               </svg> Editar datos
             </button>
-          )}
+
 
           <button onClick={() => navigate("/change-password")} className="btn-change">
             <svg width="30" height="30" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">

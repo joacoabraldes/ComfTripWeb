@@ -85,7 +85,7 @@ export default function EditProfile() {
     }
 
     if (loading) {
-        return <div className="edit-root">Cargando datos de perfil…</div>;
+        return <div className="profile-root" style={{fontSize:25}}>Cargando datos de perfil…</div>;
     }
 
     return (

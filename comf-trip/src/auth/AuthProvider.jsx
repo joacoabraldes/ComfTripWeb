@@ -7,17 +7,18 @@ const STORAGE_KEY = "myapp_auth_v1";
 const AuthContext = createContext({
   user: null,
   token: null,
-  isAuthenticated: false,
   login: async () => {},
   register: async () => {},
   logout: () => {},
+  setUser: () => {},   // valor por defecto (función vacía)
+  setToken: () => {},  // idem
+  hydrated: false      // valor inicial por defecto
 });
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [hydrated, setHydrated] = useState(false)
-  const isAuthenticated = !!token;
 
   // hydrate from storage (compat: check legacy token/user too)
   useEffect(() => {
@@ -25,8 +26,8 @@ export const AuthProvider = ({ children }) => {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        setToken(parsed.token || null);
-        setUser(parsed.user || null);
+        setToken(parsed.token);
+        setUser(parsed.user);
         return;
       }
       // compatibility: if older code wrote separate keys
@@ -154,15 +155,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   };
 
   return (
-      <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, logout, setUser, setToken, hydrated }}>
+      <AuthContext.Provider value={{ user, token, login, register, logout, setUser, setToken, hydrated }}>
       {children}
     </AuthContext.Provider>
   );

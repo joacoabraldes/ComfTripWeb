@@ -35,14 +35,14 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/explorar" element={<Explorar />} />
 
-          {/* Optional: keep add/load-trip public if you want, otherwise wrap with ProtectedRoute */}
-          <Route path="/add-trip" element={<AddTrip />} />
-          <Route path="/load-trip" element={<LoadTrip />} />
 
           {/* Protected routes - require authentication */}
+            <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/explorar" element={<ProtectedRoute><Explorar /></ProtectedRoute>} />
+             <Route path="/add-trip" element={<ProtectedRoute><AddTrip /></ProtectedRoute>} />
+            <Route path="/load-trip" element={<ProtectedRoute><LoadTrip /></ProtectedRoute>} />
+
           <Route
             path="/trips"
             element={

@@ -181,7 +181,7 @@ export default function TripItinerary() {
               <div className="muted">Aún no hay puntos en el itinerario.</div>
             ) : (
               (trip.places || []).map((p) => (
-                <div key={p.id} className="place-item" onClick={() => {
+                <div key={p.id} className="place-item" style={{borderColor: ((selectedPlace?.id === p.id) ? "#ff3951":"transparent")}} onClick={() => {
                   if (selectedPlace?.id === p.id) {
                     setSelectedPlace(null); // clic en mismo lugar = cerrar info
                   } else {
@@ -190,7 +190,8 @@ export default function TripItinerary() {
                 }}>
                   <div className="place-main">
                     <div className="place-title">{p.location?.titulo ?? `Lugar #${p.fk_location}`}</div>
-                    <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""} {p.start_hour} {p.end_hour ? ` - ${p.end_hour}` : ""}</div>
+                    <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""}
+                      {p.start_hour} {p.end_hour ? ` - ${p.end_hour}` : ""}</div>
                     {p.notes && <div className="place-notes">{p.notes}</div>}
                   </div>
                   <div className="trip-menu-wrapper">

@@ -1,6 +1,7 @@
 // src/pages/Register.jsx
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import {useAuth} from "../auth/AuthProvider";
 import Select from "react-select";
 import countryList from "react-select-country-list";
 import { apiPost } from "./api";
@@ -132,7 +133,7 @@ export default function Register() {
 
           <div className="footer-cta">
             <span>Already a member?</span>
-            <button className="linkish" onClick={() => navigate("/login")} style={{marginLeft:6}}>Log In</button>
+            <button className="linkish" onClick={() => navigate("/login")} style={{marginLeft:6, fontSize:"20px"}}>Log In</button>
           </div>
         </div>
 

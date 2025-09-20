@@ -8,7 +8,7 @@ import { useAuth } from "../auth/AuthProvider";
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" }); // 'email' here is the identifier (username or email)
   const nav = useNavigate();
-  const { login } = useAuth();
+  const { login} = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -68,11 +68,15 @@ export default function Login() {
               />
             </label>
 
-            <div className="forgot">¿Olvidaste tu contraseña?</div>
+            <button className="forgot">¿Olvidaste tu contraseña?</button>
 
             <button type="submit" className="btn-primary login" disabled={loading}>
               {loading ? "Entrando..." : "Iniciar"}
             </button>
+            <div className="footer-cta">
+              <span>Not registered?</span>
+              <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}}>Register</button>
+            </div>
           </form>
         </div>
 

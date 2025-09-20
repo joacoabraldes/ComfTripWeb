@@ -9,9 +9,11 @@ import { useAuth } from "../auth/AuthProvider";
  * <Route path="/trips" element={<ProtectedRoute><Trips/></ProtectedRoute>} />
  */
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
+  const { token,user, hydrated} = useAuth();
+  if (!hydrated) {
+    return <div>Loading...</div>; // o un spinner si querés
+  }
+  if (!token || !user) {
     // redirect to error page (you can change to '/login' if preferred)
     return <Navigate to="/error" replace />;
   }

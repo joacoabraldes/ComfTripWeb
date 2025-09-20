@@ -125,6 +125,10 @@
   font-size: 14px;
 }
 
+.linkish:hover{
+  text-decoration: underline;
+}
+
 /* responsive tweaks */
 @media (max-width: 1000px) {
   .interests-grid {

@@ -36,6 +36,7 @@ export default function AddPlace() {
     const [trip, setTrip] = useState(null);
     const [locations, setLocations] = useState([]);
     const [selectedLocation, setSelectedLocation] = useState("");
+    const [locationInfo, setLocationInfo]=useState(null);
     const [date, setDate] =useState("");
     const [startDate, setStartDate]=useState(null);
     const [endDate, setEndDate]=useState(null);
@@ -96,6 +97,9 @@ export default function AddPlace() {
         setEndHour("");
     }, [date]);
 
+    useEffect(() => {
+        setEndHour("");
+    }, [startHour]);
 
     const bookedDates = new Set(
         (trip?.places || []).map(p =>
@@ -230,7 +234,7 @@ export default function AddPlace() {
                     alignItems: "center",
                     height: "80vh" // ocupa casi toda la pantalla
                 }}>
-                    <div style={{fontSize:25}}> Cargando itinerario… </div>
+                    <div style={{fontSize:25}}> Cargando… </div>
                 </main>
             </div>
         );
@@ -273,7 +277,12 @@ export default function AddPlace() {
                     <form onSubmit={handleAddPlace} className="trip-it-form" style={{overflowY: "auto"}}>
                         <label>Ubicación</label>
                         <select
-                                 onChange={(e) => setSelectedLocation(e.target.value)}>
+                            onChange={(e) => {
+                                const id = String(e.target.value);
+                                setSelectedLocation(id); // para enviar al backend
+                                const loc = locations.find(l => l.id === id);
+                                setLocationInfo(loc || null); // para mostrar info a la derecha
+                            }}>
                             <option value="">— seleccionar —</option>
                             {locations.map((l) => (
                                 <option key={l.id} value={l.id}>
@@ -353,9 +362,27 @@ export default function AddPlace() {
                 </section>
 
                 <section className="trip-it-right">
+                    {!locationInfo ? (
                     <div className="map-wrapper">
                         <MapSvg width={999} height={800} />
-                    </div>
+                    </div>) : (
+                        <div className="place-detail">
+                            <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{locationInfo.titulo}</h3>
+                            <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({locationInfo.fk_interest})</p>
+                            {locationInfo.description && <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion:</strong>
+                                {locationInfo.description}</p>}
+
+                            {/* Imágenes */}
+                            {locationInfo.images && locationInfo.images.length > 0 && (
+                                <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
+                                    <div className="place-images">
+                                        {locationInfo.images.map((imgUrl, i) => (
+                                            <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
+                                        ))}
+                                    </div></div>
+                            )}
+                        </div>
+                    )}
                 </section>
             </main>
         </div>

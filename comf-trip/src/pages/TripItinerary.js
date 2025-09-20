@@ -30,6 +30,8 @@ export default function TripItinerary() {
   const tripIdRaw = params.tripId ?? params.id ?? params?.tripId; // tolerate either
   const tripId = Number(tripIdRaw);
   const [menuOpen, setMenuOpen] = useState(null); // id del menú abierto
+  const [selectedPlace, setSelectedPlace] = useState(null);
+
 
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState(null);
@@ -51,6 +53,22 @@ export default function TripItinerary() {
         const tripRes = await apiGet(`/trips/${tripId}`);
 
         if (!mounted) return;
+
+        // ----> AGREGAR FOTOS DE PRUEBA A UN SOLO LUGAR
+        if (tripRes.places && tripRes.places.length > 0) {
+          // Elegimos el primer lugar para mostrar fotos de prueba
+          tripRes.places[1].description="hola"
+          tripRes.places[1].images = [
+            "https://i.pinimg.com/originals/d8/5d/9a/d85d9a3c01e81a917af38532b6b7523c.jpg",
+            "https://s3-sa-east-1.amazonaws.com/modernabuenosaires/img/obras/galeria/7_1406143152.jpg",
+            "https://s3-sa-east-1.amazonaws.com/modernabuenosaires/img/obras/galeria/7_1406143152.jpg",
+            "https://s3-sa-east-1.amazonaws.com/modernabuenosaires/img/obras/galeria/7_1406143152.jpg",
+            "https://s3-sa-east-1.amazonaws.com/modernabuenosaires/img/obras/galeria/7_1406143152.jpg",
+            "https://s3-sa-east-1.amazonaws.com/modernabuenosaires/img/obras/galeria/7_1406143152.jpg",
+            "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/12/09/20/0c/obelisco-de-buenos-aires.jpg?w=1200&h=-1&s=1"
+          ];
+        }
+
         setTrip(tripRes);
       } catch (err) {
         console.error("TripItinerary load error:", err);
@@ -163,7 +181,13 @@ export default function TripItinerary() {
               <div className="muted">Aún no hay puntos en el itinerario.</div>
             ) : (
               (trip.places || []).map((p) => (
-                <div key={p.id} className="place-item">
+                <div key={p.id} className="place-item" onClick={() => {
+                  if (selectedPlace?.id === p.id) {
+                    setSelectedPlace(null); // clic en mismo lugar = cerrar info
+                  } else {
+                    setSelectedPlace(p);
+                  }
+                }}>
                   <div className="place-main">
                     <div className="place-title">{p.location?.titulo ?? `Lugar #${p.fk_location}`}</div>
                     <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""} {p.start_hour} {p.end_hour ? ` - ${p.end_hour}` : ""}</div>
@@ -210,12 +234,34 @@ export default function TripItinerary() {
             </button>
           </div>
         </section>
-
         <section className="trip-it-right">
+        {!selectedPlace ? (
+
           <div className="map-wrapper">
             <MapSvg width={999} height={800} />
           </div>
-        </section>
+
+            ) : (
+
+              <div className="place-detail">
+                <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{selectedPlace.location?.titulo ?? `Lugar #${selectedPlace.fk_location}`}</h3>
+                <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {selectedPlace.date ? new Date(selectedPlace.date).toLocaleDateString() : "-"}</p>
+                <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {selectedPlace.start_hour} {selectedPlace.end_hour ? ` - ${selectedPlace.end_hour}` : ""}</p>
+                {selectedPlace.notes && <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:</strong> {selectedPlace.notes}</p>}
+                {/* Agregá más info si querés */}
+
+                {/* Imágenes */}
+                {selectedPlace.images && selectedPlace.images.length > 0 && (
+                    <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
+                    <div className="place-images">
+                      {selectedPlace.images.map((imgUrl, i) => (
+                          <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
+                      ))}
+                    </div></div>
+                    )}
+              </div>
+
+        )}</section>
       </main>
     </div>
   );

@@ -16,6 +16,7 @@ const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [hydrated, setHydrated] = useState(false)
   const isAuthenticated = !!token;
 
   // hydrate from storage (compat: check legacy token/user too)
@@ -42,14 +43,16 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.warn("Auth hydrate error", err);
+    }finally {
+      setHydrated(true);
     }
   }, []);
 
   // persist
   useEffect(() => {
+    if (!hydrated) return; // NO persistir hasta que se haya hidratado
     if (token) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }));
-      // keep legacy keys (so other parts remain compatible)
       localStorage.setItem("token", token);
       if (user) localStorage.setItem("user", JSON.stringify(user));
     } else {
@@ -57,7 +60,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     }
-  }, [token, user]);
+  }, [token, user, hydrated]);
 
   /**
    * LOGIN
@@ -119,7 +122,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     setToken(res.token);
-    setUser(res.user || null);
+    setUser(res.user ? { ...res.user } : null);
     return res;
   };
 
@@ -144,7 +147,7 @@ export const AuthProvider = ({ children }) => {
 
     if (res?.token) {
       setToken(res.token);
-      setUser(res.user || null);
+      setUser(res.user ? { ...res.user } : null);
     }
 
     return res;
@@ -153,10 +156,13 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, logout }}>
+      <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, logout, setUser, setToken, hydrated }}>
       {children}
     </AuthContext.Provider>
   );

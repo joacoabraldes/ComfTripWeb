@@ -57,8 +57,8 @@ export default function TripItinerary() {
         // ----> AGREGAR FOTOS DE PRUEBA A UN SOLO LUGAR
         if (tripRes.places && tripRes.places.length > 0) {
           // Elegimos el primer lugar para mostrar fotos de prueba
-          tripRes.places[1].description="hola"
-          tripRes.places[1].images = [
+
+          tripRes.places[0].images = [
             "https://i.pinimg.com/originals/d8/5d/9a/d85d9a3c01e81a917af38532b6b7523c.jpg",
             "https://s3-sa-east-1.amazonaws.com/modernabuenosaires/img/obras/galeria/7_1406143152.jpg",
             "https://s3-sa-east-1.amazonaws.com/modernabuenosaires/img/obras/galeria/7_1406143152.jpg",

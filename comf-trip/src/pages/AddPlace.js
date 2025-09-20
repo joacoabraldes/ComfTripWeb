@@ -369,8 +369,8 @@ export default function AddPlace() {
                         <div className="place-detail">
                             <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{locationInfo.titulo}</h3>
                             <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({locationInfo.fk_interest})</p>
-                            {locationInfo.description && <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion:</strong>
-                                {locationInfo.description}</p>}
+                            <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion:</strong>
+                                {locationInfo.description ? `${locationInfo.description}` : '-'}</p>
 
                             {/* Imágenes */}
                             {locationInfo.images && locationInfo.images.length > 0 && (
@@ -381,6 +381,7 @@ export default function AddPlace() {
                                         ))}
                                     </div></div>
                             )}
+                            <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Mapa</strong></div>
                         </div>
                     )}
                 </section>

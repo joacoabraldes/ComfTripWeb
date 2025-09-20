@@ -247,18 +247,19 @@ export default function TripItinerary() {
                 <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{selectedPlace.location?.titulo ?? `Lugar #${selectedPlace.fk_location}`}</h3>
                 <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {selectedPlace.date ? new Date(selectedPlace.date).toLocaleDateString() : "-"}</p>
                 <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {selectedPlace.start_hour} {selectedPlace.end_hour ? ` - ${selectedPlace.end_hour}` : ""}</p>
-                {selectedPlace.notes && <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:</strong> {selectedPlace.notes}</p>}
+                <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:</strong> {selectedPlace.notes ? `${selectedPlace.notes}` : '-'}</p>
                 {/* Agregá más info si querés */}
 
                 {/* Imágenes */}
                 {selectedPlace.images && selectedPlace.images.length > 0 && (
-                    <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
+                    <div style={{marginTop:"10px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
                     <div className="place-images">
                       {selectedPlace.images.map((imgUrl, i) => (
                           <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
                       ))}
                     </div></div>
                     )}
+                <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Mapa</strong></div>
               </div>
 
         )}</section>

@@ -287,7 +287,7 @@ export default function AddPlace() {
                             }))}
                             value={selectedLocation ? {
                                 value: selectedLocation,
-                                label: `${locations.find(l => l.id == selectedLocation)?.titulo || ""}`
+                                label: `${locations.find(l => l.id === selectedLocation)?.titulo || ""}`
                             } : ""}
                             onChange={(option) => {
                                 setSelectedLocation(option.value);

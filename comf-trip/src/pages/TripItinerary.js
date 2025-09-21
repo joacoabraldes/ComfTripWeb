@@ -85,12 +85,6 @@ export default function TripItinerary() {
     return () => { mounted = false; };
   }, [tripId]);
 
-  // Normaliza una fecha para que comparemos solo día/mes/año (sin horas)
-  const normalizeDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  async function hasPased(date){
-
-  }
-
   const fmtDate = (d) => {
     if (!d) return "-";
     try {

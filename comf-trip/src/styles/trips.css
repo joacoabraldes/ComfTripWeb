@@ -135,6 +135,7 @@
 .trip-menu-wrapper{
   position: relative; /* referencia para el menú */
   display: inline-block;
+
 }
 
 .trip-menu-btn{

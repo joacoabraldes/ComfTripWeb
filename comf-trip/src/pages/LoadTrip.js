@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import loadingGif from '../components/loading.gif';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from "react-router-dom";
 
-const LoadTrip = () => {
+export default function LoadTrip() {
+  const location = useLocation();
   const navigate = useNavigate();
+  const tripId = location.state?.tripId;
+
+  useEffect(() => {
+    if (!tripId) return;
+    const timer = setTimeout(() => {
+      navigate(`/trip_itinerary/${tripId}`);
+    }, 3000); // ⏳ 3 segundos en la pantalla de carga
+
+    return () => clearTimeout(timer);
+  }, [tripId, navigate]);
+
 
   return (
     <div style={styles.container}>
@@ -39,5 +51,3 @@ const styles = {
     height: '100px',
   }
 };
-
-export default LoadTrip;

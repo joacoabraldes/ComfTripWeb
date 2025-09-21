@@ -6,24 +6,26 @@ import "../styles/tripItinerary.css";
 import Header from "../components/Header";
 import TimePicker from "../components/TimePicker"
 import "../styles/addPlace.css";
+import "../styles/auth.css"
+import Select from "react-select";
 
 import { apiGet, apiPost } from "./api"; // tus helpers
 
-const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
-
-function getAuthToken() {
-    return (
-        localStorage.getItem("token") ||
-        (() => {
-            try {
-                const u = JSON.parse(localStorage.getItem("user") || "null");
-                return u?.token || null;
-            } catch (e) {
-                return null;
-            }
-        })()
-    );
-}
+// const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
+//
+// function getAuthToken() {
+//     return (
+//         localStorage.getItem("token") ||
+//         (() => {
+//             try {
+//                 const u = JSON.parse(localStorage.getItem("user") || "null");
+//                 return u?.token || null;
+//             } catch (e) {
+//                 return null;
+//             }
+//         })()
+//     );
+// }
 
 export default function AddPlace() {
     // NOTE: read the param name that you defined in App.jsx (/:tripId)
@@ -276,25 +278,29 @@ export default function AddPlace() {
                     <h3 style={{ marginTop: 18 }}>Agregar punto al itinerario</h3>
                     <form onSubmit={handleAddPlace} className="trip-it-form" style={{overflowY: "auto"}}>
                         <label>Ubicación</label>
-                        <select
-                            onChange={(e) => {
-                                const id = String(e.target.value);
-                                setSelectedLocation(id); // para enviar al backend
-                                const loc = locations.find(l => l.id === id);
-                                setLocationInfo(loc || null); // para mostrar info a la derecha
-                            }}>
-                            <option value="">— seleccionar —</option>
-                            {locations.map((l) => (
-                                <option key={l.id} value={l.id}>
-                                    {l.titulo} ({l.fk_interest})
-                                </option>
-                            ))}
-                        </select>
+                        <Select
+                            className="country-select"
+                            classNamePrefix="react-select"
+                            options={locations.map(l => ({
+                                value: l.id,
+                                label: `${l.titulo} (${l.fk_interest})`
+                            }))}
+                            value={selectedLocation ? {
+                                value: selectedLocation,
+                                label: `${locations.find(l => l.id == selectedLocation)?.titulo || ""}`
+                            } : ""}
+                            onChange={(option) => {
+                                setSelectedLocation(option.value);
+                                const loc = locations.find(l => l.id === option.value);
+                                setLocationInfo(loc || "");
+                            }}
+                            placeholder="Buscar ubicación..."
+                        />
 
                         <label>Fecha</label>
 
                         <div style={ {borderRadius: "12px", padding:"20px", border: "1px solid #e6e6e6"}}>
-                        <div className="calendar-header">
+                        <div className="calendar-header" style={{paddingBottom:"15px"}}>
                             <span className="month-year">{monthNames[currentMonth]} {currentYear}</span>
                             <div className="arrows">
                                 <button type="button" className="arrow" onClick={handlePrevMonth}>‹</button>

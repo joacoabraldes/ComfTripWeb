@@ -210,13 +210,29 @@
 }
 
 .country-select .react-select__control--is-focused {
-  border-color: #ff3951;     /* borde rojo cuando está enfocado */
+  border: #ff3951;     /* borde rojo cuando está enfocado */
   box-shadow: 0 0 0 1px #ff3951;
 }
 
 /* Texto del placeholder */
 .country-select .react-select__placeholder {
   color: #964f4f;
+}
+.country-select .react-select__input-container {
+  width: 100%;  /* fuerza que el input ocupe todo */
+  height: 100%;
+  display: flex;
+}
+/* Input interno (cuando escribís) */
+.country-select .react-select__input-container input {
+
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  height: 100%;
+  font-size: 16px;
+  padding: 0;   /* saca el padding para que no parezca un campo nuevo */
 }
 
 /* Texto seleccionado */

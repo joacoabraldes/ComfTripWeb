@@ -16,6 +16,8 @@ export default function AddTrip() {
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [notes, setNotes] = useState("");
+  const [budget, setBudget]=useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
 
@@ -175,7 +177,7 @@ export default function AddTrip() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    let createdTripId=null;
     try {
       const stored = JSON.parse(localStorage.getItem("user") || "null");
       if (!stored || !stored.id) {
@@ -194,16 +196,19 @@ export default function AddTrip() {
           destination: `${dest.province.label}, ${dest.country.label}`,
           start_date: dest.startDate,
           end_date: dest.endDate,
-          budget: null,
-          notes: "",
+          budget: budget,
+          notes: notes,
           created_at: today,
         };
 
-        await apiPost("/trips", payload);
+        const t= await apiPost("/trips", payload);
+        createdTripId=t.trip.id;
       }
 
-      alert("Viaje creado correctamente 🎉");
-      nav("/load-trip", { state: { tripData: destinations } });
+      if (createdTripId) {
+        alert("Viaje creado correctamente 🎉");
+        nav("/load-trip", { state: { tripId: createdTripId } });
+      }
     } catch (err) {
       console.error("Error creando viaje:", err);
       alert(err.message || "Ocurrió un error al crear el viaje.");
@@ -236,7 +241,6 @@ export default function AddTrip() {
                   value={currentDestination.country}
                   onChange={handleChangeCountry}
                   placeholder="Escribe o selecciona un país"
-                  isClearable
               />
 
             </label>
@@ -249,7 +253,6 @@ export default function AddTrip() {
                   value={currentDestination.province}
                   onChange={handleChangeProvince}
                   placeholder="Escribe o selecciona una provincia"
-                  isClearable
                   isDisabled={!currentDestination?.country}
               />
 
@@ -266,7 +269,7 @@ export default function AddTrip() {
               </div>
             </div>
 
-            <div className="calendar">
+            <div className="calendar" >
               <div className="week-days">
                 {weekDays.map((day, index) => (
                   <span key={index} className="week-day">{day}</span>
@@ -305,22 +308,36 @@ export default function AddTrip() {
               </p>
             )}
 
+            <label>Presupuesto (opcional)</label>
+            <input value={budget}
+                      className={"input"}
+                      onChange={(e) => setBudget(e.target.value)} />
+
+            <label>Notas (opcional)</label>
+            <textarea value={notes}
+                      className={"textarea"}
+                      onChange={(e) => setNotes(e.target.value)} rows={3} />
+
             <button
               type="submit"
               className="btn-primary create-trip"
               disabled={loading}
+              style={{marginBottom: "0"}}
             >
               {loading ? 'Creando...' : 'Armar Viaje'}
+
+            </button>
+            <button
+                type="button"
+                className="btn-secondary add-destination"
+                onClick={handleAddDestination}
+                style={{marginBottom: "20px"}}
+            >
+              + Agregar otro destino
             </button>
           </form>
 
-          <button
-            type="button"
-            className="btn-secondary add-destination"
-            onClick={handleAddDestination}
-          >
-            + Agregar otro destino
-          </button>
+
         </div>
 
         {/* RIGHT: Logo */}

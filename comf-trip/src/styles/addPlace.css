@@ -15,22 +15,42 @@
 }
 
 .trip-it-form select,
-.trip-it-form input,
-.trip-it-form textarea {
+.trip-it-form input{
     width: 100%;
     padding: 20px;
     border: 1px solid #e6e6e6;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     background: #fcf7f7;
-    transition: border 0.2s, box-shadow 0.2s;
-    box-sizing: border-box;
+    outline: none;
 }
 
-.trip-it-form select option{
-    font-size: 18px;
-    background-color: white;
+.trip-it-form textarea {
+    min-height: 100px;      /* altura mínima */
+    resize: vertical;       /* deja al usuario agrandar/reducir hacia abajo */
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    background: #fcf7f7;
+    transition: border 0.2s, box-shadow 0.2s;
 }
+
+
+.trip-it-form select option{
+    font-size: 16px;
+    padding: 10px 16px;     /* 🔹 más espacio vertical y horizontal */
+    background-color: #fff; /* fondo blanco por defecto */
+    color: #333;            /* texto gris normal */
+    cursor: pointer;
+
+}
+
+.trip-it-form select option:checked {
+    background-color: #ff3951; /* rojo principal */
+    color: white;
+}
+
 
 .trip-it-form select:focus,
 .trip-it-form input:focus,

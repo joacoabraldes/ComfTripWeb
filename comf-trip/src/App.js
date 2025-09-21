@@ -15,7 +15,7 @@ import MapPage from "./pages/Map";
 import Home from "./pages/Home";
 import TripItinerary from "./pages/TripItinerary";
 import InterestsPage from "./pages/Interests"; // add this import
-import Explorar from "./pages/Explorar";
+import Explore from "./pages/Explore";
 
 // ... inside <Routes>
 
@@ -39,8 +39,8 @@ function App() {
 
           {/* Protected routes - require authentication */}
             <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/explorar" element={<ProtectedRoute><Explorar /></ProtectedRoute>} />
-             <Route path="/add-trip" element={<ProtectedRoute><AddTrip /></ProtectedRoute>} />
+            <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+            <Route path="/add-trip" element={<ProtectedRoute><AddTrip /></ProtectedRoute>} />
             <Route path="/load-trip" element={<ProtectedRoute><LoadTrip /></ProtectedRoute>} />
 
           <Route

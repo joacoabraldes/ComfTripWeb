@@ -11,7 +11,7 @@
   grid-template-columns: 1fr 1fr; /* mitad izquierda y derecha */
   gap: 30px;
   height: calc(100vh - 140px); /* toda la pantalla menos header + espacio botón */
-  padding: 80px 20px 0 20px;
+  padding: 40px 20px 0 20px;
   box-sizing: border-box;
   width: 100%;
   margin: 28px auto;

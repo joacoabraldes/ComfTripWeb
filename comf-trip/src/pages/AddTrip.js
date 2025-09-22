@@ -1,6 +1,5 @@
-// src/pages/AddTrip.js
 import React, { useState, useMemo } from 'react';
-import { apiPost } from "./api";
+import { apiPost, apiGet } from "./api";
 import { useNavigate } from 'react-router-dom';
 import '../styles/AddTrip.css';
 import LogoSvg from '../components/LogoSvg';
@@ -20,13 +19,14 @@ export default function AddTrip() {
   const [budget, setBudget]=useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
+  const [statusMessage, setStatusMessage] = useState(null);
 
   // Primero obtenemos el destino actual
   const currentDestination = destinations[currentDestinationIndex];
 
   const countries = useMemo(() => countryList().getData(), []);
 
-// Luego lo usamos en provinces
+  // provinces based on country selection
   const provinces = useMemo(() => {
     const country = currentDestination?.country;
     if (!country) return [];
@@ -34,8 +34,6 @@ export default function AddTrip() {
     if (!countryData) return [];
     return countryData[2].map(r => ({ value: r[1], label: r[0] }));
   }, [currentDestination?.country]);
-
-
 
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
@@ -53,15 +51,12 @@ export default function AddTrip() {
 
   const { days, firstDayOfMonth } = generateCalendarDays();
 
-// Normaliza una fecha para que comparemos solo día/mes/año (sin horas)
   const normalizeDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-// --- handleDateSelect: lógica de rango robusta ---
   const handleDateSelect = (day) => {
     const selectedDate = new Date(currentYear, currentMonth, day);
     const normalizedSelected = normalizeDate(selectedDate);
 
-    //  no dejar seleccionar si es antes de hoy
     if (normalizedSelected < normalizeDate(today)) {
       return;
     }
@@ -96,7 +91,6 @@ export default function AddTrip() {
     });
   };
 
-// --- isDateInRange: marca correctamente los días entre start y end ---
   const isDateInRange = (day) => {
     const current = destinations[currentDestinationIndex];
     if (!current || !current.startDate) return false;
@@ -105,7 +99,6 @@ export default function AddTrip() {
     const start = normalizeDate(current.startDate);
 
     if (!current.endDate) {
-      // Si no hay endDate, solo marcar el startDate
       return start.getTime() === currentDate.getTime();
     }
 
@@ -113,7 +106,6 @@ export default function AddTrip() {
     return currentDate.getTime() >= start.getTime() && currentDate.getTime() <= end.getTime();
   };
 
-// --- handlePrevMonth / handleNextMonth: NO borres las fechas al navegar ---
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => {
       if (prev === 0) {
@@ -134,14 +126,12 @@ export default function AddTrip() {
     });
   };
 
-// --- handleAddDestination: asegurar que el índice nuevo sea correcto ---
   const handleAddDestination = () => {
     setDestinations((prev) => {
       const newDest = [
         ...prev,
         { country: null, province: null, startDate: null, endDate: null }
       ];
-      // ponemos el índice en la nueva última posición
       setCurrentDestinationIndex(newDest.length - 1);
       return newDest;
     });
@@ -149,14 +139,13 @@ export default function AddTrip() {
     setCurrentYear(today.getFullYear());
   };
 
-
   const handleChangeCountry = (val) => {
     setDestinations((prev) => {
       const newDestinations = [...prev];
       newDestinations[currentDestinationIndex] = {
         ...newDestinations[currentDestinationIndex],
         country: val,
-        province: null, // resetear región cuando cambia el país
+        province: null,
       };
       return newDestinations;
     });
@@ -173,11 +162,19 @@ export default function AddTrip() {
     });
   };
 
+  function formatDateYMD(d) {
+    if (!d) return null;
+    const yy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    let createdTripId=null;
+    setStatusMessage(null);
+
     try {
       const stored = JSON.parse(localStorage.getItem("user") || "null");
       if (!stored || !stored.id) {
@@ -186,27 +183,37 @@ export default function AddTrip() {
         return;
       }
 
+      let createdTripId = null;
+
       for (const dest of destinations) {
         if (!dest.country || !dest.province || !dest.startDate || !dest.endDate) {
           throw new Error("Por favor completa todos los destinos y fechas.");
         }
 
-        // 👇 armar el payload que espera tu backend
         const payload = {
           destination: `${dest.province.label}, ${dest.country.label}`,
-          start_date: dest.startDate,
-          end_date: dest.endDate,
-          budget: budget,
-          notes: notes,
-          created_at: today,
+          start_date: formatDateYMD(dest.startDate),
+          end_date: formatDateYMD(dest.endDate),
+          budget: budget || null,
+          notes: notes || null
         };
 
-        const t= await apiPost("/trips", payload);
-        createdTripId=t.trip.id;
+        setStatusMessage(`Creando viaje a ${payload.destination} ...`);
+        const t = await apiPost("/trips", payload);
+        if (!t || !t.trip || !t.trip.id) {
+          throw new Error("No se pudo crear el viaje");
+        }
+        createdTripId = t.trip.id;
+
+        // Now ask server to build and persist itinerary for this trip
+        setStatusMessage("Generando itinerario automáticamente (esto puede tardar unos segundos) ...");
+        // call itinerary endpoint with save=true so server inserts trip_places
+        await apiGet(`/trips/${createdTripId}/itinerary?save=true`);
+        setStatusMessage("Itinerario generado y guardado!");
       }
 
       if (createdTripId) {
-        alert("Viaje creado correctamente 🎉");
+        // navigate to loading page (you already show a spinner there)
         nav("/load-trip", { state: { tripId: createdTripId } });
       }
     } catch (err) {
@@ -214,6 +221,7 @@ export default function AddTrip() {
       alert(err.message || "Ocurrió un error al crear el viaje.");
     } finally {
       setLoading(false);
+      setStatusMessage(null);
     }
   };
 
@@ -222,7 +230,6 @@ export default function AddTrip() {
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
   ];
   const weekDays = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
-
 
   return (
     <div className="add-trip-root">
@@ -255,9 +262,7 @@ export default function AddTrip() {
                   placeholder="Escribe o selecciona una provincia"
                   isDisabled={!currentDestination?.country}
               />
-
             </label>
-
 
             <h2 className="add-trip-subtitle">Selecciona las fechas que vas a estar</h2>
 
@@ -300,7 +305,7 @@ export default function AddTrip() {
 
             {currentDestination.startDate && currentDestination.endDate && (
               <p className="date-range">
-                Se armará un plan turístico para {currentDestination.destination} del{' '}
+                Se armará un plan turístico para {currentDestination.province?.label || ''}, {currentDestination.country?.label || ''} del{' '}
                 {currentDestination.startDate.getDate()}/{currentDestination.startDate.getMonth() + 1}/
                 {currentDestination.startDate.getFullYear()} al{' '}
                 {currentDestination.endDate.getDate()}/{currentDestination.endDate.getMonth() + 1}/
@@ -318,14 +323,15 @@ export default function AddTrip() {
                       className={"textarea"}
                       onChange={(e) => setNotes(e.target.value)} rows={3} />
 
+            {statusMessage && <div style={{marginBottom:12, color: "#333"}}>{statusMessage}</div>}
+
             <button
               type="submit"
               className="btn-primary create-trip"
               disabled={loading}
               style={{marginBottom: "0"}}
             >
-              {loading ? 'Creando...' : 'Armar Viaje'}
-
+              {loading ? 'Creando y generando itinerario...' : 'Armar Viaje'}
             </button>
             <button
                 type="button"
@@ -336,8 +342,6 @@ export default function AddTrip() {
               + Agregar otro destino
             </button>
           </form>
-
-
         </div>
 
         {/* RIGHT: Logo */}

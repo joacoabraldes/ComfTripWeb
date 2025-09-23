@@ -205,3 +205,51 @@ body {
     padding-right: 12px;
   }
 }
+
+/* ---------- Home enhancements: carousel + trip cards ---------- */
+
+.hero-left { width: 48%; display:flex; flex-direction: column; gap: 12px; }
+.hero-right { width: 48%; display:flex; flex-direction: column; gap: 12px; }
+
+/* actions */
+.home-actions { display:flex; gap:12px; margin-top: 8px; align-items:center; }
+.btn-ghost { background: transparent; border: 1px solid #eee; padding: 10px 14px; border-radius: 8px; cursor: pointer; color: #333; }
+.btn-ghost:hover { border-color: #ddd; }
+
+/* trips preview */
+.trips-preview { display:flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.trip-card { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-radius:8px; background: #fff; border: 1px solid #f1f1f1; cursor: pointer; text-align:left; }
+.trip-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.04); transform: translateY(-3px); }
+.trip-card-left { display:flex; flex-direction: column; }
+.trip-destination { font-weight:700; }
+.trip-dates { font-size: 12px; color: #777; margin-top:6px; }
+.see-all { margin-top: 8px; background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 600; }
+
+/* carousel */
+.carousel { position: relative; overflow: hidden; border-radius: 10px; background: #fff; padding: 12px; border: 1px solid #f1f1f1; box-shadow: 0 6px 18px rgba(0,0,0,0.03); min-height: 320px; display:flex; flex-direction: column; }
+.carousel-inner { display:flex; transition: transform 400ms ease; width: 100%; }
+.carousel-item { min-width: 100%; box-sizing: border-box; padding: 6px 0; display:flex; gap: 12px; align-items: center; cursor: pointer; }
+.carousel-image { width: 48%; height: 220px; background-size: cover; background-position:center; border-radius: 8px; background-color: #fafafa; display:flex; align-items:center; justify-content:center; }
+.no-img { color:#aaa; font-size:14px; }
+.carousel-body { width: 52%; display:flex; flex-direction:column; gap:6px; padding-right: 6px; }
+.carousel-title { font-weight:700; font-size:18px; }
+.carousel-sub { color:#666; font-size:13px; }
+
+.carousel-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: 1px solid #eee; width: 42px; height: 42px; border-radius: 50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:22px; }
+.carousel-nav.left { left: 8px; }
+.carousel-nav.right { right: 8px; }
+.carousel-nav:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+
+.carousel-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display:flex; gap: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #eee; border: none; cursor: pointer; }
+.dot.active { background: var(--primary); }
+
+/* responsive tweaks */
+@media (max-width: 1100px) {
+  .hero { flex-direction: column; padding: 20px; }
+  .hero-left, .hero-right { width: 100%; }
+  .carousel-image { height: 160px; }
+}
+
+/* small polish */
+.muted { color:#888; font-size: 15px; }

@@ -1,0 +1,318 @@
+// src/pages/EditTrip.js
+import React, { useState, useEffect } from "react";
+import { apiPut, apiGet } from "./api";
+import { useNavigate, useParams } from "react-router-dom";
+import "../styles/AddTrip.css";
+import LogoSvg from "../components/LogoSvg";
+
+export default function EditTrip() {
+    const { tripId } = useParams(); // 👈 recibimos el ID por la URL
+    const [destinations, setDestinations] = useState([
+        { destination:"", startDate: null, endDate: null }
+    ]);
+    const [stored, setStored]=useState(null)
+    const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
+    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const [notes, setNotes] = useState("");
+    const [budget, setBudget] = useState("");
+    const [loading, setLoading] = useState(false);
+    const nav = useNavigate();
+
+    const currentDestination = destinations[currentDestinationIndex];
+
+
+    // cargar datos del trip al montar
+    useEffect(() => {
+        let mounted=true;
+        const fetchTrip = async () => {
+            try {
+                const trip = await apiGet(`/trips/${tripId}`);
+                if (!mounted) return;
+                if(trip){
+                    const start = trip.start_date ? new Date(trip.start_date) : new Date();
+                    setCurrentMonth(start.getMonth());
+                    setCurrentYear(start.getFullYear());
+                }
+
+                // trip que viene del backend
+                setStored(trip);
+                setDestinations([
+                    {
+                        destination: trip.destination,
+                        startDate: new Date(trip.start_date),
+                        endDate: new Date(trip.end_date)
+                    }
+                ]);
+
+                setBudget(trip.budget || "");
+                setNotes(trip.notes || "");
+            } catch (err) {
+                console.error("Error cargando trip:", err);
+                alert("No se pudo cargar el viaje.");
+                nav("/");
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+        fetchTrip();return () => { mounted = false; };
+    }, [tripId, nav]);
+
+    const getDaysInMonth = (year, month) =>
+        new Date(year, month + 1, 0).getDate();
+
+    const generateCalendarDays = () => {
+        const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        const days = [];
+        for (let i = 1; i <= daysInMonth; i++) {
+            days.push({ date: i, selected: false });
+        }
+        return { days, firstDayOfMonth };
+    };
+
+    const { days, firstDayOfMonth } = generateCalendarDays();
+
+    const normalizeDate = (d) =>
+        new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    // seleccionar solo endDate
+    const handleDateSelect = (day) => {
+        const selectedDate = new Date(currentYear, currentMonth, day);
+        const normalizedSelected = normalizeDate(selectedDate);
+
+        setDestinations((prev) => {
+            const newDestinations = [...prev];
+            const current = { ...(newDestinations[currentDestinationIndex] || {}) };
+
+            const { endDate } = current;
+
+
+
+                if (normalizedSelected.getTime()<endDate.getTime()) {
+                    return newDestinations;
+                }
+            current.endDate = normalizedSelected;
+
+            newDestinations[currentDestinationIndex] = current;
+            return newDestinations;
+        });
+    };
+
+    const isDateInRange = (day) => {
+        const current = destinations[currentDestinationIndex];
+        if (!current || !current.startDate) return false;
+
+        const currentDate = normalizeDate(new Date(currentYear, currentMonth, day));
+        const start = normalizeDate(current.startDate);
+
+        if (!current.endDate) {
+            return start.getTime() === currentDate.getTime();
+        }
+
+        const end = normalizeDate(current.endDate);
+        return (
+            currentDate.getTime() >= start.getTime() &&
+            currentDate.getTime() <= end.getTime()
+        );
+    };
+
+    const handlePrevMonth = () => {
+        setCurrentMonth((prev) => {
+            if (prev === 0) {
+                setCurrentYear(currentYear - 1);
+                return 11;
+            }
+            return prev - 1;
+        });
+    };
+
+    const handleNextMonth = () => {
+        setCurrentMonth((prev) => {
+            if (prev === 11) {
+                setCurrentYear(currentYear + 1);
+                return 0;
+            }
+            return prev + 1;
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            const dest = destinations[0];
+            if (!dest.startDate || !dest.endDate) {
+                throw new Error("Por favor selecciona la fecha de fin del viaje.");
+            }
+
+            const payload = {
+                id: stored.id,
+                user_id: stored.user_id,
+                destination: stored.destination,
+                start_date: stored.start_date,
+                end_date: dest.endDate,
+                budget: budget,
+                notes: notes,
+                created_at: stored.created_at
+            };
+
+            await apiPut(`/trips/${tripId}`, payload);
+            alert("Viaje actualizado ✅");
+            nav("/load-trip", { state: { tripId } });
+        } catch (err) {
+            console.error("Error editando viaje:", err);
+            alert(err.message || "Ocurrió un error al editar el viaje.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo",
+        "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+    const weekDays = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
+
+    return (
+        <div className="add-trip-root" >
+            <div className="add-trip-container" >
+                {/* LEFT: Form */}
+                <div className="add-trip-left">
+                    <form className="form" onSubmit={handleSubmit} style={{gap:"10px"}}>
+                        <h2 className="add-trip-title" style={{marginBottom:"0"}}>
+                            {currentDestination.destination}
+                        </h2>
+
+                        <h2 className="add-trip-subtitle">
+                            Selecciona la fecha de fin del viaje
+                        </h2>
+
+                        <div className="calendar-header">
+              <span className="month-year">
+                {monthNames[currentMonth]} {currentYear}
+              </span>
+                            <div className="arrows">
+                                <button
+                                    type="button"
+                                    className="arrow"
+                                    onClick={handlePrevMonth}
+                                >
+                                    ‹
+                                </button>
+                                <button
+                                    type="button"
+                                    className="arrow"
+                                    onClick={handleNextMonth}
+                                >
+                                    ›
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="calendar">
+                            <div className="week-days">
+                                {weekDays.map((day, index) => (
+                                    <span key={index} className="week-day">
+                    {day}
+                  </span>
+                                ))}
+                            </div>
+                            <div className="days-grid">
+                                {Array(firstDayOfMonth)
+                                    .fill(null)
+                                    .map((_, index) => (
+                                        <div key={`empty-${index}`} className="empty-day" />
+                                    ))}
+                                {days.map((day) => {
+                                    const currentDate = new Date(Date.UTC(currentYear, currentMonth, day.date));
+                                    const normalized = new Date(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate());
+                                    const isPast = normalized < normalizeDate(new Date(currentDestination.startDate));
+
+                                    const start =
+                                        currentDestination?.startDate &&
+                                        normalizeDate(currentDestination.startDate).getTime() ===
+                                        normalized.getTime();
+                                    const end =
+                                        currentDestination?.endDate &&
+                                        normalizeDate(currentDestination.endDate).getTime() ===
+                                        normalized.getTime();
+
+                                    const inRange = isDateInRange(day.date);
+
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={day.date}
+                                            className={`day ${inRange ? "selected-day" : ""}`}
+                                            onClick={() =>
+                                                !isPast && handleDateSelect(day.date)
+                                            }
+                                            disabled={isPast}
+                                            style={{
+                                                borderTopLeftRadius: start ? "90px" : "0",
+                                                borderBottomLeftRadius: start ? "90px" : "0",
+                                                borderTopRightRadius: end ? "90px" : "0",
+                                                borderBottomRightRadius: end ? "90px" : "0"
+                                            }}
+                                        >
+                                            {day.date}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {currentDestination?.startDate && currentDestination?.endDate && (
+                            <p className="date-range">
+                                Tu viaje a {currentDestination.province?.label},{" "}
+                                {currentDestination.country?.label} será del{" "}
+                                {currentDestination.startDate.getDate()}/
+                                {currentDestination.startDate.getMonth() + 1}/
+                                {currentDestination.startDate.getFullYear()} al{" "}
+                                {currentDestination.endDate.getDate()}/
+                                {currentDestination.endDate.getMonth() + 1}/
+                                {currentDestination.endDate.getFullYear()}
+                            </p>
+                        )}
+
+                        <label>Presupuesto (opcional)</label>
+                        <input
+                            value={budget}
+                            className={"input"}
+                            style={{maxHeight:"50px"}}
+                            onChange={(e) => setBudget(e.target.value)}
+                        />
+
+                        <label>Notas (opcional)</label>
+                        <textarea
+                            value={notes}
+                            className={"textarea"}
+                            onChange={(e) => setNotes(e.target.value)}
+                            rows={3}
+                        />
+
+                        <button
+                            type="submit"
+                            className="btn-primary create-trip"
+                            style={{marginBottom:"0"}}
+                            disabled={loading}
+                        >
+                            {loading ? "Guardando..." : "Guardar Cambios"}
+                        </button>
+                    </form>
+                </div>
+
+                {/* RIGHT: Logo */}
+                <div className="add-trip-right">
+                    <div>
+                        <div className="hero-art" aria-hidden>
+                            <LogoSvg />
+                        </div>
+                        <div className="brand">ComfTrip</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

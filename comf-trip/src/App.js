@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import Trips from "./pages/Trips";
 import AddTrip from "./pages/AddTrip";
+import EditTrip from "./pages/EditTrip";
 import LoadTrip from "./pages/LoadTrip";
 import ErrorPage from "./pages/Error";
 import Profile from "./pages/Profile";
@@ -24,6 +25,7 @@ import Explore from "./pages/Explore";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AddPlace from "./pages/AddPlace";
+import EditPlace from "./pages/EditPlace";
 
 function App() {
   return (
@@ -42,8 +44,8 @@ function App() {
             <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
             <Route path="/add-trip" element={<ProtectedRoute><AddTrip /></ProtectedRoute>} />
             <Route path="/load-trip" element={<ProtectedRoute><LoadTrip /></ProtectedRoute>} />
-
-          <Route
+            <Route path="/edit-trip/:tripId" element={<ProtectedRoute><EditTrip /></ProtectedRoute>} />
+            <Route
             path="/trips"
             element={
               <ProtectedRoute>
@@ -51,6 +53,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+            <Route
+                path="/edit-place/:tripId"
+                element={
+                    <ProtectedRoute>
+                        <EditPlace />
+                    </ProtectedRoute>
+                }
+            />
 
           <Route
             path="/map"

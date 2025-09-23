@@ -123,16 +123,16 @@ export default function Trips() {
                               {fmtDate(t.start_date || t.startDate)} —{" "}
                               {fmtDate(t.end_date || t.endDate)}
                             </div>
-                            {selectedTrip?.budget != null && (
-                                <p className="trip-detail-row">
-                                  <strong>Presupuesto:</strong> ${selectedTrip.budget}
-                                </p>
-                            )}
-                            {selectedTrip?.notes && (
-                                <p className="trip-detail-row">
-                                  <strong>Notas:</strong> {selectedTrip.notes}
-                                </p>
-                            )}
+                            {/*{t?.budget != null && (*/}
+                            {/*    <p className="trip-detail-row">*/}
+                            {/*      <strong>Presupuesto:</strong> ${t.budget}*/}
+                            {/*    </p>*/}
+                            {/*)}*/}
+                            {/*{t?.notes && (*/}
+                            {/*    <p className="trip-detail-row">*/}
+                            {/*      <strong>Notas:</strong> {t.notes}*/}
+                            {/*    </p>*/}
+                            {/*)}*/}
                             <div className="trip-created">
                               Creado: {fmtDate(t.created_at)}
                             </div>
@@ -152,9 +152,8 @@ export default function Trips() {
                             {menuOpen === t.id && (
                                 <div className="trip-menu">
                                   <button className="trip-menu-btn"
-                                      onClick={() => {
-                                        navigate(`/trips/${t.id}/editTrip`);
-                                        setMenuOpen(null);
+                                          onClick={() => {{navigate(`/edit-trip/${t.id}`)}
+                                        setMenuOpen(null)
                                       }}
                                   ><svg width="20" height="20" viewBox="0 0 41 37" fill="none" xmlns="http://www.w3.org/2000/svg">
                                       <path d="M18.7915 6.16667H6.83317C5.92701 6.16667 5.05797 6.49152 4.41722 7.06975C3.77647 7.64799 3.4165 8.43225 3.4165 9.25V30.8333C3.4165 31.6511 3.77647 32.4353 4.41722 33.0136C5.05797 33.5918 5.92701 33.9167 6.83317 33.9167H30.7498C31.656 33.9167 32.525 33.5918 33.1658 33.0136C33.8065 32.4353 34.1665 31.6511 34.1665 30.8333V20.0417M31.604 3.85417C32.2836 3.24085 33.2054 2.8963 34.1665 2.8963C35.1276 2.8963 36.0494 3.24085 36.729 3.85417C37.4086 4.46748 37.7904 5.29931 37.7904 6.16667C37.7904 7.03402 37.4086 7.86585 36.729 8.47917L20.4998 23.125L13.6665 24.6667L15.3748 18.5L31.604 3.85417Z" stroke="#1E1E1E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>

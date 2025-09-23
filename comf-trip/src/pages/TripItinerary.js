@@ -210,7 +210,8 @@ export default function TripItinerary() {
                         <div className="trip-menu">
                           <button className="trip-menu-btn"
                                   onClick={() => {
-                                    navigate(`/trips/editProgram/${p.id}`);
+                                    navigate(`/edit-place/${tripId}?placeIndex=${trip.places.indexOf(p)}`);
+
                                     setMenuOpen(null);
                                   }}
                           ><svg width="20" height="20" viewBox="0 0 41 37" fill="none" xmlns="http://www.w3.org/2000/svg">

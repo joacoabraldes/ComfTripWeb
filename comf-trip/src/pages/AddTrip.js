@@ -1,333 +1,359 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import Map, { Marker, NavigationControl, Popup } from "react-map-gl/mapbox";
-import "../styles/tripItinerary.css";
-import Header from "../components/Header";
-import "../styles/header.css";
-import { apiDelete, apiGet } from "./api";
+import React, { useState, useMemo } from 'react';
+import { apiPost, apiGet } from "./api";
+import { useNavigate } from 'react-router-dom';
+import '../styles/AddTrip.css';
+import LogoSvg from '../components/LogoSvg';
+import Select from 'react-select';
+import countryList from "react-select-country-list";
+import { allCountries  } from "country-region-data";
 
-const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
-
-export default function TripItinerary() {
-  const params = useParams();
-  const navigate = useNavigate();
-  const tripIdRaw = params.tripId ?? params.id ?? params?.tripId;
-  const tripId = Number(tripIdRaw);
-  const [menuOpen, setMenuOpen] = useState(null);
-  const [selectedPlace, setSelectedPlace] = useState(null);
+export default function AddTrip() {
+  const [destinations, setDestinations] = useState([
+    { country: null, province: null, startDate: null, endDate: null }
+  ]);
+  const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
   const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [notes, setNotes] = useState("");
+  const [budget, setBudget]=useState("");
+  const [loading, setLoading] = useState(false);
+  const nav = useNavigate();
+  const [statusMessage, setStatusMessage] = useState(null);
 
-  const [loading, setLoading] = useState(true);
-  const [trip, setTrip] = useState(null);
-  const [error, setError] = useState(null);
+  // Primero obtenemos el destino actual
+  const currentDestination = destinations[currentDestinationIndex];
 
-  // map viewport (centered on first place or default)
-  const [viewState, setViewState] = useState({
-    latitude: -34.6037,
-    longitude: -58.3816,
-    zoom: 11
-  });
-  const [selectedLocationOnMap, setSelectedLocationOnMap] = useState(null);
+  const countries = useMemo(() => countryList().getData(), []);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (!Number.isFinite(tripId) || tripId <= 0) {
-        setError("ID de viaje inválido en la URL.");
-        setLoading(false);
+  // provinces based on country selection
+  const provinces = useMemo(() => {
+    const country = currentDestination?.country;
+    if (!country) return [];
+    const countryData = allCountries.find(c => c[0] === country.label);
+    if (!countryData) return [];
+    return countryData[2].map(r => ({ value: r[1], label: r[0] }));
+  }, [currentDestination?.country]);
+
+  const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const generateCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+    const days = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push({ date: i, selected: false });
+    }
+    return { days, firstDayOfMonth };
+  };
+
+  const { days, firstDayOfMonth } = generateCalendarDays();
+
+  const normalizeDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const handleDateSelect = (day) => {
+    const selectedDate = new Date(currentYear, currentMonth, day);
+    const normalizedSelected = normalizeDate(selectedDate);
+
+    if (normalizedSelected < normalizeDate(today)) {
+      return;
+    }
+
+    setDestinations((prev) => {
+      const newDestinations = [...prev];
+      const current = { ...(newDestinations[currentDestinationIndex] || {}) };
+
+      const { startDate, endDate } = current;
+
+      if (!startDate) {
+        // primer click -> startDate
+        current.startDate = normalizedSelected;
+        current.endDate = null;
+      } else if (startDate && !endDate) {
+        // segundo click -> endDate (si es anterior, los invertimos)
+        const startNorm = normalizeDate(startDate);
+        if (normalizedSelected.getTime() < startNorm.getTime()) {
+          current.endDate = startNorm;
+          current.startDate = normalizedSelected;
+        } else {
+          current.endDate = normalizedSelected;
+        }
+      } else {
+        // ya había un rango: tercer click -> reiniciamos rango empezando por el click
+        current.startDate = normalizedSelected;
+        current.endDate = null;
+      }
+
+      newDestinations[currentDestinationIndex] = current;
+      return newDestinations;
+    });
+  };
+
+  const isDateInRange = (day) => {
+    const current = destinations[currentDestinationIndex];
+    if (!current || !current.startDate) return false;
+
+    const currentDate = normalizeDate(new Date(currentYear, currentMonth, day));
+    const start = normalizeDate(current.startDate);
+
+    if (!current.endDate) {
+      return start.getTime() === currentDate.getTime();
+    }
+
+    const end = normalizeDate(current.endDate);
+    return currentDate.getTime() >= start.getTime() && currentDate.getTime() <= end.getTime();
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentMonth((prev) => {
+      if (prev === 0) {
+        setCurrentYear(currentYear - 1);
+        return 11;
+      }
+      return prev - 1;
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth((prev) => {
+      if (prev === 11) {
+        setCurrentYear(currentYear+ 1);
+        return 0;
+      }
+      return prev + 1;
+    });
+  };
+
+  const handleAddDestination = () => {
+    setDestinations((prev) => {
+      const newDest = [
+        ...prev,
+        { country: null, province: null, startDate: null, endDate: null }
+      ];
+      setCurrentDestinationIndex(newDest.length - 1);
+      return newDest;
+    });
+    setCurrentMonth(today.getMonth());
+    setCurrentYear(today.getFullYear());
+  };
+
+  const handleChangeCountry = (val) => {
+    setDestinations((prev) => {
+      const newDestinations = [...prev];
+      newDestinations[currentDestinationIndex] = {
+        ...newDestinations[currentDestinationIndex],
+        country: val,
+        province: null,
+      };
+      return newDestinations;
+    });
+  };
+
+  const handleChangeProvince = (val) => {
+    setDestinations((prev) => {
+      const newDestinations = [...prev];
+      newDestinations[currentDestinationIndex] = {
+        ...newDestinations[currentDestinationIndex],
+        province: val,
+      };
+      return newDestinations;
+    });
+  };
+
+  function formatDateYMD(d) {
+    if (!d) return null;
+    const yy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatusMessage(null);
+
+    try {
+      const stored = JSON.parse(localStorage.getItem("user") || "null");
+      if (!stored || !stored.id) {
+        alert("Usuario no identificado. Inicia sesión nuevamente.");
+        nav("/login");
         return;
       }
 
-      setLoading(true);
-      setError(null);
-      try {
-        const tripRes = await apiGet(`/trips/${tripId}`);
+      let createdTripId = null;
 
-        if (!mounted) return;
-
-        // Add test images for first place if none (non-blocking)
-        if (tripRes.places && tripRes.places.length > 0) {
-          if (!tripRes.places[0].images || !tripRes.places[0].images.length) {
-            tripRes.places[0].images = [
-              "https://i.pinimg.com/originals/d8/5d/9a/d85d9a3c01e81a917af38532b6b7523c.jpg",
-            ];
-          }
+      for (const dest of destinations) {
+        if (!dest.country || !dest.province || !dest.startDate || !dest.endDate) {
+          throw new Error("Por favor completa todos los destinos y fechas.");
         }
 
-        setTrip(tripRes);
+        const payload = {
+          destination: `${dest.province.label}, ${dest.country.label}`,
+          start_date: formatDateYMD(dest.startDate),
+          end_date: formatDateYMD(dest.endDate),
+          budget: budget || null,
+          notes: notes || null
+        };
 
-        // set map center to first place that has coordinates
-        const firstWithCoords = (tripRes.places || []).find((p) => p.location && p.location.latitude && p.location.longitude);
-        if (firstWithCoords) {
-          setViewState({
-            latitude: Number(firstWithCoords.location.latitude),
-            longitude: Number(firstWithCoords.location.longitude),
-            zoom: 12
-          });
+        setStatusMessage(`Creando viaje a ${payload.destination} ...`);
+        const t = await apiPost("/trips", payload);
+        if (!t || !t.trip || !t.trip.id) {
+          throw new Error("No se pudo crear el viaje");
         }
-      } catch (err) {
-        console.error("TripItinerary load error:", err);
-        if (err?.status === 401) setError("No autenticado. Por favor inicie sesión.");
-        else if (err?.status === 403) setError("No autorizado para ver ese viaje.");
-        else if (err?.status === 404) setError("Viaje no encontrado (compruebe ownership o id).");
-        else setError("No se pudo cargar el viaje o las localidades.");
-      } finally {
-        if (mounted) setLoading(false);
+        createdTripId = t.trip.id;
+
+        // Now ask server to build and persist itinerary for this trip
+        setStatusMessage("Generando itinerario automáticamente (esto puede tardar unos segundos) ...");
+        // call itinerary endpoint with save=true so server inserts trip_places
+        await apiGet(`/trips/${createdTripId}/itinerary?save=true`);
+        setStatusMessage("Itinerario generado y guardado!");
       }
-    })();
-    return () => { mounted = false; };
-  }, [tripId]);
 
-  const fmtDate = (d) => {
-    if (!d) return "-";
-    try {
-      const date = new Date(d);
-      return date.toLocaleDateString();
-    } catch (e) {
-      return d;
+      if (createdTripId) {
+        // navigate to loading page (you already show a spinner there)
+        nav("/load-trip", { state: { tripId: createdTripId } });
+      }
+    } catch (err) {
+      console.error("Error creando viaje:", err);
+      alert(err.message || "Ocurrió un error al crear el viaje.");
+    } finally {
+      setLoading(false);
+      setStatusMessage(null);
     }
   };
 
-  async function handleDeletePlace(placeId) {
-    if (!window.confirm("¿Eliminar este punto del itinerario?")) return;
-
-    try {
-      await apiDelete(`/trips/${tripId}/places/${placeId}`);
-      setTrip((t) => ({
-        ...t,
-        places: (t?.places || []).filter((p) => p.id !== placeId),
-      }));
-      setMenuOpen(null);
-    } catch (err) {
-      console.error("Delete place error:", err);
-      setError("No se pudo eliminar el lugar.");
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="trip-it-root">
-        <Header/>
-        <main className="trip-it-main" style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "80vh"
-        }}>
-          <div style={{fontSize:25}}> Cargando itinerario… </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="trip-it-root">
-        <Header/>
-        <main className="trip-it-main">
-          <div style={{ padding: 24 }}>
-            <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
-            <div style={{ marginTop: 18, color: "#b00020" }}>{error}</div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!trip) {
-    return (
-      <div className="trip-it-root">
-        <Header/>
-      </div>
-    );
-  }
-
-  // marker list derived from trip.places
-  const markers = (trip.places || [])
-    .map((p) => {
-      const loc = p.location || {};
-      const lat = loc.latitude !== undefined ? Number(loc.latitude) : (loc.latitud !== undefined ? Number(loc.latitud) : null);
-      const lng = loc.longitude !== undefined ? Number(loc.longitude) : (loc.longitud !== undefined ? Number(loc.longitud) : null);
-      return {
-        place: p,
-        latitude: lat,
-        longitude: lng,
-        title: loc.titulo
-      };
-    })
-    .filter(m => m.latitude != null && m.longitude != null);
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  ];
+  const weekDays = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
 
   return (
-    <div className="trip-it-root">
-      <Header/>
+    <div className="add-trip-root">
+      <div className="add-trip-container">
+        {/* LEFT: Form */}
+        <div className="add-trip-left">
+          <form className="form" onSubmit={handleSubmit}>
+            <label className="field">
+              <h2 className="add-trip-subtitle">Selecciona a donde vas a viajar</h2>
 
-      <main className="trip-it-main"  style={{padding: "70px 20px 0 20px"}}>
+              {/* Selector de País */}
+              <Select
+                  className="country-select"
+                  classNamePrefix="react-select"
+                  options={countries}
+                  value={currentDestination.country}
+                  onChange={handleChangeCountry}
+                  placeholder="Escribe o selecciona un país"
+              />
 
-        <section className="trip-it-left">
+            </label>
+            <label className="field">
+              {/* Selector de Región */}
+              <Select
+                  className="country-select"
+                  classNamePrefix="react-select"
+                  options={provinces}
+                  value={currentDestination.province}
+                  onChange={handleChangeProvince}
+                  placeholder="Escribe o selecciona una provincia"
+                  isDisabled={!currentDestination?.country}
+              />
+            </label>
 
-          <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
-          <h2 className="trip-it-title">{trip.destination}</h2>
-          <div className="trip-it-dates">
-            {trip.start_date ? new Date(trip.start_date).toLocaleDateString() : "-"} — {trip.end_date ? new Date(trip.end_date).toLocaleDateString() : "-"}
-          </div>
-            {trip?.budget != null && (
-                  <p className="trip-detail-row">
-                    <strong>Presupuesto:</strong> ${trip.budget}
-                  </p>
-              )}
-            {trip?.notes && (
-                  <p className="trip-detail-row">
-                    <strong>Notas:</strong> {trip.notes}
-                  </p>
-              )}
-              <div className="trip-it-created">
-                Creado: {fmtDate(trip.created_at)}
+            <h2 className="add-trip-subtitle">Selecciona las fechas que vas a estar</h2>
+
+            <div className="calendar-header">
+              <span className="month-year">{monthNames[currentMonth]} {currentYear}</span>
+              <div className="arrows">
+                <button type="button" className="arrow" onClick={handlePrevMonth}>‹</button>
+                <button type="button" className="arrow" onClick={handleNextMonth}>›</button>
               </div>
+            </div>
 
-          <h3 style={{ marginTop: 18 }}>Itinerario actual</h3>
-          <div className="places-list">
-            {(trip.places || []).length === 0 ? (
-              <div className="muted">Aún no hay puntos en el itinerario.</div>
-            ) : (
-              (trip.places || []).map((p) => (
-                <div key={p.id} className="place-item"
-                     style={{borderColor: ((selectedPlace?.id === p.id) ? "#ff3951":""), backgroundColor: (new Date(p.date)<today) ? "#fafafa": ""}}>
-                <div style={{width: "100%"}} onClick={() => {
-                  if (selectedPlace?.id === p.id) {
-                    setSelectedPlace(null);
-                    setSelectedLocationOnMap(null);
-                  } else {
-                    setSelectedPlace(p);
-                    setSelectedLocationOnMap({
-                      latitude: p.location?.latitude ?? p.location?.latitud,
-                      longitude: p.location?.longitude ?? p.location?.longitud,
-                      titulo: p.location?.titulo
-                    });
-                    if (p.location && (p.location.latitude || p.location.latitud)) {
-                      const lat = Number(p.location.latitude ?? p.location.latitud);
-                      const lng = Number(p.location.longitude ?? p.location.longitud);
-                      setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 13 }));
-                    }
-                  }
-                  setMenuOpen(!menuOpen);}}>
-                  <div className="place-main">
-                    <div className="place-title">{p.location?.titulo ?? `Lugar #${p.fk_location}`}</div>
-                    <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""} {p.start_hour} {p.end_hour ? ` - ${p.end_hour}` : ""}</div>
-                    {p.notes && <div className="place-notes">{p.notes}</div>}
-                  </div></div>
-                  <div className="trip-menu-wrapper">
-                    <button
-                        className="trip-menu-btn"
-                        onClick={() =>
-                        {setMenuOpen(menuOpen === p.id ? null : p.id)
-                            setSelectedPlace(p);
-                        }}
-                    >⋮
-                    </button>
-
-                    {menuOpen === p.id && (
-                        <div className="trip-menu">
-                          <button className="trip-menu-btn"
-                                  onClick={() => {
-                                    navigate(`/trips/editProgram/${p.id}`);
-                                    setMenuOpen(null);
-                                  }}
-                          >✎
-                          </button>
-                          <button className="trip-menu-btn"
-                                  onClick={() => {handleDeletePlace(p.id);
-                                                        setMenuOpen(null);}}
-                          >🗑
-                          </button>
-                        </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <div style={{ marginTop: 10 }}>
-            <button onClick={() => navigate(`/add_place/${tripId}`)} className="btn-primary">
-              Agregar al itinerario
-            </button>
-          </div>
-        </section>
-
-        <section className="trip-it-right">
-          {!selectedPlace ? (
-            <div className="map-wrapper" style={{height: "100%"}}>
-              <Map
-                {...viewState}
-                onMove={(evt) => setViewState(evt.viewState)}
-                style={{ width: "100%", height: "100%" }}
-                mapStyle="mapbox://styles/mapbox/streets-v11"
-                mapboxAccessToken={MAPBOX_TOKEN}
-              >
-                <div style={{ position: "absolute", right: 10, top: 10, zIndex: 1 }}>
-                  <NavigationControl showCompass showZoom />
-                </div>
-
-                {markers.map((m) => (
-                  <Marker
-                    key={`m-${m.place.id}`}
-                    longitude={Number(m.longitude)}
-                    latitude={Number(m.latitude)}
-                    anchor="bottom"
-                    onClick={(e) => {
-                      e.originalEvent && e.originalEvent.stopPropagation();
-                      setSelectedPlace(m.place);
-                      setSelectedLocationOnMap({ latitude: m.latitude, longitude: m.longitude, titulo: m.title });
-                      setViewState((v) => ({ ...v, latitude: Number(m.latitude), longitude: Number(m.longitude), zoom: 14 }));
-                    }}
-                  >
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      style={{ transform: "translate(-12px,-24px)", cursor: "pointer" }}
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff3951" />
-                      <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                    </svg>
-                  </Marker>
+            <div className="calendar" >
+              <div className="week-days">
+                {weekDays.map((day, index) => (
+                  <span key={index} className="week-day">{day}</span>
                 ))}
+              </div>
+              <div className="days-grid">
+                {Array(firstDayOfMonth).fill(null).map((_, index) => (
+                  <div key={`empty-${index}`} className="empty-day" />
+                ))}
+                {days.map((day) => {
+                  const currentDate = new Date(currentYear, currentMonth, day.date);
+                  const isPast = normalizeDate(currentDate) < normalizeDate(today);
 
-                {selectedLocationOnMap && (
-                  <Popup
-                    longitude={Number(selectedLocationOnMap.longitude)}
-                    latitude={Number(selectedLocationOnMap.latitude)}
-                    anchor="top"
-                    onClose={() => setSelectedLocationOnMap(null)}
-                    closeOnClick={false}
-                  >
-                    <div style={{ maxWidth: 260 }}>
-                      <strong style={{ marginBottom: 6 }}>{selectedLocationOnMap.titulo}</strong>
-                    </div>
-                  </Popup>
-                )}
-              </Map>
+                  return (
+                      <button
+                          type="button"
+                          key={day.date}
+                          className={`day ${isDateInRange(day.date) ? 'selected-day' : ''}`}
+                          onClick={() => !isPast && handleDateSelect(day.date)}
+                          disabled={isPast}
+                      >
+                        {day.date}
+                      </button>
+                  )
+                })}
+              </div>
             </div>
-          ) : (
-            <div className="place-detail">
-              <h3 style={{fontSize:"34px",marginTop:"5px",  marginBottom:"5px"}}>{selectedPlace.location?.titulo ?? `Lugar #${selectedPlace.fk_location}`}</h3>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {selectedPlace.date ? new Date(selectedPlace.date).toLocaleDateString() : "-"}</p>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {selectedPlace.start_hour} {selectedPlace.end_hour ? ` - ${selectedPlace.end_hour}` : ""}</p>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:</strong> {selectedPlace.notes ? `${selectedPlace.notes}` : '-'}</p>
 
-              {selectedPlace.images && selectedPlace.images.length > 0 && (
-                  <div style={{marginTop:"10px"}}><strong style={{fontSize:"18px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
-                  <div className="place-images">
-                    {selectedPlace.images.map((imgUrl, i) => (
-                        <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
-                    ))}
-                  </div></div>
-                  )}
-              <div style={{marginTop:"20px"}}><strong style={{fontSize:"18px",marginTop:"30px", marginBottom:"5px"}}>Mapa</strong></div>
+            {currentDestination.startDate && currentDestination.endDate && (
+              <p className="date-range">
+                Se armará un plan turístico para {currentDestination.province?.label || ''}, {currentDestination.country?.label || ''} del{' '}
+                {currentDestination.startDate.getDate()}/{currentDestination.startDate.getMonth() + 1}/
+                {currentDestination.startDate.getFullYear()} al{' '}
+                {currentDestination.endDate.getDate()}/{currentDestination.endDate.getMonth() + 1}/
+                {currentDestination.endDate.getFullYear()}
+              </p>
+            )}
+
+            <label>Presupuesto (opcional)</label>
+            <input value={budget}
+                      className={"input"}
+                      onChange={(e) => setBudget(e.target.value)} />
+
+            <label>Notas (opcional)</label>
+            <textarea value={notes}
+                      className={"textarea"}
+                      onChange={(e) => setNotes(e.target.value)} rows={3} />
+
+            {statusMessage && <div style={{marginBottom:12, color: "#333"}}>{statusMessage}</div>}
+
+            <button
+              type="submit"
+              className="btn-primary create-trip"
+              disabled={loading}
+              style={{marginBottom: "0"}}
+            >
+              {loading ? 'Creando y generando itinerario...' : 'Armar Viaje'}
+            </button>
+            <button
+                type="button"
+                className="btn-secondary add-destination"
+                onClick={handleAddDestination}
+                style={{marginBottom: "20px"}}
+            >
+              + Agregar otro destino
+            </button>
+          </form>
+        </div>
+
+        {/* RIGHT: Logo */}
+        <div className="add-trip-right">
+          <div>
+            <div className="hero-art" aria-hidden>
+              <LogoSvg />
             </div>
-          )}
-        </section>
-      </main>
+            <div className="brand">ComfTrip</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

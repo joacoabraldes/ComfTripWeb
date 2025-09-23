@@ -280,20 +280,40 @@ export default function AddTrip() {
                   <div key={`empty-${index}`} className="empty-day" />
                 ))}
                 {days.map((day) => {
-                  const currentDate = new Date(currentYear, currentMonth, day.date);
-                  const isPast = normalizeDate(currentDate) < normalizeDate(today);
+                  const currentDate = new Date(Date.UTC(currentYear, currentMonth, day.date));
+                  const normalized = new Date(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate());
+                  const isPast = normalized < normalizeDate(new Date(currentDestination.startDate));
+
+                  const start =
+                      currentDestination?.startDate &&
+                      normalizeDate(currentDestination.startDate).getTime() ===
+                      normalized.getTime();
+                  const end =
+                      currentDestination?.endDate &&
+                      normalizeDate(currentDestination.endDate).getTime() ===
+                      normalized.getTime();
+
+                  const inRange = isDateInRange(day.date);
 
                   return (
                       <button
                           type="button"
                           key={day.date}
-                          className={`day ${isDateInRange(day.date) ? 'selected-day' : ''}`}
-                          onClick={() => !isPast && handleDateSelect(day.date)}
+                          className={`day ${inRange ? "selected-day" : ""}`}
+                          onClick={() =>
+                              !isPast && handleDateSelect(day.date)
+                          }
                           disabled={isPast}
+                          style={{
+                            borderTopLeftRadius: start ? "90px" : "0",
+                            borderBottomLeftRadius: start ? "90px" : "0",
+                            borderTopRightRadius: end ? "90px" : "0",
+                            borderBottomRightRadius: end ? "90px" : "0"
+                          }}
                       >
                         {day.date}
                       </button>
-                  )
+                  );
                 })}
               </div>
             </div>

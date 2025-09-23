@@ -43,7 +43,7 @@ export default function AddTrip() {
 
   const generateCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1, 24,0,0).getDay();
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
     const days = [];
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({ date: i, selected: false });
@@ -173,7 +173,7 @@ export default function AddTrip() {
     });
   };
 
-  const isoDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -200,7 +200,6 @@ export default function AddTrip() {
           notes: notes,
           created_at: today,
         };
-
 
         const t= await apiPost("/trips", payload);
         createdTripId=t.trip.id;
@@ -282,37 +281,19 @@ export default function AddTrip() {
                 ))}
                 {days.map((day) => {
                   const currentDate = new Date(currentYear, currentMonth, day.date);
-                  const normalized = normalizeDate(currentDate);
-                  const isPast = normalized < normalizeDate(today);
-
-                  const start =
-                      currentDestination.startDate &&
-                      normalizeDate(currentDestination.startDate).getTime() === normalized.getTime();
-
-                  const end =
-                      currentDestination.endDate &&
-                      normalizeDate(currentDestination.endDate).getTime() === normalized.getTime();
-
-                  const inRange = isDateInRange(day.date);
-                  const notSelected=(!start && !end && !inRange)
+                  const isPast = normalizeDate(currentDate) < normalizeDate(today);
 
                   return (
                       <button
                           type="button"
                           key={day.date}
-                          className={`day ${inRange ? "selected-day" : ""}`}
+                          className={`day ${isDateInRange(day.date) ? 'selected-day' : ''}`}
                           onClick={() => !isPast && handleDateSelect(day.date)}
                           disabled={isPast}
-                          style={{
-                            borderTopLeftRadius: (start || notSelected) ? "90px" : "0",
-                            borderBottomLeftRadius: (start || notSelected) ? "90px" : "0",
-                            borderTopRightRadius: (end || notSelected) ? "90px" : "0",
-                            borderBottomRightRadius: (end || notSelected) ? "90px" : "0",
-                          }}
                       >
                         {day.date}
                       </button>
-                  );
+                  )
                 })}
               </div>
             </div>

@@ -30,13 +30,6 @@ const categoryIcons = {
   deportes: "⚽",
   relax: "🧘",
   familia: "👨‍👩‍👧‍👦",
-  aventuras: "🧗",
-  historia: "📜",
-  arte: "🎨",
-  musica: "🎵",
-  playas: "🏖️",
-  romantico: "💖",
-  // fallback será 🌍
 };
 
 export default function Explore() {

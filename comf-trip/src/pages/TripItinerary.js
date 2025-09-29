@@ -80,14 +80,21 @@ export default function TripItinerary() {
   }, [tripId]);
 
   const fmtDate = (d) => {
-    if (!d) return "-";
-    try {
-      const date = new Date(d);
-      return date.toLocaleDateString();
-    } catch (e) {
-      return d;
-    }
+      if(!d) return "-"
+      const date=d.split("T")[0].split("-");
+      const yy = date[0];
+      const mm =date[1];
+      const dd = date[2];
+      return `${dd}/${mm}/${yy}`;
   };
+
+    const fmtHour=(t)=>{
+        if(!t) return "-";
+        const time=t.split(":");
+        const hour=time[0];
+        const min=time[1];
+        return `${hour}:${min}`
+    }
 
   async function handleDeletePlace(placeId) {
     if (!window.confirm("¿Eliminar este punto del itinerario?")) return;
@@ -169,7 +176,7 @@ export default function TripItinerary() {
           <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
           <h2 className="trip-it-title">{trip.destination}</h2>
           <div className="trip-it-dates">
-            {trip.start_date ? new Date(trip.start_date).toLocaleDateString() : "-"} — {trip.end_date ? new Date(trip.end_date).toLocaleDateString() : "-"}
+            {fmtDate(trip.start_date)} — {fmtDate(trip.end_date)}
           </div>
             {trip?.budget != null && (
                   <p className="trip-detail-row">
@@ -190,7 +197,7 @@ export default function TripItinerary() {
             {(trip.places || []).length === 0 ? (
               <div className="muted">Aún no hay puntos en el itinerario.</div>
             ) : (
-              (trip.places || []).map((p) => (
+              (trip.places || []).map((p,i) => (
                 <div key={p.id} className="place-item"
                      style={{borderColor: ((selectedPlace?.id === p.id) ? "#ff3951":""), backgroundColor: (new Date(p.date)<today) ? "#fafafa": ""}}>
                 <div style={{width: "100%"}} onClick={() => {
@@ -213,7 +220,7 @@ export default function TripItinerary() {
                   setMenuOpen(!menuOpen);}}>
                   <div className="place-main">
                     <div className="place-title">{p.location?.titulo ?? `Lugar #${p.fk_location}`}</div>
-                    <div className="place-meta">{p.date ? new Date(p.date).toLocaleDateString() : ""} {p.start_hour} {p.end_hour ? ` - ${p.end_hour}` : ""}</div>
+                    <div className="place-meta">{fmtDate(p.date)} {fmtHour(p.start_hour)} {` - ${fmtHour(p.end_hour)}`}</div>
                     {p.notes && <div className="place-notes">{p.notes}</div>}
                   </div></div>
                   <div className="trip-menu-wrapper">
@@ -230,7 +237,7 @@ export default function TripItinerary() {
                         <div className="trip-menu">
                           <button className="trip-menu-btn"
                                   onClick={() => {
-                                    navigate(`/trips/editProgram/${p.id}`);
+                                    navigate(`/edit-place/${trip.id}?placeIndex=${i}`);
                                     setMenuOpen(null);
                                   }}
                           >✎
@@ -312,8 +319,8 @@ export default function TripItinerary() {
           ) : (
             <div className="place-detail">
               <h3 style={{fontSize:"34px",marginTop:"5px",  marginBottom:"5px"}}>{selectedPlace.location?.titulo ?? `Lugar #${selectedPlace.fk_location}`}</h3>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {selectedPlace.date ? new Date(selectedPlace.date).toLocaleDateString() : "-"}</p>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {selectedPlace.start_hour} {selectedPlace.end_hour ? ` - ${selectedPlace.end_hour}` : ""}</p>
+              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {fmtDate(selectedPlace.date)}</p>
+              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {fmtHour(selectedPlace.start_hour)} - {fmtHour(selectedPlace.end_hour)} </p>`
               <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:</strong> {selectedPlace.notes ? `${selectedPlace.notes}` : '-'}</p>
 
               {selectedPlace.images && selectedPlace.images.length > 0 && (

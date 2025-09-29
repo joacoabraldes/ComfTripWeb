@@ -162,14 +162,6 @@ export default function AddTrip() {
     });
   };
 
-  function formatDateYMD(d) {
-    if (!d) return null;
-    const yy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yy}-${mm}-${dd}`;
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -192,8 +184,8 @@ export default function AddTrip() {
 
         const payload = {
           destination: `${dest.province.label}, ${dest.country.label}`,
-          start_date: formatDateYMD(dest.startDate),
-          end_date: formatDateYMD(dest.endDate),
+          start_date: dest.startDate,
+          end_date: dest.endDate,
           budget: budget || null,
           notes: notes || null
         };
@@ -288,17 +280,36 @@ export default function AddTrip() {
                   const currentDate = new Date(currentYear, currentMonth, day.date);
                   const isPast = normalizeDate(currentDate) < normalizeDate(today);
 
-                  return (
-                      <button
-                          type="button"
-                          key={day.date}
-                          className={`day ${isDateInRange(day.date) ? 'selected-day' : ''}`}
-                          onClick={() => !isPast && handleDateSelect(day.date)}
-                          disabled={isPast}
-                      >
-                        {day.date}
-                      </button>
-                  )
+                    const start =
+                        currentDestination?.startDate &&
+                        currentDestination.startDate.getTime() ===
+                        currentDate.getTime();
+                    const end =
+                        currentDestination?.endDate &&
+                        currentDestination.endDate.getTime() ===
+                        currentDate.getTime();
+
+                    const inRange = isDateInRange(day.date);
+
+                    return (
+                        <button
+                            type="button"
+                            key={day.date}
+                            className={`day ${inRange ? "selected-day" : ""}`}
+                            onClick={() =>
+                                !isPast && handleDateSelect(day.date)
+                            }
+                            disabled={isPast}
+                            style={{
+                                borderTopLeftRadius: start ? "90px" : "0",
+                                borderBottomLeftRadius: start ? "90px" : "0",
+                                borderTopRightRadius: end ? "90px" : "0",
+                                borderBottomRightRadius: end ? "90px" : "0"
+                            }}
+                        >
+                            {day.date}
+                        </button>
+                    );
                 })}
               </div>
             </div>

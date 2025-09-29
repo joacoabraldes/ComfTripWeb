@@ -72,6 +72,15 @@ export default function Home() {
     return () => clearInterval(carouselAutoRef.current);
   }, [carouselLen]);
 
+    const fmtDate = (d) => {
+        if(!d) return "-"
+        const date=d.split("T")[0].split("-");
+        const yy = date[0];
+        const mm =date[1];
+        const dd = date[2];
+        return `${dd}/${mm}/${yy}`;
+    };
+
   function goPrev() {
     setIndex((i) => (i - 1 + carouselLen) % carouselLen);
   }
@@ -97,7 +106,7 @@ export default function Home() {
             </h1>
             <p className="hero-sub">
               {nextTrip
-                ? `${new Date(nextTrip.start_date).toLocaleDateString()} — ${new Date(nextTrip.end_date).toLocaleDateString()}`
+                ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
                 : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
             </p>
           </div>
@@ -127,7 +136,7 @@ export default function Home() {
                   >
                     <div className="trip-card-left">
                       <div className="trip-destination">{t.destination}</div>
-                      <div className="trip-dates">{t.start_date ? new Date(t.start_date).toLocaleDateString() : "-"} — {t.end_date ? new Date(t.end_date).toLocaleDateString() : "-"}</div>
+                      <div className="trip-dates">{fmtDate(t.start_date)} — {fmtDate(t.end_date)}</div>
                     </div>
                     <div className="trip-card-right">
                       ▶

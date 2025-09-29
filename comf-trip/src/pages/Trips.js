@@ -21,15 +21,14 @@ export default function Trips() {
     return today >= start && today <= end;
   };
 
-  const fmtDate = (d) => {
-    if (!d) return "-";
-    try {
-      const date = new Date(d);
-      return date.toLocaleDateString();
-    } catch (e) {
-      return d;
-    }
-  };
+    const fmtDate = (d) => {
+        if(!d) return "-"
+        const date=d.split("T")[0].split("-");
+        const yy = date[0];
+        const mm =date[1];
+        const dd = date[2];
+        return `${dd}/${mm}/${yy}`;
+    };
 
   useEffect(() => {
     let mounted = true;
@@ -66,6 +65,7 @@ export default function Trips() {
       mounted = false;
     };
   }, []);
+
 
   // pantalla de carga
   if (loading) {
@@ -120,8 +120,8 @@ export default function Trips() {
                               {t.destination ?? "Destino desconocido"}
                             </div>
                             <div className="trip-dates">
-                              {fmtDate(t.start_date || t.startDate)} —{" "}
-                              {fmtDate(t.end_date || t.endDate)}
+                              {fmtDate(t.start_date)} —{" "}
+                              {fmtDate(t.end_date)}
                             </div>
                             {/*{t?.budget != null && (*/}
                             {/*    <p className="trip-detail-row">*/}

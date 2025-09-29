@@ -21,6 +21,14 @@ export default function EditTrip() {
 
     const currentDestination = destinations[currentDestinationIndex];
 
+    const normalizeDate=(d)=>{
+        if(!d) return new Date();
+        const date=d.split("T")[0].split("-");
+        const yy = Number(date[0]);
+        const mm =Number(date[1])-1;
+        const dd = Number(date[2]);
+        return new Date(yy, mm, dd);
+    }
 
     // cargar datos del trip al montar
     useEffect(() => {
@@ -30,7 +38,7 @@ export default function EditTrip() {
                 const trip = await apiGet(`/trips/${tripId}`);
                 if (!mounted) return;
                 if(trip){
-                    const start = trip.start_date ? new Date(trip.start_date) : new Date();
+                    const start = normalizeDate(trip.start_date);
                     setCurrentMonth(start.getMonth());
                     setCurrentYear(start.getFullYear());
                 }
@@ -40,8 +48,8 @@ export default function EditTrip() {
                 setDestinations([
                     {
                         destination: trip.destination,
-                        startDate: new Date(trip.start_date),
-                        endDate: new Date(trip.end_date)
+                        startDate: normalizeDate(trip.start_date),
+                        endDate: normalizeDate(trip.end_date)
                     }
                 ]);
 
@@ -73,13 +81,9 @@ export default function EditTrip() {
 
     const { days, firstDayOfMonth } = generateCalendarDays();
 
-    const normalizeDate = (d) =>
-        new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
     // seleccionar solo endDate
     const handleDateSelect = (day) => {
         const selectedDate = new Date(currentYear, currentMonth, day);
-        const normalizedSelected = normalizeDate(selectedDate);
 
         setDestinations((prev) => {
             const newDestinations = [...prev];
@@ -89,10 +93,10 @@ export default function EditTrip() {
 
 
 
-                if (normalizedSelected.getTime()<endDate.getTime()) {
+                if (selectedDate.getTime()<endDate.getTime()) {
                     return newDestinations;
                 }
-            current.endDate = normalizedSelected;
+            current.endDate = selectedDate;
 
             newDestinations[currentDestinationIndex] = current;
             return newDestinations;
@@ -103,14 +107,14 @@ export default function EditTrip() {
         const current = destinations[currentDestinationIndex];
         if (!current || !current.startDate) return false;
 
-        const currentDate = normalizeDate(new Date(currentYear, currentMonth, day));
-        const start = normalizeDate(current.startDate);
+        const currentDate = new Date(currentYear, currentMonth, day);
+        const start = current.startDate;
 
         if (!current.endDate) {
             return start.getTime() === currentDate.getTime();
         }
 
-        const end = normalizeDate(current.endDate);
+        const end = current.endDate;
         return (
             currentDate.getTime() >= start.getTime() &&
             currentDate.getTime() <= end.getTime()
@@ -225,18 +229,17 @@ export default function EditTrip() {
                                         <div key={`empty-${index}`} className="empty-day" />
                                     ))}
                                 {days.map((day) => {
-                                    const currentDate = new Date(Date.UTC(currentYear, currentMonth, day.date));
-                                    const normalized = new Date(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate());
-                                    const isPast = normalized < normalizeDate(new Date(currentDestination.startDate));
+                                    const currentDate = new Date(currentYear, currentMonth, day.date);
+                                    const isPast = currentDate < currentDestination.startDate;
 
                                     const start =
                                         currentDestination?.startDate &&
-                                        normalizeDate(currentDestination.startDate).getTime() ===
-                                        normalized.getTime();
+                                        currentDestination.startDate.getTime() ===
+                                        currentDate.getTime();
                                     const end =
                                         currentDestination?.endDate &&
-                                        normalizeDate(currentDestination.endDate).getTime() ===
-                                        normalized.getTime();
+                                        currentDestination.endDate.getTime() ===
+                                        currentDate.getTime();
 
                                     const inRange = isDateInRange(day.date);
 

@@ -50,6 +50,15 @@ export default function AddPlace() {
     const [adding, setAdding] = useState(false);
     const [error, setError] = useState(null);
 
+    const normalizeDate=(d)=>{
+        if(!d) return null;
+        const date=d.split("T")[0].split("-");
+        const yy = Number(date[0]);
+        const mm =Number(date[1])-1;
+        const dd = Number(date[2]);
+        return new Date(yy, mm, dd);
+    }
+
     useEffect(() => {
         let mounted = true;
         (async () => {
@@ -72,8 +81,8 @@ export default function AddPlace() {
                 setLocations(Array.isArray(locs) ? locs : []);
 
                 if (tripRes) {
-                    setStartDate(tripRes.start_date ? new Date(tripRes.start_date) : null);
-                    setEndDate(tripRes.end_date ? new Date(tripRes.end_date) : null);
+                    setStartDate(normalizeDate(tripRes.start_date));
+                    setEndDate(normalizeDate(tripRes.end_date));
 
                     const start = tripRes.start_date ? new Date(tripRes.start_date) : new Date();
                     setCurrentYear(start.getFullYear());
@@ -103,11 +112,39 @@ export default function AddPlace() {
         setEndHour("");
     }, [startHour]);
 
+    const fmtDate = (d) => {
+        if(!d) return "-"
+        const date=d.split("T")[0].split("-");
+        const yy = date[0];
+        const mm =date[1];
+        const dd = date[2];
+        return `${dd}/${mm}/${yy}`;
+    };
+
     const bookedDates = new Set(
         (trip?.places || []).map(p =>
             p.date.split("T")[0] // normalizo a YYYY-MM-DD
         )
     );
+
+    const safeParseImages = (im) => {
+        if (!im) return [];
+        if (Array.isArray(im)) return im;
+        if (typeof im === "string") {
+            try {
+                const parsed = JSON.parse(im);
+                if (Array.isArray(parsed)) return parsed;
+                return [parsed];
+            } catch (e) {
+                return [im];
+            }
+        }
+        return [];
+    };
+    let imgs=[];
+    if(locationInfo) {
+        imgs = safeParseImages(locationInfo.imagenes);
+    }
 
     // horarios ocupados de la fecha seleccionada
     const occupiedSlots = React.useMemo(() => {
@@ -148,9 +185,6 @@ export default function AddPlace() {
     };
 
     const { days, firstDayOfMonth } = generateCalendarDays();
-
-    const normalizeDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
 
 // --- handlePrevMonth / handleNextMonth: NO borres las fechas al navegar ---
     const handlePrevMonth = () => {
@@ -273,7 +307,7 @@ export default function AddPlace() {
 
                     <h2 className="trip-it-title">{trip.destination}</h2>
                     <div className="trip-it-dates">
-                        {trip.start_date ? new Date(trip.start_date).toLocaleDateString() : "-"} — {trip.end_date ? new Date(trip.end_date).toLocaleDateString() : "-"}
+                        {trip.start_date ? fmtDate(trip.start_date) : "-"} — {trip.end_date ? fmtDate(trip.end_date) : "-"}
                     </div>
                     <h3 style={{ marginTop: 18 }}>Agregar punto al itinerario</h3>
                     <form onSubmit={handleAddPlace} className="trip-it-form" style={{overflowY: "auto"}}>
@@ -319,7 +353,7 @@ export default function AddPlace() {
                                 ))}
                                 {days.map((day) => {
                                     const currentDate = new Date(currentYear, currentMonth, day.date);
-                                    const isPast = normalizeDate(currentDate) < normalizeDate(startDate) || normalizeDate(currentDate) > normalizeDate(endDate);
+                                    const isPast = currentDate < startDate || currentDate > endDate;
                                     const isoDate = currentDate.toISOString().split("T")[0];
                                     const occupiedPlace = bookedDates.has(isoDate);
 
@@ -375,19 +409,20 @@ export default function AddPlace() {
                         <div className="place-detail">
                             <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{locationInfo.titulo}</h3>
                             <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({locationInfo.fk_interest})</p>
-                            <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion:</strong>
-                                {locationInfo.description ? `${locationInfo.description}` : '-'}</p>
+                            <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion: </strong>
+                                {locationInfo.descripcion ? locationInfo.descripcion : ""}</p>
 
                             {/* Imágenes */}
-                            {locationInfo.images && locationInfo.images.length > 0 && (
+
+                            {imgs && imgs.length > 0 && (
                                 <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
                                     <div className="place-images">
-                                        {locationInfo.images.map((imgUrl, i) => (
+                                        {imgs.map((imgUrl, i) => (
                                             <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
                                         ))}
                                     </div></div>
                             )}
-                            <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Mapa</strong></div>
+                            <div style={{marginTop:"-60px"}}><strong style={{fontSize:"20px", marginBottom:"5px"}}>Mapa</strong></div>
                         </div>
                     )}
                 </section>

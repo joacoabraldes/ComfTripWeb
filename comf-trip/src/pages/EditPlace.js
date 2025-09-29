@@ -30,6 +30,15 @@ export default function EditPlace() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
 
+
+    const normalizeDate=(d)=>{
+        if(!d) return null;
+        const date=d.split("T")[0].split("-");
+        const yy = Number(date[0]);
+        const mm =Number(date[1])-1;
+        const dd = Number(date[2]);
+        return new Date(yy, mm, dd);
+    }
     useEffect(() => {
         let mounted = true;
         (async () => {
@@ -49,8 +58,8 @@ export default function EditPlace() {
                     setNotes(p.notes || "");
                 }
                 if (tripRes) {
-                    setStartDate(tripRes.start_date ? new Date(tripRes.start_date) : null);
-                    setEndDate(tripRes.end_date ? new Date(tripRes.end_date) : null);
+                    setStartDate(normalizeDate(tripRes.start_date));
+                    setEndDate(normalizeDate(tripRes.end_date));
 
                     const start = tripRes.start_date ? new Date(tripRes.start_date) : new Date();
                     setCurrentYear(start.getFullYear());
@@ -74,6 +83,15 @@ export default function EditPlace() {
     useEffect(() => {
         setEndHour("");
     }, [startHour]);
+
+    const fmtDate = (d) => {
+        if(!d) return "-"
+        const date=d.split("T")[0].split("-");
+        const yy = date[0];
+        const mm =date[1];
+        const dd = date[2];
+        return `${dd}/${mm}/${yy}`;
+    };
 
     const bookedDates = useMemo(() => new Set(
         (trip?.places || []).map(p => p.date.split("T")[0])
@@ -106,8 +124,6 @@ export default function EditPlace() {
     };
 
     const { days, firstDayOfMonth } = generateCalendarDays();
-
-    const normalizeDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
 
 // --- handlePrevMonth / handleNextMonth: NO borres las fechas al navegar ---
@@ -177,8 +193,31 @@ export default function EditPlace() {
         }
     };
 
-    if (loading) return <div style={{ padding: 50 }}>Cargando...</div>;
-    if (error) return <div style={{ padding: 50, color: "red" }}>{error}</div>;
+    if (loading) return(
+    <div className="trip-it-root">
+                <Header/>
+                <main className="trip-it-main" style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "80vh"
+                }}>
+                    <div style={{fontSize:25}}> Cargando… </div>
+                </main>
+            </div>
+        );
+    if (error) return (<div className="trip-it-root">
+            <Header/>
+            <main className="trip-it-main" style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "80vh"
+            }}>
+                <div style={{ padding: 50, color: "red", fontSize:25 }}>{error}</div>
+            </main>
+        </div>
+    );
     if (!place) return null;
 
     const monthNames = [
@@ -194,7 +233,7 @@ export default function EditPlace() {
                 <section className="trip-it-left">
                     <h2 className="trip-it-title">{trip.destination}</h2>
                     <div className="trip-it-dates">
-                        {trip.start_date ? new Date(trip.start_date).toLocaleDateString() : "-"} — {trip.end_date ? new Date(trip.end_date).toLocaleDateString() : "-"}
+                        {fmtDate(trip.start_date)} — {fmtDate(trip.end_date)}
                     </div>
                     <h3 style={{ marginTop: 18 }}>Editar punto del itinerario</h3>
                     <form onSubmit={handleSubmit} className="trip-it-form">
@@ -220,7 +259,7 @@ export default function EditPlace() {
                                 ))}
                                 {days.map((day) => {
                                     const currentDate = new Date(currentYear, currentMonth, day.date);
-                                    const isPast = normalizeDate(currentDate) < normalizeDate(startDate) || normalizeDate(currentDate) > normalizeDate(endDate);
+                                    const isPast = currentDate < startDate || currentDate > endDate;
                                     const isoDate = currentDate.toISOString().split("T")[0];
                                     const occupiedPlace = bookedDates.has(isoDate);
 

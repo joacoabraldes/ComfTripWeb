@@ -4,6 +4,7 @@ import { apiPut, apiGet } from "./api";
 import { useNavigate, useParams } from "react-router-dom";
 import "../styles/AddTrip.css";
 import LogoSvg from "../components/LogoSvg";
+import Header from "../components/Header";
 
 export default function EditTrip() {
     const { tripId } = useParams(); // 👈 recibimos el ID por la URL
@@ -11,13 +12,16 @@ export default function EditTrip() {
         { destination:"", startDate: null, endDate: null }
     ]);
     const [stored, setStored]=useState(null)
-    const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
+    const currentDestinationIndex = 0;
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [notes, setNotes] = useState("");
     const [budget, setBudget] = useState("");
     const [loading, setLoading] = useState(false);
     const nav = useNavigate();
+    const [tripsDates, setTripsDates] = useState([]);
+    const [loadingOpen, setLoadingOpen]=useState(true);
+    const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
 
     const currentDestination = destinations[currentDestinationIndex];
 
@@ -34,13 +38,26 @@ export default function EditTrip() {
     useEffect(() => {
         let mounted=true;
         const fetchTrip = async () => {
+            setLoadingOpen(true);
             try {
                 const trip = await apiGet(`/trips/${tripId}`);
+                const res = await apiGet("/trips");
                 if (!mounted) return;
                 if(trip){
                     const start = normalizeDate(trip.start_date);
                     setCurrentMonth(start.getMonth());
                     setCurrentYear(start.getFullYear());
+                }
+                if (Array.isArray(res)) {
+                    const sorted = [...res].sort((a, b) => {
+                        return normalizeDate(b.start_date) - normalizeDate(a.start_date); // fallback por fecha
+                    });
+                    const filtered = sorted.filter(t => t.id !== trip.id);
+                    const Dates = filtered.map(t => ({
+                        start_date: normalizeDate(t.start_date),
+                        end_date: normalizeDate(t.end_date)
+                    }));
+                    setTripsDates(Dates);
                 }
 
                 // trip que viene del backend
@@ -60,7 +77,7 @@ export default function EditTrip() {
                 alert("No se pudo cargar el viaje.");
                 nav("/");
             } finally {
-                if (mounted) setLoading(false);
+                if (mounted) setLoadingOpen(false);
             }
         };
         fetchTrip();return () => { mounted = false; };
@@ -88,18 +105,37 @@ export default function EditTrip() {
         setDestinations((prev) => {
             const newDestinations = [...prev];
             const current = { ...(newDestinations[currentDestinationIndex] || {}) };
+            const start=normalizeDate(stored.start_date);
+            const end=normalizeDate(stored.end_date);
 
-            const { endDate } = current;
-
-
-
-                if (selectedDate.getTime()<endDate.getTime()) {
+                if (selectedDate<end && selectedDate>start) {
                     return newDestinations;
                 }
-            current.endDate = selectedDate;
+                else if(selectedDate<=start){
+                    current.startDate=selectedDate;
+                }
+                else if (selectedDate>=end){
+                    current.endDate = selectedDate;
+                }
 
             newDestinations[currentDestinationIndex] = current;
             return newDestinations;
+        });
+    };
+
+    const alreadySelected = (d) => {
+        if (!d) return false;
+        return tripsDates.some(trip => {
+            const start = new Date(trip.start_date);
+            const end = new Date(trip.end_date);
+            if (currentDestination.startDate) {
+                if(currentDestination.startDate<start && d>currentDestination.startDate){
+                    return d >= start;
+                } else if(currentDestination.startDate>end && currentDestination.startDate>d){
+                    return d<=end
+                }
+            }
+            return d >= start && d <= end;
         });
     };
 
@@ -111,15 +147,27 @@ export default function EditTrip() {
         const start = current.startDate;
 
         if (!current.endDate) {
-            return start.getTime() === currentDate.getTime();
+            return start === currentDate;
         }
 
         const end = current.endDate;
         return (
-            currentDate.getTime() >= start.getTime() &&
-            currentDate.getTime() <= end.getTime()
+            currentDate >= start &&
+            currentDate <= end
         );
     };
+
+    const isDateFormer=(day)=>{
+        if(!stored) return false;
+        const currentDate = new Date(currentYear, currentMonth, day);
+        const start = normalizeDate(stored.start_date);
+        if(!stored.end_date) return start===currentDate;
+        const end=normalizeDate(stored.end_date);
+        return (
+            currentDate >= start &&
+            currentDate <= end
+        );
+    }
 
     const handlePrevMonth = () => {
         setCurrentMonth((prev) => {
@@ -155,7 +203,7 @@ export default function EditTrip() {
                 id: stored.id,
                 user_id: stored.user_id,
                 destination: stored.destination,
-                start_date: stored.start_date,
+                start_date: dest.startDate,
                 end_date: dest.endDate,
                 budget: budget,
                 notes: notes,
@@ -177,6 +225,22 @@ export default function EditTrip() {
         "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ];
     const weekDays = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
+
+    if (loadingOpen) {
+        return (
+            <div className="trip-it-root">
+                <Header/>
+                <main className="trip-it-main" style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "80vh" // ocupa casi toda la pantalla
+                }}>
+                    <div style={{fontSize:25}}> Cargando… </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="add-trip-root" >
@@ -230,7 +294,7 @@ export default function EditTrip() {
                                     ))}
                                 {days.map((day) => {
                                     const currentDate = new Date(currentYear, currentMonth, day.date);
-                                    const isPast = currentDate < currentDestination.startDate;
+                                    const isPast = currentDate < today || alreadySelected(currentDate);
 
                                     const start =
                                         currentDestination?.startDate &&
@@ -241,13 +305,11 @@ export default function EditTrip() {
                                         currentDestination.endDate.getTime() ===
                                         currentDate.getTime();
 
-                                    const inRange = isDateInRange(day.date);
-
                                     return (
                                         <button
                                             type="button"
                                             key={day.date}
-                                            className={`day ${inRange ? "selected-day" : ""}`}
+                                            className={`day ${isDateFormer(day.date)? "former-day" : (isDateInRange(day.date) ? "selected-day" : "")}`}
                                             onClick={() =>
                                                 !isPast && handleDateSelect(day.date)
                                             }

@@ -193,6 +193,11 @@
   color: #ff3951;
 }
 
+.former-day {
+    background-color: #ff3951;
+    color: white;
+}
+
 .date-range {
   text-align: center;
   margin-top: 20px;

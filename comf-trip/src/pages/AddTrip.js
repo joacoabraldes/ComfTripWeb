@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, {useState, useMemo, useEffect} from 'react';
 import { apiPost, apiGet } from "./api";
 import { useNavigate } from 'react-router-dom';
 import '../styles/AddTrip.css';
@@ -6,23 +6,62 @@ import LogoSvg from '../components/LogoSvg';
 import Select from 'react-select';
 import countryList from "react-select-country-list";
 import { allCountries  } from "country-region-data";
+import Header from "../components/Header";
 
 export default function AddTrip() {
   const [destinations, setDestinations] = useState([
     { country: null, province: null, startDate: null, endDate: null }
   ]);
   const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
-  const today = new Date();
+  const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [notes, setNotes] = useState("");
   const [budget, setBudget]=useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingTrip, setLoadingTrip] = useState(false);
   const nav = useNavigate();
   const [statusMessage, setStatusMessage] = useState(null);
-
   // Primero obtenemos el destino actual
   const currentDestination = destinations[currentDestinationIndex];
+
+  const normalizeDate=(d)=>{
+      if(!d) return new Date();
+      const date=d.split("T")[0].split("-");
+      const yy = Number(date[0]);
+      const mm =Number(date[1])-1;
+      const dd = Number(date[2]);
+      return new Date(yy, mm, dd);
+  }
+  const [tripsDates, setTripsDates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+      let mounted = true;
+      (async () => {
+          setLoading(true);
+          try {
+              const res = await apiGet("/trips");
+              if (!mounted) return;
+
+              if (Array.isArray(res)) {
+                  const sorted = [...res].sort((a, b) => {
+                      return normalizeDate(b.start_date) - normalizeDate(a.start_date); // fallback por fecha
+                  });
+                  const Dates = sorted.map(trip => ({
+                      start_date: normalizeDate(trip.start_date),
+                      end_date: normalizeDate(trip.end_date)
+                  }));
+                  setTripsDates(Dates);
+              }
+          } catch (err) {
+              console.error("Error cargando viajes:", err);
+          } finally {
+              if (mounted) setLoading(false);
+          }
+      })();
+      return () => {
+          mounted = false;
+      };
+  }, []);
 
   const countries = useMemo(() => countryList().getData(), []);
 
@@ -51,13 +90,27 @@ export default function AddTrip() {
 
   const { days, firstDayOfMonth } = generateCalendarDays();
 
-  const normalizeDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const alreadySelected = (d) => {
+        if (!d) return false;
+        return tripsDates.some(trip => {
+            const start = new Date(trip.start_date);
+            const end = new Date(trip.end_date);
+            if (currentDestination.startDate) {
+                if(currentDestination.startDate<start && d>currentDestination.startDate){
+                    return d >= start;
+                } else if(currentDestination.startDate>end && currentDestination.startDate>d){
+                    return d<=end
+                }
+            }
+            return d >= start && d <= end;
+        });
+    };
 
-  const handleDateSelect = (day) => {
+
+    const handleDateSelect = (day) => {
     const selectedDate = new Date(currentYear, currentMonth, day);
-    const normalizedSelected = normalizeDate(selectedDate);
 
-    if (normalizedSelected < normalizeDate(today)) {
+    if (selectedDate < today || alreadySelected(selectedDate)) {
       return;
     }
 
@@ -69,20 +122,20 @@ export default function AddTrip() {
 
       if (!startDate) {
         // primer click -> startDate
-        current.startDate = normalizedSelected;
+        current.startDate = selectedDate;
         current.endDate = null;
       } else if (startDate && !endDate) {
         // segundo click -> endDate (si es anterior, los invertimos)
-        const startNorm = normalizeDate(startDate);
-        if (normalizedSelected.getTime() < startNorm.getTime()) {
+        const startNorm = startDate;
+        if (selectedDate.getTime() < startNorm.getTime()) {
           current.endDate = startNorm;
-          current.startDate = normalizedSelected;
+          current.startDate = selectedDate;
         } else {
-          current.endDate = normalizedSelected;
+          current.endDate = selectedDate;
         }
       } else {
         // ya había un rango: tercer click -> reiniciamos rango empezando por el click
-        current.startDate = normalizedSelected;
+        current.startDate = selectedDate;
         current.endDate = null;
       }
 
@@ -95,14 +148,14 @@ export default function AddTrip() {
     const current = destinations[currentDestinationIndex];
     if (!current || !current.startDate) return false;
 
-    const currentDate = normalizeDate(new Date(currentYear, currentMonth, day));
-    const start = normalizeDate(current.startDate);
+    const currentDate = new Date(currentYear, currentMonth, day);
+    const start = current.startDate;
 
     if (!current.endDate) {
       return start.getTime() === currentDate.getTime();
     }
 
-    const end = normalizeDate(current.endDate);
+    const end =current.endDate;
     return currentDate.getTime() >= start.getTime() && currentDate.getTime() <= end.getTime();
   };
 
@@ -164,7 +217,7 @@ export default function AddTrip() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoadingTrip(true);
     setStatusMessage(null);
 
     try {
@@ -212,7 +265,7 @@ export default function AddTrip() {
       console.error("Error creando viaje:", err);
       alert(err.message || "Ocurrió un error al crear el viaje.");
     } finally {
-      setLoading(false);
+      setLoadingTrip(false);
       setStatusMessage(null);
     }
   };
@@ -222,6 +275,22 @@ export default function AddTrip() {
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
   ];
   const weekDays = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+
+  if (loading) {
+      return (
+          <div className="trip-it-root">
+              <Header/>
+              <main className="trip-it-main" style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "80vh" // ocupa casi toda la pantalla
+              }}>
+                  <div style={{fontSize:25}}> Cargando… </div>
+              </main>
+          </div>
+      );
+  }
 
   return (
     <div className="add-trip-root">
@@ -278,7 +347,7 @@ export default function AddTrip() {
                 ))}
                 {days.map((day) => {
                   const currentDate = new Date(currentYear, currentMonth, day.date);
-                  const isPast = normalizeDate(currentDate) < normalizeDate(today);
+                  const isPast = currentDate < today || alreadySelected(currentDate);
 
                     const start =
                         currentDestination?.startDate &&
@@ -304,7 +373,7 @@ export default function AddTrip() {
                                 borderTopLeftRadius: start ? "90px" : "0",
                                 borderBottomLeftRadius: start ? "90px" : "0",
                                 borderTopRightRadius: end ? "90px" : "0",
-                                borderBottomRightRadius: end ? "90px" : "0"
+                                borderBottomRightRadius: end ? "90px" : "0",
                             }}
                         >
                             {day.date}
@@ -339,10 +408,10 @@ export default function AddTrip() {
             <button
               type="submit"
               className="btn-primary create-trip"
-              disabled={loading}
+              disabled={loadingTrip}
               style={{marginBottom: "0"}}
             >
-              {loading ? 'Creando y generando itinerario...' : 'Armar Viaje'}
+              {loadingTrip ? 'Creando y generando itinerario...' : 'Armar Viaje'}
             </button>
             <button
                 type="button"

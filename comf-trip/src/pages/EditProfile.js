@@ -11,6 +11,7 @@ import "../styles/header.css";
 export default function EditProfile() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [loadingInfo, setLoadingInfo]=useState(true)
 
     // opciones de países
     const options = useMemo(() => countryList().getData(), []);
@@ -44,6 +45,8 @@ export default function EditProfile() {
                 });
             } catch (err) {
                 console.error("Error fetching profile:", err);
+            }finally {
+                setLoadingInfo(false);
             }
         })();
     }, [navigate]);
@@ -84,8 +87,12 @@ export default function EditProfile() {
         }
     }
 
+    if(loadingInfo){
+        return <div className="profile-root" style={{fontSize:25}}>Cargando...</div>;
+    }
+
     if (loading) {
-        return <div className="profile-root" style={{fontSize:25}}>Cargando datos de perfil…</div>;
+        return <div className="profile-root" style={{fontSize:25}}>Guardando cambios del perfil…</div>;
     }
 
     return (

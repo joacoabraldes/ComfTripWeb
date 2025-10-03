@@ -154,14 +154,42 @@ export default function Trips() {
 
                             {menuOpen === t.id && (
                                 <div className="trip-menu">
-                                  <button className="trip-menu-btn"
-                                          onClick={() => {navigate(`/edit-trip/${t.id}`)
-                                              setMenuOpen(null)
-                                      }}
-                                  ><svg width="20" height="20" viewBox="0 0 41 37" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M18.7915 6.16667H6.83317C5.92701 6.16667 5.05797 6.49152 4.41722 7.06975C3.77647 7.64799 3.4165 8.43225 3.4165 9.25V30.8333C3.4165 31.6511 3.77647 32.4353 4.41722 33.0136C5.05797 33.5918 5.92701 33.9167 6.83317 33.9167H30.7498C31.656 33.9167 32.525 33.5918 33.1658 33.0136C33.8065 32.4353 34.1665 31.6511 34.1665 30.8333V20.0417M31.604 3.85417C32.2836 3.24085 33.2054 2.8963 34.1665 2.8963C35.1276 2.8963 36.0494 3.24085 36.729 3.85417C37.4086 4.46748 37.7904 5.29931 37.7904 6.16667C37.7904 7.03402 37.4086 7.86585 36.729 8.47917L20.4998 23.125L13.6665 24.6667L15.3748 18.5L31.604 3.85417Z" stroke="#1E1E1E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <button
+                                    className="trip-menu-btn"
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(`/api/trips/${t.id}/share`, {
+                                          method: "POST",
+                                          headers: { "Content-Type": "application/json", 
+                                                    Authorization: `Bearer ${localStorage.getItem("token")}` }
+                                        });
+                                        const data = await res.json();
+                                        setMenuOpen(null);
+
+                                        if (navigator.share) {
+                                          await navigator.share({
+                                            title: "Mi viaje",
+                                            text: `Mira mi viaje a ${t.destination}`,
+                                            url: data.url,
+                                          });
+                                        } else {
+                                          window.prompt("Copia este enlace para compartir:", data.url);
+                                        }
+                                      } catch (err) {
+                                        console.error("Error generando enlace de compartir:", err);
+                                        alert("No se pudo generar el enlace de compartir.");
+                                      }
+                                    }}
+                                  >
+                                    {/* ícono de compartir */}
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                      <path d="M4 12V19C4 19.55 4.45 20 5 20H19C19.55 20 20 19.55 20 19V12"
+                                            stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M12 4V15M12 4L8 8M12 4L16 8"
+                                            stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     </svg>
                                   </button>
+
                                   <button className="trip-menu-btn"
                                           onClick={async () => {
                                             if (window.confirm(`¿Seguro que deseas eliminar el viaje a ${t.destination}?`)) {

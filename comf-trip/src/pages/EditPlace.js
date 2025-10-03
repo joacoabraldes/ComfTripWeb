@@ -29,7 +29,7 @@ export default function EditPlace() {
     const [notes, setNotes] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
-
+    const [locations, setLocations] = useState([]);
 
     const normalizeDate=(d)=>{
         if(!d) return null;
@@ -44,8 +44,10 @@ export default function EditPlace() {
         (async () => {
             try {
                 const tripRes = await apiGet(`/trips/${tripId}`);
+                const locs = await apiGet("/locations");
                 if (!mounted) return;
                 setTrip(tripRes);
+                setLocations(Array.isArray(locs) ? locs : []);
 
                 const p = tripRes.places?.[placeIndex];
                 if (!p) {
@@ -81,8 +83,12 @@ export default function EditPlace() {
     }, [date]);
 
     useEffect(() => {
-        setEndHour("");
-    }, [startHour]);
+        if(startHour && !startHour.split(":")[1]){
+        setEndHour("");}
+        else if(startHour && (startHour.split(":")[0]===endHour.split(":")[0] && startHour.split(":")[1]>endHour.split(":")[1])){
+            setEndHour(`${endHour.split(":")[0]}:`);
+        }
+    }, [startHour, endHour]);
 
     const fmtDate = (d) => {
         if(!d) return "-"
@@ -193,9 +199,16 @@ export default function EditPlace() {
         }
     };
 
+    // buscar el location correspondiente
+    const locationData = useMemo(() => {
+        if (!locations.length) return null;
+        const locId = place.location?.id;
+        return locations.find(l => Number(l.id) === locId) || null;
+    }, [locations, place]);
+
+
     if (loading) return(
     <div className="trip-it-root">
-                <Header/>
                 <main className="trip-it-main" style={{
                     display: "flex",
                     justifyContent: "center",
@@ -309,13 +322,16 @@ export default function EditPlace() {
                     <div className="place-detail">
                         <h3 style={{fontSize:"50px", marginTop:"5px", marginBottom:"5px"}}>{place.location?.titulo ?? `Lugar #${place.fk_location}`}</h3>
                         <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>({place.location?.fk_interest ?? "-"})</p>
-                        <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}><strong>Descripcion:</strong> {place.location?.description || '-'}</p>
+                        <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>
+                            <strong>Descripcion:</strong> {locationData?.descripcion ?? "-"}
+                        </p>
 
-                        {place.images && place.images.length > 0 && (
+
+                        {place.location?.imagenes && place.location?.imagenes.length > 0 && (
                             <div style={{marginTop:"20px"}}>
                                 <strong style={{fontSize:"20px", marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
                                 <div className="place-images">
-                                    {place.images.map((imgUrl, i) => (
+                                    {place.location?.imagenes.map((imgUrl, i) => (
                                         <img key={i} src={imgUrl} alt={`Lugar ${i+1}`} className="place-image"/>
                                     ))}
                                 </div>

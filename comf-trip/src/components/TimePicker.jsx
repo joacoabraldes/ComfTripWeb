@@ -63,21 +63,34 @@ export default function TimePicker({ value, onChange, occupiedSlots = [], minTim
 
     return (
         <div style={{ display: "flex", gap: "6px" }}>
-            <select value={hour} disabled={disabled} onChange={e => setHour(e.target.value)}>
+            <select value={hour} disabled={disabled} onChange={e => {setHour(e.target.value); setMinute("")}}>
                 <option value="">HH</option>
                 {hours.map(h => (
-                    <option key={h} value={h} disabled={isInvalid(h, "")}>{h}</option>
+                    <option
+                        key={h}
+                        value={h}
+                        disabled={isInvalid(h, "")}
+                        style={{ color: hour===h ? "white" : (isInvalid(h, "") ? "#ccc" : "black") }}
+                    >
+                        {h}
+                    </option>
                 ))}
             </select>
             <span style={{ fontSize: "30px", padding: "5px" }}>:</span>
             <select value={minute} disabled={disabled} onChange={e => setMinute(e.target.value)}>
                 <option value="">MM</option>
                 {minutes.map(m => (
-                    <option key={m} value={m} disabled={hour && isInvalid(hour, m)}>
+                    <option
+                        key={m}
+                        value={m}
+                        disabled={!hour && isInvalid(hour, m)}
+                        style={{ color: hour && minute===m ? "white" : (isInvalid(hour, m) ? "#ccc" : "black") }}
+                    >
                         {m}
                     </option>
                 ))}
             </select>
+
         </div>
     );
 }

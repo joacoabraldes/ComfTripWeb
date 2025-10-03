@@ -320,13 +320,13 @@ export default function TripItinerary() {
             <div className="place-detail">
               <h3 style={{fontSize:"34px",marginTop:"5px",  marginBottom:"5px"}}>{selectedPlace.location?.titulo ?? `Lugar #${selectedPlace.fk_location}`}</h3>
               <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {fmtDate(selectedPlace.date)}</p>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {fmtHour(selectedPlace.start_hour)} - {fmtHour(selectedPlace.end_hour)} </p>`
+              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {fmtHour(selectedPlace.start_hour)} - {fmtHour(selectedPlace.end_hour)} </p>
               <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:</strong> {selectedPlace.notes ? `${selectedPlace.notes}` : '-'}</p>
 
-              {selectedPlace.images && selectedPlace.images.length > 0 && (
+              {selectedPlace.location?.imagenes && selectedPlace.location?.imagenes.length > 0 && (
                   <div style={{marginTop:"10px"}}><strong style={{fontSize:"18px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
                   <div className="place-images">
-                    {selectedPlace.images.map((imgUrl, i) => (
+                    {selectedPlace.location?.imagenes.map((imgUrl, i) => (
                         <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
                     ))}
                   </div></div>

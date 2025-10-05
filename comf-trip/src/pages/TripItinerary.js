@@ -16,7 +16,7 @@ export default function TripItinerary() {
   const tripId = Number(tripIdRaw);
   const [menuOpen, setMenuOpen] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const today = new Date();
+  const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
 
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState(null);
@@ -112,10 +112,18 @@ export default function TripItinerary() {
     }
   }
 
+    const normalizeDate=(d)=>{
+        if(!d) return new Date();
+        const date=d.split("T")[0].split("-");
+        const yy = Number(date[0]);
+        const mm =Number(date[1])-1;
+        const dd = Number(date[2]);
+        return new Date(yy, mm, dd);
+    }
+
   if (loading) {
     return (
       <div className="trip-it-root">
-        <Header/>
         <main className="trip-it-main" style={{
           display: "flex",
           justifyContent: "center",
@@ -199,7 +207,7 @@ export default function TripItinerary() {
             ) : (
               (trip.places || []).map((p,i) => (
                 <div key={p.id} className="place-item"
-                     style={{borderColor: ((selectedPlace?.id === p.id) ? "#ff3951":""), backgroundColor: (new Date(p.date)<today) ? "#fafafa": ""}}>
+                     style={{borderColor: ((selectedPlace?.id === p.id) ? "#ff3951":""), backgroundColor: (normalizeDate(p.date)<today) ? "#fafafa": ""}}>
                 <div style={{width: "100%"}} onClick={() => {
                   if (selectedPlace?.id === p.id) {
                     setSelectedPlace(null);

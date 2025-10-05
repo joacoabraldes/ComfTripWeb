@@ -190,6 +190,12 @@ export default function Trips() {
                                     </svg>
                                   </button>
 
+                                    <button className="trip-menu-btn"
+                                            onClick={() => {navigate(`/edit-trip/${t.id}`)
+                                                setMenuOpen(null)
+                                            }}
+                                    >✎</button>
+
                                   <button className="trip-menu-btn"
                                           onClick={async () => {
                                             if (window.confirm(`¿Seguro que deseas eliminar el viaje a ${t.destination}?`)) {

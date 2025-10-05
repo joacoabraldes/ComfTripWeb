@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, {useEffect, useState, useRef} from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/home.css";
 
@@ -13,7 +13,6 @@ export default function Home() {
   const [popular, setPopular] = useState([]);
   const [loadingTrips, setLoadingTrips] = useState(true);
   const [loadingPopular, setLoadingPopular] = useState(true);
-  const [error, setError] = useState(null);
 
   // carousel state
   const [index, setIndex] = useState(0);
@@ -25,7 +24,6 @@ export default function Home() {
     let mounted = true;
     (async () => {
       setLoadingTrips(true);
-      setError(null);
       try {
         const data = await apiGet("/trips");
         if (!mounted) return;
@@ -33,7 +31,6 @@ export default function Home() {
         setTrips(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Home: fetch trips error", err);
-        setError("No se pudieron cargar tus viajes. ¿Estás logueado?");
         setTrips([]);
       } finally {
         if (mounted) setLoadingTrips(false);
@@ -81,6 +78,14 @@ export default function Home() {
         return `${dd}/${mm}/${yy}`;
     };
 
+    const fmtHour=(t)=>{
+        if(!t) return "-";
+        const time=t.split(":");
+        const hour=time[0];
+        const min=time[1];
+        return `${hour}:${min}`
+    }
+
   function goPrev() {
     setIndex((i) => (i - 1 + carouselLen) % carouselLen);
   }
@@ -94,37 +99,182 @@ export default function Home() {
 
   const nextTrip = upcoming.length ? upcoming[0] : null;
 
-  return (
+    const normalizeDate=(d)=>{
+        if(!d) return new Date();
+        const date=d.split("T")[0].split("-");
+        const yy = Number(date[0]);
+        const mm =Number(date[1])-1;
+        const dd = Number(date[2]);
+        return new Date(yy, mm, dd);
+    }
+
+    const safeParseImages = (im) => {
+        if (!im) return [];
+        if (Array.isArray(im)) return im;
+        if (typeof im === "string") {
+            try {
+                const parsed = JSON.parse(im);
+                if (Array.isArray(parsed)) return parsed;
+                return [parsed];
+            } catch (e) {
+                return [im];
+            }
+        }
+        return [];
+    };
+
+    const [currentTrip, setCurrentTrip]=useState(null);
+    const [currentPlace, setCurrentPlace]=useState(null);
+    const [nextPlace, setNextPlace]=useState(null);
+    const [hasNextToday, setHasNextToday]=useState(true);
+    const [loadingCurrent, setLoadingCurrent]=useState(true);
+    useEffect(() => {
+        function updateStatus() {
+            const now = new Date();
+            const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            // Determinar si estamos en un viaje actual
+            const tripNow =
+                nextTrip &&
+                normalizeDate(nextTrip.start_date) <= currentDay &&
+                normalizeDate(nextTrip.end_date) >= currentDay ? nextTrip : null;
+
+            setCurrentTrip(tripNow);
+
+            if (!tripNow) {
+                setCurrentPlace(null);
+                return;
+            }
+
+            // Calcular si estamos en un place en este momento
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            const todayDate = currentDay.getTime();
+
+            const placeNow = tripNow.places.find((p) => {
+                const pDate = normalizeDate(p.date).getTime();
+                if (pDate !== todayDate) return false;
+
+                const [sh, sm] = p.start_hour.split(":").map(Number);
+                const [eh, em] = p.end_hour.split(":").map(Number);
+
+                const startMinutes = sh * 60 + sm;
+                const endMinutes = eh * 60 + em;
+
+                return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+            });
+
+            setCurrentPlace(placeNow || null);
+
+            const placeNext = tripNow.places.find((p) => {
+                const pDate = normalizeDate(p.date).getTime();
+                if (pDate !== todayDate){
+                    setHasNextToday(false);
+                    if(pDate>todayDate) return true
+                }
+                const [sh, sm] = p.start_hour.split(":").map(Number);
+                const startMinutes = sh * 60 + sm;
+
+                return nowMinutes < startMinutes;
+            });
+            setNextPlace(placeNext || null);
+            if(!placeNext) setHasNextToday(false);
+            setLoadingCurrent(false);
+        }
+
+        // primera ejecución inmediata
+        updateStatus();
+
+
+        // volver a chequear cada minuto
+        const interval = setInterval(updateStatus, 60 * 1000);
+
+        return () => clearInterval(interval);
+    }, [nextTrip]);
+
+
+
+    return (
     <div className="home-root">
       <Header />
 
       <main className="hero">
         <div className="hero-left">
+            {loadingTrips || loadingCurrent ? (
+                <div className="muted" style={{fontSize:"25px"}}>Cargando viajes…</div>
+            ) :(<div>
           <div className="hero-top">
+
             <h1 style={{ margin: 0 }}>
-              {nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?"}
+              {currentTrip ? `Estas en ${currentTrip.destination}` : (nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?")}
             </h1>
-            <p className="hero-sub">
+            <p className="hero-sub" style={{ marginBottom: 0 }}>
               {nextTrip
                 ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
                 : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
             </p>
+              <div className="home-actions" >
+                  {nextTrip && (
+                      <button className="btn-ghost" onClick={() => navigate(`/trip_itinerary/${nextTrip.id}`)}>
+                          Ver itinerario<div>
+                          ▶
+                      </div>
+                      </button>
+                  )}
+              </div>
           </div>
+            {currentPlace || nextPlace ? (
+                <div>{currentPlace && (
+                    <div style={{ paddingBottom: "5px" }}>
+                        <h2>Actividad actual:</h2>
+                        <div className="place-row" style={{backgroundColor:"#fff6f7"}}>
+                            <img
+                                src={safeParseImages(currentPlace.location?.imagenes)[0]}
+                                className="place-img"
+                                alt="Lugar actual"
+                            />
+                            <div className="place-info">
+                                <h2>{currentPlace.location?.titulo}</h2>
+                                <p className="sub-title">
+                                    {fmtDate(currentPlace.date)}
+                                </p>
+                                <p className="sub-title">
+                                    {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)}
+                                </p>
+                            </div>
+                        </div>
+                        <p className="sub-title">
+                            {hasNextToday ? "" : "Esta es la última actividad del día"}
+                        </p>
+                    </div>
+                )}
+                    {nextPlace && (
+                        <div>
+                            <h2>Próxima actividad:</h2>
+                            <div className="place-row">
+                                <img
+                                    src={safeParseImages(nextPlace.location?.imagenes)[0]}
+                                    className="place-img"
+                                    alt="Próximo lugar"
+                                />
+                                <div className="place-info">
+                                    <h3>{nextPlace.location?.titulo}</h3>
+                                    <p>
+                                        {fmtDate(nextPlace.date)}
+                                    </p>
+                                    <p>
+                                        {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-          <div className="home-actions">
-            <button className="btn-primary" onClick={() => navigate("/add-trip")}>Nuevo viaje</button>
-            {nextTrip && (
-              <button className="btn-ghost" onClick={() => navigate(`/trip_itinerary/${nextTrip.id}`)}>
-                Ver itinerario
-              </button>
-            )}
-          </div>
-
+                </div>
+            ) : (
+                <div>
           <section style={{ marginTop: 22 }}>
             <h3 style={{ marginBottom: 10 }}>Tus viajes</h3>
-            {loadingTrips ? (
-              <div className="muted">Cargando viajes…</div>
-            ) : trips.length === 0 ? (
+              { trips.length === 0 ? (
               <div className="muted">No tienes viajes. Empieza creando uno 😉</div>
             ) : (
               <div className="trips-preview">
@@ -147,8 +297,9 @@ export default function Home() {
                   <button className="see-all" onClick={() => navigate("/trips")}>Ver todos</button>
                 )}
               </div>
-            )}
+            )}<button className="btn-primary" onClick={() => navigate("/add-trip")}>Nuevo viaje</button>
           </section>
+            </div>)}</div>)}
         </div>
 
         <div className="hero-right">

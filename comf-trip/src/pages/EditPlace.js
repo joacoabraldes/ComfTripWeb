@@ -1,7 +1,6 @@
 // src/pages/EditPlace.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import MapSvg from "../components/MapSvg";
 import TimePicker from "../components/TimePicker";
 import "../styles/tripItinerary.css";
 import "../styles/addPlace.css";

@@ -213,8 +213,11 @@ body {
 
 /* actions */
 .home-actions { display:flex; gap:12px; margin-top: 8px; align-items:center; }
-.btn-ghost { background: transparent; border: 1px solid #eee; padding: 10px 14px; border-radius: 8px; cursor: pointer; color: #333; }
+.btn-ghost { display:flex; justify-content:space-between; align-items:center; background: transparent;
+    border: 1px solid #eee; padding: 10px 14px; border-radius: 8px; cursor: pointer; color: #333; width: 100%;
+font-size: 18px; margin-bottom: 20px; margin-top: 20px}
 .btn-ghost:hover { border-color: #ddd; }
+.btn-ghost-left { display:flex; flex-direction: column; }
 
 /* trips preview */
 .trips-preview { display:flex; flex-direction: column; gap: 8px; margin-top: 8px; }
@@ -253,3 +256,33 @@ body {
 
 /* small polish */
 .muted { color:#888; font-size: 15px; }
+
+.place-row {
+    display: flex;
+    align-items: center; /* centra verticalmente la imagen y el texto */
+    gap: 15px; /* espacio entre imagen e info */
+    padding: 10px;
+    background-color:#fff6f7;
+    border-radius: 8px;
+}
+
+.place-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+}
+.place-info h3{
+    margin-top: 0;
+}
+
+.place-info p{
+    margin-top: 4px;
+}
+
+.place-img {
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}

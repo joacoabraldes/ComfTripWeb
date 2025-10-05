@@ -17,6 +17,7 @@ import Home from "./pages/Home";
 import TripItinerary from "./pages/TripItinerary";
 import InterestsPage from "./pages/Interests"; // add this import
 import Explore from "./pages/Explore";
+import Community from "./pages/Community";
 
 // ... inside <Routes>
 
@@ -117,6 +118,7 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+          <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
 
           {/* fallback: send to error */}
           <Route path="*" element={<Navigate to="/error" replace />} />

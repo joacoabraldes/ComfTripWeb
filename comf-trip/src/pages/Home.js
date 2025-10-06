@@ -161,7 +161,7 @@ export default function Home() {
             const placeNow = tripNow.places.find((p) => {
                 const pDate = normalizeDate(p.date).getTime();
                 if (pDate !== todayDate) return false;
-
+                if(!p.start_hour && !p.end_hour) return false;
                 const [sh, sm] = p.start_hour.split(":").map(Number);
                 const [eh, em] = p.end_hour.split(":").map(Number);
 
@@ -179,6 +179,7 @@ export default function Home() {
                     setHasNextToday(false);
                     return pDate>todayDate;
                 }
+                if(!p.start_hour) return true;
                 const [sh, sm] = p.start_hour.split(":").map(Number);
                 const startMinutes = sh * 60 + sm;
                 setHasNextToday(true);
@@ -202,6 +203,7 @@ export default function Home() {
     const timeBetween=()=>{
         if(!hasNextToday) return "";
         if(currentPlace){
+            if(!nextPlace.start_hour && !currentPlace.end_hour) return "";
             const [sh, sm] = nextPlace.start_hour.split(":").map(Number);
             const [eh, em] = currentPlace.end_hour.split(":").map(Number);
 
@@ -215,6 +217,7 @@ export default function Home() {
             ${H&&M ? " y ":" "}${M ? `${M} minuto${M===1? "":"s"}` : ""} para la proxima actividad`
         }
         const today=new Date();
+        if(!nextPlace.start_hour) return "";
         const [sh, sm] = nextPlace.start_hour.split(":").map(Number);
 
         const minutesBetween =(sh * 60 + sm)-(today.getHours() * 60 + today.getMinutes());

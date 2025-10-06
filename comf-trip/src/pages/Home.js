@@ -259,7 +259,14 @@ export default function Home() {
         })
         : popular;
 
-
+    if(loadingTrips || loadingCurrent || loadingPopular){
+        return (<div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh"
+        }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando viajes…</div></div>)
+    }
 
     return (
     <div className="home-root">
@@ -267,9 +274,6 @@ export default function Home() {
 
       <main className="hero">
         <div className="hero-left">
-            {(loadingTrips || loadingCurrent) ? (
-                <div className="muted" style={{fontSize:"25px"}}>Cargando viajes…</div>
-            ) :(<div>
           <div className="hero-top">
 
             <h1 style={{ margin: 0 }}>
@@ -331,7 +335,7 @@ export default function Home() {
 
                     </div>
                 )}<p className="sub-title">
-                    {hasNextToday ? timeBetween() : "Esta es la última actividad del día"}
+                    {hasNextToday ? timeBetween() :(currentPlace? "Esta es la última actividad del día": "")}
                 </p>
                     {nextPlace && (
                         <div>
@@ -374,8 +378,8 @@ export default function Home() {
                     )}
 
                 </div>
-            ) : (
-                <div>
+            ) : (<div> {!nextPlace && currentTrip ? (<div className="muted">No tienes mas actividades en este viaje. Agrega uno nuevo </div>) : (<div>
+
           <section style={{ marginTop: 22 }}>
             <h3 style={{ marginBottom: 10 }}>Tus viajes</h3>
               { trips.length === 0 ? (
@@ -599,9 +603,7 @@ export default function Home() {
 
                     </Map>
                 </div>)
-                : (<div>{(loadingPopular || loadingCurrent) ? (
-                            <div></div>):(<div>
-
+                : (<div>
           <h3 style={{ marginTop: 0 }}>Lugares recomendados</h3>
 
           <div className="carousel">
@@ -652,7 +654,7 @@ export default function Home() {
                 </div>
               </>
             )}
-          </div></div>)}</div>)}
+          </div></div>)}
         </div>
       </main>
     </div>

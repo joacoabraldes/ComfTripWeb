@@ -40,12 +40,12 @@ function parseImagesField(imgField) {
         if (typeof parsed === "object") return [parsed];
       }
       // fallback: split by commas (very tolerant)
-      const maybe = trimmed.replace(/^\[|\]$/g, "").replace(/(^"|"$)/g, "").split(",").map(s => s.trim()).filter(Boolean);
+      const maybe = trimmed.replace(/^\[|$/g, "").replace(/(^"|"$)/g, "").split(",").map(s => s.trim()).filter(Boolean);
       return maybe;
     }
   } catch (e) {
     // fallback splitting
-    const maybe = String(imgField).replace(/^\[|\]$/g, "").replace(/"/g, "").split(",").map(s => s.trim()).filter(Boolean);
+    const maybe = String(imgField).replace(/^\[|$/g, "").replace(/"/g, "").split(",").map(s => s.trim()).filter(Boolean);
     return maybe;
   }
   return [];
@@ -318,11 +318,12 @@ export default function MapPage() {
               <Popup
                 longitude={selectedLocation.longitude}
                 latitude={selectedLocation.latitude}
-                anchor="top"
+                anchor="left"
                 onClose={() => setSelectedLocation(null)}
                 closeOnClick={false}
+                offset={[-5, -43]}
               >
-                <div style={{ maxWidth: 260 }}>
+                <div style={{ maxWidth: 260}}>
                   <h3 style={{ margin: "0 0 6px 0" }}>{selectedLocation.titulo}</h3>
                   <div style={{ fontSize: 13, color: "#444", marginBottom: 6 }}>
                     {selectedLocation.descripcion?.slice(0, 200)}
@@ -331,7 +332,7 @@ export default function MapPage() {
                     <img
                       src={selectedLocation.imagenes[0]}
                       alt={selectedLocation.titulo}
-                      style={{ width: "100%", height: "auto", borderRadius: 6 }}
+                      style={{ width: "100%", height: "auto", maxHeight:150, borderRadius: 6 }}
                       onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                   )}

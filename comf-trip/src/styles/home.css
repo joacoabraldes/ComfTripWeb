@@ -12,7 +12,7 @@
   --radius: 8px;
   --max-width: 1200px;
   --gutter: 24px;
-  --header-height: 72px;
+  --header-height: 60px;
 }
 
 * { box-sizing: border-box; }
@@ -43,8 +43,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  min-height: calc(100vh - 160px);
+  gap: 40px;
 }
 
 /* text block on the left */
@@ -208,10 +207,10 @@ body {
 
 /* ---------- Home enhancements: carousel + trip cards ---------- */
 
-.hero-left { width: 48%; display:flex; flex-direction: column; gap: 12px; }
-.hero-right { width: 48%; display:flex; flex-direction: column; gap: 12px; }
+.hero-left { width: 90%; display:flex; flex-direction: column; gap: 12px; }
+.hero-right { width: 110%; display:flex; flex-direction: column; gap: 12px; }
 .hero-right > div {
-    width: 900px;
+    width: 100%;
     height: 100%;
     min-height: 400px;
     min-width: 700px;

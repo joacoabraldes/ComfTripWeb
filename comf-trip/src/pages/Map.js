@@ -40,13 +40,11 @@ function parseImagesField(imgField) {
         if (typeof parsed === "object") return [parsed];
       }
       // fallback: split by commas (very tolerant)
-      const maybe = trimmed.replace(/^\[|$/g, "").replace(/(^"|"$)/g, "").split(",").map(s => s.trim()).filter(Boolean);
-      return maybe;
+      return trimmed.replace(/^\[|$/g, "").replace(/(^"|"$)/g, "").split(",").map(s => s.trim()).filter(Boolean);
     }
   } catch (e) {
     // fallback splitting
-    const maybe = String(imgField).replace(/^\[|$/g, "").replace(/"/g, "").split(",").map(s => s.trim()).filter(Boolean);
-    return maybe;
+    return String(imgField).replace(/^\[|$/g, "").replace(/"/g, "").split(",").map(s => s.trim()).filter(Boolean);
   }
   return [];
 }

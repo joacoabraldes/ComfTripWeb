@@ -161,7 +161,7 @@ export default function Home() {
             const placeNow = tripNow.places.find((p) => {
                 const pDate = normalizeDate(p.date).getTime();
                 if (pDate !== todayDate) return false;
-                if(!p.start_hour && !p.end_hour) return false;
+                if(!p.start_hour && !p.end_hour) return true;
                 const [sh, sm] = p.start_hour.split(":").map(Number);
                 const [eh, em] = p.end_hour.split(":").map(Number);
 

@@ -599,14 +599,15 @@ export default function Home() {
 
                     </Map>
                 </div>)
-                : (<div>
+                : (<div>{(loadingPopular || loadingCurrent) ? (
+                            <div></div>):(<div>
+
           <h3 style={{ marginTop: 0 }}>Lugares recomendados</h3>
 
           <div className="carousel">
             <div className="carousel-inner" style={{ transform: `translateX(-${index * 100}%)` }}>
-              {loadingPopular ? (
-                <div className="carousel-item empty">Cargando lugares…</div>
-              ) : popular.length === 0 ? (
+
+                {popular.length === 0 ? (
                 <div className="carousel-item empty">No hay lugares para mostrar</div>
               ) : (
                 popular.map((loc) => {
@@ -651,7 +652,7 @@ export default function Home() {
                 </div>
               </>
             )}
-          </div></div>)}
+          </div></div>)}</div>)}
         </div>
       </main>
     </div>

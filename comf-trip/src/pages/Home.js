@@ -186,7 +186,7 @@ export default function Home() {
             });
             setNextPlace(placeNext || null);
             if(!placeNext) setHasNextToday(false);
-            setLoadingCurrent(false);
+
         }
 
         // primera ejecución inmediata
@@ -195,7 +195,7 @@ export default function Home() {
 
         // volver a chequear cada minuto
         const interval = setInterval(updateStatus, 60 * 1000);
-
+        setLoadingCurrent(false);
         return () => clearInterval(interval);
     }, [nextTrip]);
 
@@ -264,7 +264,7 @@ export default function Home() {
 
       <main className="hero">
         <div className="hero-left">
-            {loadingTrips || loadingCurrent ? (
+            {(loadingTrips || loadingCurrent) ? (
                 <div className="muted" style={{fontSize:"25px"}}>Cargando viajes…</div>
             ) :(<div>
           <div className="hero-top">

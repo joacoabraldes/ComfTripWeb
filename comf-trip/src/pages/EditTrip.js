@@ -229,7 +229,6 @@ export default function EditTrip() {
     if (loadingOpen) {
         return (
             <div className="trip-it-root">
-                <Header/>
                 <main className="trip-it-main" style={{
                     display: "flex",
                     justifyContent: "center",
@@ -244,6 +243,7 @@ export default function EditTrip() {
 
     return (
         <div className="add-trip-root" >
+            <Header/>
             <div className="add-trip-container" >
                 {/* LEFT: Form */}
                 <div className="add-trip-left">

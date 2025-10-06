@@ -1,7 +1,6 @@
 // src/pages/TripItinerary.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import MapSvg from "../components/MapSvg";
 import "../styles/tripItinerary.css";
 import Header from "../components/Header";
 import TimePicker from "../components/TimePicker"
@@ -9,7 +8,9 @@ import "../styles/addPlace.css";
 import "../styles/auth.css"
 import Select from "react-select";
 
-import { apiGet, apiPost } from "./api"; // tus helpers
+import { apiGet, apiPost } from "./api";
+import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 // const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 //
@@ -49,6 +50,12 @@ export default function AddPlace() {
     const [notes, setNotes] = useState("");
     const [adding, setAdding] = useState(false);
     const [error, setError] = useState(null);
+    const [viewState, setViewState] = useState({
+        latitude: -34.6037,
+        longitude: -58.3816,
+        zoom: 12
+    });
+    const [selectedLocationOnMap, setSelectedLocationOnMap] = useState(null);
 
     const normalizeDate=(d)=>{
         if(!d) return null;
@@ -111,6 +118,13 @@ export default function AddPlace() {
     useEffect(() => {
         setEndHour("");
     }, [startHour]);
+
+    useEffect(()=>{
+        if(!locationInfo) return;
+        const lat = Number(locationInfo.latitude);
+        const lng = Number(locationInfo.longitude);
+        setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
+    },[locationInfo])
 
     const fmtDate = (d) => {
         if(!d) return "-"
@@ -263,7 +277,6 @@ export default function AddPlace() {
     if (loading) {
         return (
             <div className="trip-it-root">
-                <Header/>
                 <main className="trip-it-main" style={{
                     display: "flex",
                     justifyContent: "center",
@@ -327,7 +340,11 @@ export default function AddPlace() {
                                 setSelectedLocation(option.value);
                                 const loc = locations.find(l => l.id === option.value);
                                 setLocationInfo(loc || "");
-                            }}
+                                if(locationInfo){
+                                    const lat = Number(locationInfo.latitude);
+                                    const lng = Number(locationInfo.longitude);
+                                    setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
+                            }}}
                             placeholder="Buscar ubicación..."
                         />
 
@@ -403,26 +420,187 @@ export default function AddPlace() {
 
                 <section className="trip-it-right">
                     {!locationInfo ? (
-                    <div className="map-wrapper">
-                        <MapSvg width={999} height={800} />
-                    </div>) : (
+                        <div className="map-wrapper" style={{height: "100%"}}>
+                            <Map
+                                {...viewState}
+                                onMove={(evt) => setViewState(evt.viewState)}
+                                style={{ width: "100%", height: "100%", borderRadius: "10px" }}
+                                mapStyle="mapbox://styles/mapbox/streets-v11"
+                                mapboxAccessToken={MAPBOX_TOKEN}
+                            >
+                                <div style={{ position: "absolute", right: 10, top: 10, zIndex: 1 }}>
+                                    <NavigationControl showCompass showZoom />
+                                </div>
+
+                                {locations.map((loc) => (
+                                    <Marker
+                                        key={`m-${loc.id}`}
+                                        longitude={Number(loc.longitude)}
+                                        latitude={Number(loc.latitude)}
+                                        anchor="bottom"
+                                    >
+                                        <div
+                                            onMouseEnter={() =>
+                                                setSelectedLocationOnMap({
+                                                    latitude: loc.latitude,
+                                                    longitude: loc.longitude,
+                                                    titulo: loc.titulo,
+                                                    interes:loc.fk_interest,
+                                                    image:loc.imagenes[0]
+                                                })
+                                            }
+                                            onMouseLeave={() => setSelectedLocationOnMap(null)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedLocation(loc.id);
+                                                setLocationInfo(loc);
+                                                setViewState((v) => ({
+                                                    ...v,
+                                                    latitude: Number(loc.latitude),
+                                                    longitude: Number(loc.longitude),
+                                                    zoom: 16
+                                                }));
+                                            }}
+                                            style={{ cursor: "pointer" }}
+                                        >
+                                            <svg
+                                                width="24"
+                                                height="24"
+                                                viewBox="0 0 24 24"
+                                                style={{ transform: "translate(-12px,-24px)" }}
+                                                xmlns="http://www.w3.org/2000/svg"
+                                            >
+                                                <path
+                                                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                    fill="#ff3951"
+                                                />
+                                                <circle cx="12" cy="9" r="2.5" fill="#fff" />
+                                            </svg>
+                                        </div>
+                                    </Marker>
+
+                                ))}
+
+                                {selectedLocationOnMap && (
+                                    <Popup
+                                        longitude={Number(selectedLocationOnMap.longitude)}
+                                        latitude={Number(selectedLocationOnMap.latitude)}
+                                        anchor="bottom"
+                                        closeButton={false}
+                                        offset={[-12, -53]}
+                                    >
+                                        <div className="place-popUp">
+                                            <img
+                                                src={selectedLocationOnMap.image}
+                                                className="img-popUp"
+                                                alt="Lugar actual"
+                                            />
+                                            <div className="place-info">
+                                                <h3>{selectedLocationOnMap.titulo}</h3>
+                                                {selectedLocationOnMap && (<p>
+                                                    {selectedLocationOnMap.interes}
+                                                </p>)}
+                                            </div>
+                                        </div>
+                                    </Popup>
+                                )}
+                            </Map>
+                        </div>) : (
                         <div className="place-detail">
-                            <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{locationInfo.titulo}</h3>
-                            <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({locationInfo.fk_interest})</p>
+                            <div className="place-it-row">
+                                <img
+                                    src={imgs[0]}
+                                    className="place-image"
+                                    alt="Lugar actual"
+                                />
+                                <div className="place-it-info">
+                                    <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{locationInfo.titulo}</h3>
+                                    <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({locationInfo.fk_interest})</p></div></div>
                             <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion: </strong>
                                 {locationInfo.descripcion ? locationInfo.descripcion : ""}</p>
+                            <div style={{ flex: 1, marginTop: 20 }}>
+                                <Map
+                                    {...viewState}
+                                    onMove={(evt) => setViewState(evt.viewState)}
+                                    style={{ width: "100%", height: "100%", borderRadius: "10px" }}
+                                    mapStyle="mapbox://styles/mapbox/streets-v11"
+                                    mapboxAccessToken={MAPBOX_TOKEN}
+                                >
+                                    <NavigationControl position="top-right" />
+                                    {locations.map((loc) => (
+                                        <Marker
+                                            key={`m-${loc.id}`}
+                                            longitude={Number(loc.longitude)}
+                                            latitude={Number(loc.latitude)}
+                                            anchor="bottom"
+                                        >
+                                            <div
+                                                onMouseEnter={() =>
+                                                    setSelectedLocationOnMap({
+                                                        latitude: loc.latitude,
+                                                        longitude: loc.longitude,
+                                                        titulo: loc.titulo,
+                                                        interes:loc.fk_interest,
+                                                        image:loc.imagenes[0]
+                                                    })
+                                                }
+                                                onMouseLeave={() => setSelectedLocationOnMap(null)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedLocation(loc.id);
+                                                    setLocationInfo(loc);
+                                                    setViewState((v) => ({
+                                                        ...v,
+                                                        latitude: Number(loc.latitude),
+                                                        longitude: Number(loc.longitude),
+                                                        zoom: 16
+                                                    }));
+                                                }}
+                                                style={{ cursor: "pointer" }}
+                                            >
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    style={{ transform: "translate(-12px,-24px)" }}
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <path
+                                                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                        fill="#ff3951"
+                                                    />
+                                                    <circle cx="12" cy="9" r="2.5" fill="#fff" />
+                                                </svg>
+                                            </div>
+                                        </Marker>
 
-                            {/* Imágenes */}
+                                    ))}
 
-                            {imgs && imgs.length > 0 && (
-                                <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
-                                    <div className="place-images">
-                                        {imgs.map((imgUrl, i) => (
-                                            <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
-                                        ))}
-                                    </div></div>
-                            )}
-                            <div style={{marginTop:"-60px"}}><strong style={{fontSize:"20px", marginBottom:"5px"}}>Mapa</strong></div>
+                                    {selectedLocationOnMap && (
+                                        <Popup
+                                            longitude={Number(selectedLocationOnMap.longitude)}
+                                            latitude={Number(selectedLocationOnMap.latitude)}
+                                            anchor="bottom"
+                                            closeButton={false}
+                                            offset={[-12, -53]}
+                                        >
+                                            <div className="place-popUp">
+                                                <img
+                                                    src={selectedLocationOnMap.image}
+                                                    className="img-popUp"
+                                                    alt="Lugar actual"
+                                                />
+                                                <div className="place-info">
+                                                    <h3>{selectedLocationOnMap.titulo}</h3>
+                                                    {selectedLocationOnMap && (<p>
+                                                        {selectedLocationOnMap.interes}
+                                                    </p>)}
+                                                </div>
+                                            </div>
+                                        </Popup>
+                                    )}
+                                </Map>
+                            </div>
                         </div>
                     )}
                 </section>

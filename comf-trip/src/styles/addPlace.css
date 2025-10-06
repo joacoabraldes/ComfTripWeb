@@ -2,10 +2,11 @@
     width: 100%;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
     gap: 16px;
-    padding: 20px;
     background: #ffffff;
     height: 100%;
+    padding-right: 20px;
 }
 
 .trip-it-form label {

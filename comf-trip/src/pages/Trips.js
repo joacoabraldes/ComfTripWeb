@@ -226,6 +226,11 @@ export default function Trips() {
                                       stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </button>
+                              <button className="trip-menu-btn"
+                                      onClick={() => {navigate(`/edit-trip/${t.id}`)
+                                          setMenuOpen(null)
+                                      }}
+                              >✎</button>
 
                             <button
                               className="trip-menu-btn"
@@ -241,10 +246,7 @@ export default function Trips() {
                                   }
                                 }
                               }}
-                            >
-                              <svg width="20" height="20" viewBox="0 0 45 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M5.625 10.75H9.375M9.375 10.75H39.375M9.375 10.75V35.8333C9.375 36.7837 9.77009 37.6951 10.4733 38.3671C11.1766 39.0391 12.1304 39.4167 13.125 39.4167H31.875C32.8696 39.4167 33.8234 39.0391 34.5266 38.3671C35.2299 37.6951 35.625 36.7837 35.625 35.8333V10.75M15 10.75V7.16667C15 6.21631 15.3951 5.30487 16.0984 4.63287C16.8016 3.96086 17.7554 3.58333 18.75 3.58333H26.25C27.2446 3.58333 28.1984 3.96086 28.9016 4.63287C29.6049 5.30487 30 6.21631 30 7.16667V10.75M18.75 19.7083V30.4583M26.25 19.7083V30.4583" stroke="#1E1E1E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                            >🗑
                             </button>
                           </div>
                         )}

@@ -121,6 +121,22 @@ export default function TripItinerary() {
         return new Date(yy, mm, dd);
     }
 
+    const pastPlace=(d, et)=>{
+        if(!d || !et) return false;
+        if(normalizeDate(d).getTime()===today.getTime()){
+            //const [sh, sm] = st.split(":").map(Number);
+            const [eh, em] = et.split(":").map(Number);
+
+            //const startMinutes = sh * 60 + sm;
+            const endMinutes = eh * 60 + em;
+            const t=new Date();
+            const currentTime=(t.getHours())*60+(t.getMinutes());
+            return endMinutes<currentTime;
+        }
+        return normalizeDate(d)<today;
+
+    }
+
   if (loading) {
     return (
       <div className="trip-it-root">
@@ -165,10 +181,11 @@ export default function TripItinerary() {
       const lat = loc.latitude !== undefined ? Number(loc.latitude) : (loc.latitud !== undefined ? Number(loc.latitud) : null);
       const lng = loc.longitude !== undefined ? Number(loc.longitude) : (loc.longitud !== undefined ? Number(loc.longitud) : null);
       return {
-        place: p,
-        latitude: lat,
-        longitude: lng,
-        title: loc.titulo
+          place: p,
+          latitude: lat,
+          longitude: lng,
+          title: loc.titulo,
+          images:loc.imagenes
       };
     })
     .filter(m => m.latitude != null && m.longitude != null);
@@ -207,29 +224,26 @@ export default function TripItinerary() {
             ) : (
               (trip.places || []).map((p,i) => (
                 <div key={p.id} className="place-item"
-                     style={{borderColor: ((selectedPlace?.id === p.id) ? "#ff3951":""), backgroundColor: (normalizeDate(p.date)<today) ? "#fafafa": ""}}>
+                     style={{borderColor: ((selectedPlace?.id === p.id) ? "#ff3951":""), backgroundColor: pastPlace(p.date, p.end_hour) ? "#fafafa": ""}}>
                 <div style={{width: "100%"}} onClick={() => {
                   if (selectedPlace?.id === p.id) {
                     setSelectedPlace(null);
                     setSelectedLocationOnMap(null);
+                      const lat = Number(p.location.latitude ?? p.location.latitud);
+                      const lng = Number(p.location.longitude ?? p.location.longitud);
+                      setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 12 }));
                   } else {
                     setSelectedPlace(p);
-                    setSelectedLocationOnMap({
-                      latitude: p.location?.latitude ?? p.location?.latitud,
-                      longitude: p.location?.longitude ?? p.location?.longitud,
-                      titulo: p.location?.titulo
-                    });
                     if (p.location && (p.location.latitude || p.location.latitud)) {
                       const lat = Number(p.location.latitude ?? p.location.latitud);
                       const lng = Number(p.location.longitude ?? p.location.longitud);
-                      setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 13 }));
+                      setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
                     }
                   }
                   setMenuOpen(!menuOpen);}}>
                   <div className="place-main">
                     <div className="place-title">{p.location?.titulo ?? `Lugar #${p.fk_location}`}</div>
                     <div className="place-meta">{fmtDate(p.date)} {fmtHour(p.start_hour)} {` - ${fmtHour(p.end_hour)}`}</div>
-                    {p.notes && <div className="place-notes">{p.notes}</div>}
                   </div></div>
                   <div className="trip-menu-wrapper">
                     <button
@@ -237,6 +251,11 @@ export default function TripItinerary() {
                         onClick={() =>
                         {setMenuOpen(menuOpen === p.id ? null : p.id)
                             setSelectedPlace(p);
+                            if (p.location && (p.location.latitude || p.location.latitud)) {
+                                const lat = Number(p.location.latitude ?? p.location.latitud);
+                                const lng = Number(p.location.longitude ?? p.location.longitud);
+                                setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
+                            }
                         }}
                     >⋮
                     </button>
@@ -275,7 +294,7 @@ export default function TripItinerary() {
               <Map
                 {...viewState}
                 onMove={(evt) => setViewState(evt.viewState)}
-                style={{ width: "100%", height: "100%" }}
+                style={{ width: "100%", height: "100%", borderRadius: "10px" }}
                 mapStyle="mapbox://styles/mapbox/streets-v11"
                 mapboxAccessToken={MAPBOX_TOKEN}
               >
@@ -288,58 +307,159 @@ export default function TripItinerary() {
                     key={`m-${m.place.id}`}
                     longitude={Number(m.longitude)}
                     latitude={Number(m.latitude)}
-                    anchor="bottom"
-                    onClick={(e) => {
-                      e.originalEvent && e.originalEvent.stopPropagation();
-                      setSelectedPlace(m.place);
-                      setSelectedLocationOnMap({ latitude: m.latitude, longitude: m.longitude, titulo: m.title });
-                      setViewState((v) => ({ ...v, latitude: Number(m.latitude), longitude: Number(m.longitude), zoom: 14 }));
-                    }}
-                  >
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      style={{ transform: "translate(-12px,-24px)", cursor: "pointer" }}
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff3951" />
-                      <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                    </svg>
+                    anchor="bottom">
+                      <div
+                          onMouseEnter={() =>
+                          setSelectedLocationOnMap({
+                              latitude: m.latitude,
+                              longitude: m.longitude,
+                              titulo: m.title,
+                              date: m.place.date,
+                              startHour: m.place.start_hour,
+                              endHour: m.place.end_hour,
+                              image: m.images[0]
+                          })
+                      }
+                          onMouseLeave={() => setSelectedLocationOnMap(null)}
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPlace(m.place);
+                              setViewState((v) => ({ ...v, latitude: Number(m.latitude), longitude: Number(m.longitude), zoom: 16 }));
+                          }}
+                          >
+                          <svg
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              style={{ transform: "translate(-12px,-24px)", cursor: "pointer" }}
+                              xmlns="http://www.w3.org/2000/svg"
+                          >
+                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff3951" />
+                              <circle cx="12" cy="9" r="2.5" fill="#fff" />
+                          </svg></div>
                   </Marker>
                 ))}
 
-                {selectedLocationOnMap && (
-                  <Popup
-                    longitude={Number(selectedLocationOnMap.longitude)}
-                    latitude={Number(selectedLocationOnMap.latitude)}
-                    anchor="top"
-                    onClose={() => setSelectedLocationOnMap(null)}
-                    closeOnClick={false}
-                  >
-                    <div style={{ maxWidth: 260 }}>
-                      <strong style={{ marginBottom: 6 }}>{selectedLocationOnMap.titulo}</strong>
-                    </div>
-                  </Popup>
-                )}
+                  {selectedLocationOnMap && (
+                      <Popup
+                          longitude={Number(selectedLocationOnMap.longitude)}
+                          latitude={Number(selectedLocationOnMap.latitude)}
+                          anchor="bottom"
+                          closeButton={false}
+                          offset={[-12, -53]}
+                      >
+                          <div className="place-popUp">
+                              <img
+                                  src={selectedLocationOnMap.image}
+                                  className="img-popUp"
+                                  alt="Lugar actual"
+                              />
+                              <div className="place-info">
+                                  <h3>{selectedLocationOnMap.titulo}</h3>
+                                  {selectedLocationOnMap.date && (<p>
+                                      {fmtDate(selectedLocationOnMap.date)}
+                                  </p>)}
+                                  {selectedLocationOnMap.startHour && (
+                                      <p>
+                                          {fmtHour(selectedLocationOnMap.startHour)} - {fmtHour(selectedLocationOnMap.endHour)}
+                                      </p>)}
+                              </div>
+                          </div>
+                      </Popup>
+                  )}
               </Map>
             </div>
           ) : (
             <div className="place-detail">
-              <h3 style={{fontSize:"34px",marginTop:"5px",  marginBottom:"5px"}}>{selectedPlace.location?.titulo ?? `Lugar #${selectedPlace.fk_location}`}</h3>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {fmtDate(selectedPlace.date)}</p>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong> {fmtHour(selectedPlace.start_hour)} - {fmtHour(selectedPlace.end_hour)} </p>
-              <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:</strong> {selectedPlace.notes ? `${selectedPlace.notes}` : '-'}</p>
+                <div className="place-it-row">
+                    <img
+                        src={selectedPlace.location?.imagenes[0]}
+                        className="place-image"
+                        alt="Lugar actual"
+                    />
+                    <div className="place-it-info">
+                        <h3 style={{fontSize:"34px",marginTop:"5px",  marginBottom:"5px"}}>{selectedPlace.location?.titulo ?? `Lugar #${selectedPlace.fk_location}`}</h3>
+                    <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Fecha:</strong> {fmtDate(selectedPlace.date)}</p>
+                        <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Hora:</strong>
+                            {fmtHour(selectedPlace.start_hour)} - {fmtHour(selectedPlace.end_hour)} </p></div></div>
+                        <p style= {{fontSize:"16px",marginTop:"5px",  marginBottom:"5px"}}><strong>Notas:
+                        </strong> {selectedPlace.notes ? `${selectedPlace.notes}` : '-'}</p>
+                <div style={{ flex: 1, marginTop: 20 }}>
+                    <Map
+                        {...viewState}
+                        onMove={(evt) => setViewState(evt.viewState)}
+                        style={{ width: "100%", height: "100%", borderRadius: "10px" }}
+                        mapStyle="mapbox://styles/mapbox/streets-v11"
+                        mapboxAccessToken={MAPBOX_TOKEN}
+                    >
+                        <NavigationControl position="top-right" />
+                        {markers.map((m) => (
+                            <Marker
+                                key={`m-${m.place.id}`}
+                                longitude={Number(m.longitude)}
+                                latitude={Number(m.latitude)}
+                                anchor="bottom">
+                                <div
+                                    onMouseEnter={() =>
+                                        setSelectedLocationOnMap({
+                                            latitude: m.latitude,
+                                            longitude: m.longitude,
+                                            titulo: m.title,
+                                            date: m.place.date,
+                                            startHour: m.place.start_hour,
+                                            endHour: m.place.end_hour,
+                                            image: m.images[0]
+                                        })
+                                    }
+                                    onMouseLeave={() => setSelectedLocationOnMap(null)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedPlace(m.place);
+                                        setViewState((v) => ({ ...v, latitude: Number(m.latitude), longitude: Number(m.longitude), zoom: 16 }));
+                                    }}
+                                >
+                                    <svg
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        style={{ transform: "translate(-12px,-24px)", cursor: "pointer" }}
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff3951" />
+                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
+                                    </svg></div>
+                            </Marker>
+                        ))}
 
-              {selectedPlace.location?.imagenes && selectedPlace.location?.imagenes.length > 0 && (
-                  <div style={{marginTop:"10px"}}><strong style={{fontSize:"18px",marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
-                  <div className="place-images">
-                    {selectedPlace.location?.imagenes.map((imgUrl, i) => (
-                        <img key={i} src={imgUrl} alt={`Lugar ${i + 1}`} className="place-image"/>
-                    ))}
-                  </div></div>
-                  )}
-              <div style={{marginTop:"20px"}}><strong style={{fontSize:"18px",marginTop:"30px", marginBottom:"5px"}}>Mapa</strong></div>
+                        {selectedLocationOnMap && (
+                            <Popup
+                                longitude={Number(selectedLocationOnMap.longitude)}
+                                latitude={Number(selectedLocationOnMap.latitude)}
+                                anchor="bottom"
+                                closeButton={false}
+                                offset={[-12, -53]}
+                            >
+                                <div className="place-popUp">
+                                    <img
+                                        src={selectedLocationOnMap.image}
+                                        className="img-popUp"
+                                        alt="Lugar actual"
+                                    />
+                                    <div className="place-info">
+                                        <h3>{selectedLocationOnMap.titulo}</h3>
+                                        {selectedLocationOnMap.date && (<p>
+                                            {fmtDate(selectedLocationOnMap.date)}
+                                        </p>)}
+                                        {selectedLocationOnMap.startHour && (
+                                            <p>
+                                                {fmtHour(selectedLocationOnMap.startHour)} - {fmtHour(selectedLocationOnMap.endHour)}
+                                            </p>)}
+                                    </div>
+                                </div>
+                            </Popup>
+                        )}
+                    </Map>
+                </div>
             </div>
           )}
         </section>

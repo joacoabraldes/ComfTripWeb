@@ -7,6 +7,8 @@ import "../styles/addPlace.css";
 import "../styles/auth.css";
 import { apiGet, apiPut } from "./api";
 import Header from "../components/Header";
+import Map, {Marker, NavigationControl} from "react-map-gl/mapbox";
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function EditPlace() {
     const { tripId } = useParams();
@@ -29,6 +31,11 @@ export default function EditPlace() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [locations, setLocations] = useState([]);
+    const [viewState, setViewState] = useState({
+        latitude: -34.6037,
+        longitude: -58.3816,
+        zoom: 11
+    });
 
     const normalizeDate=(d)=>{
         if(!d) return null;
@@ -57,6 +64,11 @@ export default function EditPlace() {
                     setStartHour(p.start_hour || "");
                     setEndHour(p.end_hour || "");
                     setNotes(p.notes || "");
+                    setViewState({
+                        latitude: Number(p.location.latitude),
+                        longitude: Number(p.location.longitude),
+                        zoom: 16
+                    });
                 }
                 if (tripRes) {
                     setStartDate(normalizeDate(tripRes.start_date));
@@ -319,24 +331,39 @@ export default function EditPlace() {
 
                 <section className="trip-it-right">
                     <div className="place-detail">
-                        <h3 style={{fontSize:"50px", marginTop:"5px", marginBottom:"5px"}}>{place.location?.titulo ?? `Lugar #${place.fk_location}`}</h3>
-                        <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>({place.location?.fk_interest ?? "-"})</p>
+                        <div className="place-it-row">
+                            <img
+                                src={place.location?.imagenes[0]}
+                                className="place-image"
+                                alt="Lugar actual"
+                            />
+                            <div className="place-it-info">
+                                <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{place.location?.titulo}</h3>
+                                <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({place.location?.fk_interest})</p></div></div>
                         <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>
                             <strong>Descripcion:</strong> {locationData?.descripcion ?? "-"}
                         </p>
-
-
-                        {place.location?.imagenes && place.location?.imagenes.length > 0 && (
-                            <div style={{marginTop:"20px"}}>
-                                <strong style={{fontSize:"20px", marginTop:"30px", marginBottom:"5px"}}>Imagenes</strong>
-                                <div className="place-images">
-                                    {place.location?.imagenes.map((imgUrl, i) => (
-                                        <img key={i} src={imgUrl} alt={`Lugar ${i+1}`} className="place-image"/>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        <div style={{marginTop:"20px"}}><strong style={{fontSize:"20px", marginTop:"30px", marginBottom:"5px"}}>Mapa</strong></div>
+                        <div style={{ flex: 1, marginTop: 20 }}>
+                            <Map
+                                {...viewState}
+                                onMove={(evt) => setViewState(evt.viewState)}
+                                style={{ width: "100%", height: "100%", borderRadius: "10px" }}
+                                mapStyle="mapbox://styles/mapbox/streets-v11"
+                                mapboxAccessToken={MAPBOX_TOKEN}
+                            >
+                                <NavigationControl position="top-right" />
+                                <Marker
+                                    latitude={Number(place.location?.latitude)}
+                                    longitude={Number(place.location?.longitude)}
+                                    anchor="bottom"
+                                >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" style={{ transform: "translate(-12px,-24px)" }}>
+                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff3951" />
+                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
+                                    </svg>
+                                </Marker>
+                            </Map>
+                        </div>
                     </div>
                 </section>
             </main>

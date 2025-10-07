@@ -18,6 +18,7 @@ import TripItinerary from "./pages/TripItinerary";
 import InterestsPage from "./pages/Interests"; // add this import
 import Explore from "./pages/Explore";
 import Community from "./pages/Community";
+import FriendProfile from "./pages/friendProfile";
 
 // ... inside <Routes>
 
@@ -119,6 +120,7 @@ function App() {
                 }
             />
           <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+          <Route path="/friend/:friendId" element={<ProtectedRoute><FriendProfile /></ProtectedRoute>} />
 
           {/* fallback: send to error */}
           <Route path="*" element={<Navigate to="/error" replace />} />

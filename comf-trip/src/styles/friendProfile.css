@@ -1,0 +1,25 @@
+/* src/styles/friendProfile.css */
+
+.friend-main { padding: 18px 36px; min-height: calc(100vh - 72px); background: #fff; }
+.friend-container { max-width: 980px; margin: 0 auto; }
+
+.friend-card { background: #fff; padding: 18px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); }
+.friend-header { display: flex; gap: 14px; align-items: center; }
+.friend-avatar { width: 72px; height: 72px; border-radius: 12px; background: linear-gradient(180deg,#f6f6f6,#fff); display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:20px; color:#333; border:1px solid rgba(0,0,0,0.04); }
+.friend-meta h2 { margin: 0; font-size: 20px; }
+.friend-meta .subtitle { color:#666; font-size:14px; margin-top:4px; }
+.friend-body { margin-top: 18px; }
+
+.friend-trips { display: grid; gap: 12px; margin-top: 12px; }
+.trip-card { border-radius: 10px; padding: 12px; border: 1px solid rgba(0,0,0,0.03); background: #fff; }
+.trip-title { font-weight: 700; }
+.trip-dates { font-size: 13px; color: #666; margin-top: 6px; }
+.badge { margin-top: 8px; display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+.badge-primary { background: rgba(255,91,106,0.12); color:#ff5b6a; }
+.badge-secondary { background: rgba(30,30,30,0.06); color:#333; }
+
+.btn { background: #ff5b6a; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.btn.ghost { background: transparent; color:#333; border: 1px solid rgba(0,0,0,0.04); }
+.btn.small { padding: 6px 8px; font-size: 13px; }
+.muted { color:#888; }
+.error { color: #b71c1c; font-weight: 700; }

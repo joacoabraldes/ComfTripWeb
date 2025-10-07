@@ -21,7 +21,7 @@ export default function AddPlace() {
     const [loading, setLoading] = useState(true);
     const [trip, setTrip] = useState(null);
     const [locations, setLocations] = useState([]);
-    const [selectedLocation, setSelectedLocation] = useState("");
+    const [selectedLocation, setSelectedLocation] = useState(null); // keep as number or null
     const [locationInfo, setLocationInfo]=useState(null);
     const [date, setDate] =useState("");
     const [startDate, setStartDate]=useState(null);
@@ -43,12 +43,33 @@ export default function AddPlace() {
 
     const normalizeDate=(d)=>{
         if(!d) return null;
-        const date=d.split("T")[0].split("-");
-        const yy = Number(date[0]);
-        const mm =Number(date[1])-1;
-        const dd = Number(date[2]);
+        const parts = d.split("T")[0].split("-");
+        const yy = Number(parts[0]);
+        const mm = Number(parts[1]) - 1;
+        const dd = Number(parts[2]);
         return new Date(yy, mm, dd);
     }
+
+    // --- Helpers to handle different DB field names ---
+    const getTripCity = (dest) => {
+        if (!dest) return "";
+        // take first segment before comma: "Rome, Italy" -> "Rome"
+        return dest.toString().split(",")[0].toLowerCase().trim();
+    };
+
+    const getLat = (loc) => {
+        // tolerate multiple possible field names
+        if (!loc) return null;
+        return Number(loc.latitude ?? loc.latitud ?? loc.lat ?? loc.lat_lng ?? 0) || null;
+    };
+    const getLng = (loc) => {
+        if (!loc) return null;
+        return Number(loc.longitude ?? loc.longitud ?? loc.lng ?? loc.lon ?? 0) || null;
+    };
+    const getImages = (loc) => {
+        if (!loc) return [];
+        return loc.imagenes ?? loc.images ?? loc.photos ?? null;
+    };
 
     useEffect(() => {
         let mounted = true;
@@ -82,7 +103,6 @@ export default function AddPlace() {
 
             } catch (err) {
                 console.error("TripItinerary load error:", err);
-                // intenta mostrar info útil si el helper apiGet devuelve un objeto con status
                 if (err?.status === 401) setError("No autenticado. Por favor inicie sesión.");
                 else if (err?.status === 403) setError("No autorizado para ver ese viaje.");
                 else if (err?.status === 404) setError("Viaje no encontrado (compruebe ownership o id).");
@@ -105,15 +125,17 @@ export default function AddPlace() {
 
     useEffect(()=>{
         if(!locationInfo) return;
-        const lat = Number(locationInfo.latitude);
-        const lng = Number(locationInfo.longitude);
-        setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
+        const lat = getLat(locationInfo);
+        const lng = getLng(locationInfo);
+        if (lat && lng) {
+            setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
+        }
     },[locationInfo])
 
     // filter locations to only those matching trip.destination (best-effort)
     const filteredLocations = React.useMemo(() => {
         if (!trip || !Array.isArray(locations) || locations.length === 0) return [];
-        const tripCity = (trip.destination || "").toString().toLowerCase().trim();
+        const tripCity = getTripCity(trip.destination);
         if (!tripCity) return [];
 
         const cityFields = [
@@ -123,13 +145,23 @@ export default function AddPlace() {
         return locations.filter(l => {
             // check common city-like fields
             for (const f of cityFields) {
-                const val = l[f] || l[f.toLowerCase()];
+                const val = (l[f] ?? l[f.toLowerCase()]);
                 if (val && val.toString().toLowerCase().includes(tripCity)) return true;
+            }
+            // also check country if the destination includes country and DB has country column
+            if ((l.country || "").toString().toLowerCase().includes(trip.destination?.toString().split(",")[1]?.trim()?.toLowerCase() ?? "")) {
+                return true;
             }
             // check descriptive fields
             if (l.address && l.address.toString().toLowerCase().includes(tripCity)) return true;
             if (l.descripcion && l.descripcion.toString().toLowerCase().includes(tripCity)) return true;
-            if (l.titulo && l.titulo.toString().toLowerCase().includes(tripCity)) return false; // don't match title as city
+
+            // do NOT implicitly return false when titulo contains city.
+            // Titles often contain city names (e.g., "Colosseum, Rome") — but title shouldn't be a primary city-field match.
+            // So only match title if none of the other fields exist (optional).
+            if ((!l.city && !l.localidad && !l.region && !l.province) && l.titulo && l.titulo.toString().toLowerCase().includes(tripCity)) {
+                return true;
+            }
 
             return false;
         });
@@ -166,9 +198,10 @@ export default function AddPlace() {
         }
         return [];
     };
-    let imgs=[];
-    if(locationInfo) {
-        imgs = safeParseImages(locationInfo.imagenes);
+
+    let imgs = [];
+    if (locationInfo) {
+        imgs = safeParseImages(getImages(locationInfo) ?? locationInfo.imagenes);
     }
 
     // horarios ocupados de la fecha seleccionada
@@ -211,7 +244,7 @@ export default function AddPlace() {
 
     const { days, firstDayOfMonth } = generateCalendarDays();
 
-// --- handlePrevMonth / handleNextMonth: NO borres las fechas al navegar ---
+    // --- handlePrevMonth / handleNextMonth: NO borres las fechas al navegar ---
     const handlePrevMonth = () => {
         setCurrentMonth((prev) => {
             if (prev === 0) {
@@ -272,7 +305,7 @@ export default function AddPlace() {
                 ...t,
                 places: Array.isArray(t?.places) ? [...t.places, ...created] : created,
             }));
-            setSelectedLocation("");
+            setSelectedLocation(null);
             setStartHour("");
             setEndHour("");
             setNotes("");
@@ -318,7 +351,7 @@ export default function AddPlace() {
             setTrip(refreshed);
 
             // reset inputs and navigate back to itinerary view
-            setSelectedLocation("");
+            setSelectedLocation(null);
             setStartHour("");
             setEndHour("");
             setNotes("");
@@ -326,7 +359,6 @@ export default function AddPlace() {
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error('Auto add error:', err);
-            // show backend message if available
             const message = err?.message || (err?.response && err.response?.data && err.response.data.message) || 'No se pudo añadir automáticamente.';
             setError(message);
         } finally {
@@ -390,20 +422,23 @@ export default function AddPlace() {
                             classNamePrefix="react-select"
                             options={availableLocations.map(l => ({
                                 value: l.id,
-                                label: `${l.titulo} (${l.fk_interest || ''})`
+                                label: `${l.titulo} ${l.city ? `— ${l.city}` : ''}`.trim()
                             }))}
                             value={selectedLocation ? {
                                 value: selectedLocation,
-                                label: `${(locations.find(l => l.id === selectedLocation)?.titulo) || ""}`
-                            } : ""}
+                                label: `${(locations.find(l => Number(l.id) === Number(selectedLocation))?.titulo) || ""}`
+                            } : null}
                             onChange={(option) => {
-                                setSelectedLocation(option.value);
-                                const loc = locations.find(l => l.id === option.value);
-                                setLocationInfo(loc || "");
+                                const id = Number(option.value);
+                                setSelectedLocation(id);
+                                const loc = locations.find(l => Number(l.id) === id);
+                                setLocationInfo(loc || null);
                                 if(loc){
-                                    const lat = Number(loc.latitude);
-                                    const lng = Number(loc.longitude);
-                                    setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
+                                    const lat = getLat(loc);
+                                    const lng = getLng(loc);
+                                    if (lat && lng) {
+                                        setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
+                                    }
                                 }
                             }}
                             placeholder={availableLocations.length ? "Buscar ubicación..." : `No se encontraron lugares en ${trip.destination}`}
@@ -505,54 +540,58 @@ export default function AddPlace() {
                                     <NavigationControl showCompass showZoom />
                                 </div>
 
-                                {availableLocations.map((loc) => (
-                                    <Marker
-                                        key={`m-${loc.id}`}
-                                        longitude={Number(loc.longitude)}
-                                        latitude={Number(loc.latitude)}
-                                        anchor="bottom"
-                                    >
-                                        <div
-                                            onMouseEnter={() =>
-                                                setSelectedLocationOnMap({
-                                                    latitude: loc.latitude,
-                                                    longitude: loc.longitude,
-                                                    titulo: loc.titulo,
-                                                    interes:loc.fk_interest,
-                                                    image:loc.imagenes && loc.imagenes[0]
-                                                })
-                                            }
-                                            onMouseLeave={() => setSelectedLocationOnMap(null)}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedLocation(loc.id);
-                                                setLocationInfo(loc);
-                                                setViewState((v) => ({
-                                                    ...v,
-                                                    latitude: Number(loc.latitude),
-                                                    longitude: Number(loc.longitude),
-                                                    zoom: 16
-                                                }));
-                                            }}
-                                            style={{ cursor: "pointer" }}
+                                {availableLocations.map((loc) => {
+                                    const lat = getLat(loc);
+                                    const lng = getLng(loc);
+                                    if (lat == null || lng == null) return null;
+                                    return (
+                                        <Marker
+                                            key={`m-${loc.id}`}
+                                            longitude={lng}
+                                            latitude={lat}
+                                            anchor="bottom"
                                         >
-                                            <svg
-                                                width="24"
-                                                height="24"
-                                                viewBox="0 0 24 24"
-                                                style={{ transform: "translate(-12px,-24px)" }}
-                                                xmlns="http://www.w3.org/2000/svg"
+                                            <div
+                                                onMouseEnter={() =>
+                                                    setSelectedLocationOnMap({
+                                                        latitude: lat,
+                                                        longitude: lng,
+                                                        titulo: loc.titulo,
+                                                        interes: loc.fk_interest,
+                                                        image: (getImages(loc) && Array.isArray(getImages(loc)) ? getImages(loc)[0] : (getImages(loc) && typeof getImages(loc) === 'string' ? getImages(loc) : null))
+                                                    })
+                                                }
+                                                onMouseLeave={() => setSelectedLocationOnMap(null)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedLocation(Number(loc.id));
+                                                    setLocationInfo(loc);
+                                                    setViewState((v) => ({
+                                                        ...v,
+                                                        latitude: lat,
+                                                        longitude: lng,
+                                                        zoom: 16
+                                                    }));
+                                                }}
+                                                style={{ cursor: "pointer" }}
                                             >
-                                                <path
-                                                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-                                                    fill="#ff3951"
-                                                />
-                                                <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                            </svg>
-                                        </div>
-                                    </Marker>
-
-                                ))}
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    style={{ transform: "translate(-12px,-24px)" }}
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <path
+                                                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                        fill="#ff3951"
+                                                    />
+                                                    <circle cx="12" cy="9" r="2.5" fill="#fff" />
+                                                </svg>
+                                            </div>
+                                        </Marker>
+                                    )
+                                })}
 
                                 {selectedLocationOnMap && (
                                     <Popup
@@ -600,54 +639,58 @@ export default function AddPlace() {
                                     mapboxAccessToken={MAPBOX_TOKEN}
                                 >
                                     <NavigationControl position="top-right" />
-                                    {availableLocations.map((loc) => (
-                                        <Marker
-                                            key={`m-${loc.id}`}
-                                            longitude={Number(loc.longitude)}
-                                            latitude={Number(loc.latitude)}
-                                            anchor="bottom"
-                                        >
-                                            <div
-                                                onMouseEnter={() =>
-                                                    setSelectedLocationOnMap({
-                                                        latitude: loc.latitude,
-                                                        longitude: loc.longitude,
-                                                        titulo: loc.titulo,
-                                                        interes:loc.fk_interest,
-                                                        image:loc.imagenes && loc.imagenes[0]
-                                                    })
-                                                }
-                                                onMouseLeave={() => setSelectedLocationOnMap(null)}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedLocation(loc.id);
-                                                    setLocationInfo(loc);
-                                                    setViewState((v) => ({
-                                                        ...v,
-                                                        latitude: Number(loc.latitude),
-                                                        longitude: Number(loc.longitude),
-                                                        zoom: 16
-                                                    }));
-                                                }}
-                                                style={{ cursor: "pointer" }}
+                                    {availableLocations.map((loc) => {
+                                        const lat = getLat(loc);
+                                        const lng = getLng(loc);
+                                        if (lat == null || lng == null) return null;
+                                        return (
+                                            <Marker
+                                                key={`m-${loc.id}`}
+                                                longitude={lng}
+                                                latitude={lat}
+                                                anchor="bottom"
                                             >
-                                                <svg
-                                                    width="24"
-                                                    height="24"
-                                                    viewBox="0 0 24 24"
-                                                    style={{ transform: "translate(-12px,-24px)" }}
-                                                    xmlns="http://www.w3.org/2000/svg"
+                                                <div
+                                                    onMouseEnter={() =>
+                                                        setSelectedLocationOnMap({
+                                                            latitude: lat,
+                                                            longitude: lng,
+                                                            titulo: loc.titulo,
+                                                            interes:loc.fk_interest,
+                                                            image:(getImages(loc) && Array.isArray(getImages(loc)) ? getImages(loc)[0] : getImages(loc))
+                                                        })
+                                                    }
+                                                    onMouseLeave={() => setSelectedLocationOnMap(null)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedLocation(Number(loc.id));
+                                                        setLocationInfo(loc);
+                                                        setViewState((v) => ({
+                                                            ...v,
+                                                            latitude: lat,
+                                                            longitude: lng,
+                                                            zoom: 16
+                                                        }));
+                                                    }}
+                                                    style={{ cursor: "pointer" }}
                                                 >
-                                                    <path
-                                                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-                                                        fill="#ff3951"
-                                                    />
-                                                    <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                                </svg>
-                                            </div>
-                                        </Marker>
-
-                                    ))}
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        viewBox="0 0 24 24"
+                                                        style={{ transform: "translate(-12px,-24px)" }}
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                            fill="#ff3951"
+                                                        />
+                                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
+                                                    </svg>
+                                                </div>
+                                            </Marker>
+                                        )
+                                    })}
 
                                     {selectedLocationOnMap && (
                                         <Popup

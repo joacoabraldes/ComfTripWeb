@@ -32,6 +32,11 @@ const categoryIcons = {
   familia: "👨‍👩‍👧‍👦",
 };
 
+function sortByRelevanceDesc(arr) {
+  if (!Array.isArray(arr)) return [];
+  return [...arr].sort((a, b) => (Number(b.relevancia || 0) - Number(a.relevancia || 0)));
+}
+
 export default function Explore() {
   const navigate = useNavigate();
 
@@ -67,9 +72,8 @@ export default function Explore() {
         if (!mounted) return;
         setCategories(Array.isArray(cats) ? cats : []);
 
-        const sorted = Array.isArray(locs)
-          ? [...locs].sort((a, b) => (b.relevancia || 0) - (a.relevancia || 0))
-          : [];
+        // ensure sorting by relevancia DESC
+        const sorted = sortByRelevanceDesc(Array.isArray(locs) ? locs : []);
         setPopularLocations(sorted.slice(0, 12));
         setLocationsFiltered(sorted.slice(0, 50));
       } catch (err) {
@@ -92,12 +96,14 @@ export default function Explore() {
         if (selectedCategorySlug === "todo") {
           const locs = await apiGet("/locations?limit=200");
           if (!mounted) return;
-          setLocationsFiltered(Array.isArray(locs) ? locs.slice(0, 50) : []);
+          const sorted = sortByRelevanceDesc(Array.isArray(locs) ? locs : []);
+          setLocationsFiltered(sorted.slice(0, 50));
         } else {
-          // backend supports ?interest=slug
+          // backend supports ?interest=slug (if backend handles slug) — still defensively sort on client
           const locs = await apiGet(`/locations?interest=${encodeURIComponent(selectedCategorySlug)}&limit=200`);
           if (!mounted) return;
-          setLocationsFiltered(Array.isArray(locs) ? locs : []);
+          const sorted = sortByRelevanceDesc(Array.isArray(locs) ? locs : []);
+          setLocationsFiltered(sorted);
         }
       } catch (err) {
         console.error("Error fetching filtered locations:", err);

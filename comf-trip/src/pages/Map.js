@@ -53,6 +53,7 @@ export default function MapPage() {
   const navigate = useNavigate();
 
   // picker marker (draggable)
+  // NOTE: using [lat, lng] tuple throughout for pickerPos (consistent with existing code)
   const [pickerPos, setPickerPos] = useState([-34.6037, -58.3816]); // [lat, lng]
 
   // map camera
@@ -161,16 +162,28 @@ export default function MapPage() {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status} @ ${url}`);
       const data = await res.json();
-      const normalized = (data || []).map((l) => ({
-        ...l,
-        imagenes: parseImagesField(l.imagenes),
-        latitude: Number(l.latitude),
-        longitude: Number(l.longitude),
-      }));
+
+      // NORMALIZE and FILTER invalid coordinates
+      const normalized = (data || []).map((l) => {
+        const latitude = Number(l.latitude);
+        const longitude = Number(l.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          console.warn('Descartando location por coords inválidas:', l);
+          return null;
+        }
+        return {
+          ...l,
+          imagenes: parseImagesField(l.imagenes),
+          latitude,
+          longitude,
+        };
+      }).filter(Boolean);
+
+      console.log('Locations normalizadas:', normalized);
       setLocations(normalized);
+
       if (normalized.length === 0) {
         // no results is valid; show message but not as error
-        // leave error null
       }
     } catch (err) {
       console.error("fetchLocations error:", err);
@@ -196,8 +209,10 @@ export default function MapPage() {
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          setPickerPos([lat, lng]);
-          setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 13 }));
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            setPickerPos([lat, lng]);
+            setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 13 }));
+          }
         },
         () => { /* ignore */ }
       );
@@ -206,7 +221,11 @@ export default function MapPage() {
 
   // keep view centered on picker (optional)
   useEffect(() => {
-    setViewState((v) => ({ ...v, latitude: pickerPos[0], longitude: pickerPos[1] }));
+    if (Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1])) {
+      setViewState((v) => ({ ...v, latitude: pickerPos[0], longitude: pickerPos[1] }));
+    } else {
+      console.warn("pickerPos inválido, no centrar view:", pickerPos);
+    }
   }, [pickerPos]);
 
   // color helper
@@ -262,10 +281,18 @@ export default function MapPage() {
 
             <ul style={{ listStyle: "none", padding: 0 }}>
               {locations.map((loc) => (
-                <li key={loc.id} style={{ marginBottom: 10, cursor: "pointer" }} onClick={() => {
-                  setViewState((v) => ({ ...v, latitude: loc.latitude, longitude: loc.longitude, zoom: 14 }));
-                  setSelectedLocation(loc);
-                }}>
+                <li
+                  key={loc.id}
+                  style={{ marginBottom: 10, cursor: "pointer" }}
+                  onClick={() => {
+                    if (Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
+                      setViewState((v) => ({ ...v, latitude: loc.latitude, longitude: loc.longitude, zoom: 14 }));
+                      setSelectedLocation(loc);
+                    } else {
+                      console.warn("Intento de centrar en location con coords inválidas:", loc);
+                    }
+                  }}
+                >
                   <strong>{loc.titulo}</strong>
                   <div style={{ fontSize: 13, color: "#666" }}>{loc.fk_interest}</div>
                 </li>
@@ -277,7 +304,13 @@ export default function MapPage() {
         <section className="map-canvas" style={{ flex: 1 }}>
           <Map
             {...viewState}
-            onMove={(evt) => setViewState(evt.viewState)}
+            onMove={(evt) => {
+              if (!evt || !evt.viewState) {
+                console.warn('onMove sin viewState válido', evt);
+                return;
+              }
+              setViewState(evt.viewState);
+            }}
             style={{ width: "100%", height: "100%" }}
             mapStyle="mapbox://styles/mapbox/streets-v11"
             mapboxAccessToken={MAPBOX_TOKEN}
@@ -287,14 +320,14 @@ export default function MapPage() {
             </div>
 
             {locations.map((loc) => (
-              typeof loc.latitude === "number" && typeof loc.longitude === "number" ? (
+              Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude) ? (
                 <Marker
                   key={`loc-${loc.id}`}
                   longitude={loc.longitude}
                   latitude={loc.latitude}
                   anchor="bottom"
                   onClick={(e) => {
-                    e.originalEvent && e.originalEvent.stopPropagation();
+                    e?.originalEvent && e.originalEvent.stopPropagation();
                     setSelectedLocation(loc);
                   }}
                 >
@@ -312,7 +345,7 @@ export default function MapPage() {
               ) : null
             ))}
 
-            {selectedLocation && typeof selectedLocation.latitude === "number" && (
+            {selectedLocation && Number.isFinite(selectedLocation.latitude) && Number.isFinite(selectedLocation.longitude) && (
               <Popup
                 longitude={selectedLocation.longitude}
                 latitude={selectedLocation.latitude}
@@ -345,7 +378,28 @@ export default function MapPage() {
               anchor="bottom"
               draggable
               onDragEnd={(evt) => {
-                const [lng, lat] = evt.lngLat;
+                // evt.lngLat puede ser array [lng, lat] o objeto { lng, lat }
+                const raw = evt?.lngLat ?? evt?.lngLatRaw ?? evt?.point ?? null;
+                let lng, lat;
+
+                // different shapes handled defensively
+                if (Array.isArray(raw) && raw.length >= 2) {
+                  [lng, lat] = raw;
+                } else if (raw && typeof raw === "object") {
+                  if (typeof raw.lng === "number" && typeof raw.lat === "number") {
+                    lng = raw.lng;
+                    lat = raw.lat;
+                  } else if (typeof raw[0] === "number" && typeof raw[1] === "number") {
+                    [lng, lat] = raw;
+                  }
+                }
+
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                  console.warn("onDragEnd: lngLat inválido:", evt?.lngLat, "raw:", raw);
+                  return;
+                }
+
+                // pickerPos uses [lat, lng]
                 setPickerPos([lat, lng]);
                 setSelectedLocation(null);
               }}
@@ -363,15 +417,16 @@ export default function MapPage() {
             </Marker>
 
             <Popup
-              longitude={pickerPos[1]}
-              latitude={pickerPos[0]}
+              longitude={Number.isFinite(pickerPos[1]) ? pickerPos[1] : 0}
+              latitude={Number.isFinite(pickerPos[0]) ? pickerPos[0] : 0}
               anchor="bottom"
               onClose={() => {}}
               closeButton={false}
               closeOnClick={false}
             >
               <div style={{ fontSize: 12 }}>
-                Lat: {pickerPos[0].toFixed(5)} <br /> Lon: {pickerPos[1].toFixed(5)}
+                {Number.isFinite(pickerPos[0]) ? `Lat: ${pickerPos[0].toFixed(5)}` : "Lat: N/A"} <br />
+                {Number.isFinite(pickerPos[1]) ? `Lon: ${pickerPos[1].toFixed(5)}` : "Lon: N/A"}
               </div>
             </Popup>
           </Map>
@@ -380,4 +435,3 @@ export default function MapPage() {
     </div>
   );
 }
-//

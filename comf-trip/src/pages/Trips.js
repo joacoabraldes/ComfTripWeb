@@ -4,16 +4,23 @@ import MapSvg from "../components/MapSvg";
 import "../styles/trips.css";
 import Header from "../components/Header";
 import "../styles/header.css";
-import { apiGet, apiDelete } from "./api";
+import { apiGet, apiDelete, apiPost } from "./api";
 
 export default function Trips() {
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState([]);
   const [selectedTrip, setSelectedTrip] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(null); // id del menú abierto
+  const [menuOpen, setMenuOpen] = useState(null);
   const navigate = useNavigate();
 
-  // try to obtain current user id from a JWT stored in localStorage.token (best-effort)
+  // estados para compartir viajes
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [friends, setFriends] = useState([]);
+  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [tripToShare, setTripToShare] = useState(null);
+  const [sharing, setSharing] = useState(false);
+
+  // obtener ID del usuario actual desde token
   const getCurrentUserId = () => {
     try {
       const token = localStorage.getItem("token");
@@ -21,7 +28,9 @@ export default function Trips() {
       const parts = token.split('.');
       if (parts.length < 2) return null;
       const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      return payload && (payload.id || payload.userId || payload.sub || payload.user_id) ? Number(payload.id || payload.userId || payload.sub || payload.user_id) : null;
+      return payload && (payload.id || payload.userId || payload.sub || payload.user_id)
+        ? Number(payload.id || payload.userId || payload.sub || payload.user_id)
+        : null;
     } catch (e) {
       return null;
     }
@@ -63,18 +72,16 @@ export default function Trips() {
 
         if (!mounted) return;
         if (Array.isArray(res)) {
-          // ordenar → viajes actuales primero
           const sorted = [...res].sort((a, b) => {
             const aNow = isCurrentTrip(a);
             const bNow = isCurrentTrip(b);
             if (aNow && !bNow) return -1;
             if (!aNow && bNow) return 1;
-            return normalizeDate(b.start_date) - normalizeDate(a.start_date); // fallback por fecha
+            return normalizeDate(b.start_date) - normalizeDate(a.start_date);
           });
           setTrips(sorted);
           setSelectedTrip(sorted.length ? sorted[0] : null);
         } else {
-          // backend returned something unexpected — set trips empty
           setTrips([]);
         }
       } catch (err) {
@@ -89,7 +96,45 @@ export default function Trips() {
     };
   }, []);
 
-  // pantalla de carga
+  // funciones para compartir viajes
+  async function loadFriends() {
+    try {
+      const res = await apiGet('/friends');
+      const friendsArr = Array.isArray(res) ? res : (res && res.rows ? res.rows : []);
+      setFriends(friendsArr);
+    } catch (err) {
+      console.error('Error cargando amigos:', err);
+      alert('No se pudieron cargar tus amigos.');
+    }
+  }
+
+  function openShareModal(trip) {
+    setTripToShare(trip);
+    setSelectedFriend(null);
+    setShowShareModal(true);
+    loadFriends();
+  }
+
+  async function submitShare() {
+    if (!tripToShare || !selectedFriend) return alert('Selecciona un amigo para compartir');
+    setSharing(true);
+    try {
+      await apiPost(`/trips/${tripToShare.id}/share`, {
+        mode: 'viewer',
+        public: false,
+        shared_with_user_id: selectedFriend.id,
+      });
+      alert(`Viaje compartido con ${selectedFriend.name || selectedFriend.email}`);
+      setShowShareModal(false);
+      setTripToShare(null);
+    } catch (err) {
+      console.error('Error compartiendo viaje:', err);
+      alert('No se pudo compartir el viaje.');
+    } finally {
+      setSharing(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="trips-root">
@@ -133,15 +178,12 @@ export default function Trips() {
                       className={`trips-list-item ${selectedTrip && selectedTrip.id === t.id ? "active" : ""}`}
                       role="listitem"
                     >
-                      {/* Texto a la izquierda */}
                       <div
                         className="trip-item-main"
                         onClick={() => navigate(`/trip_itinerary/${t.id}`)}
                       >
                         <div className="trip-destination">
                           {t.destination ?? "Destino desconocido"}
-
-                          {/* shared / created badge */}
                           {t.share ? (
                             <span className="badge badge-primary" style={{ marginLeft: 8 }}>
                               {t.share.public ? "Enlace público" : "Compartido"}
@@ -157,13 +199,9 @@ export default function Trips() {
                         <div className="trip-dates">
                           {fmtDate(t.start_date)} — {fmtDate(t.end_date)}
                         </div>
-
-                        <div className="trip-created">
-                          Creado: {fmtDate(t.created_at)}
-                        </div>
+                        <div className="trip-created">Creado: {fmtDate(t.created_at)}</div>
                       </div>
 
-                      {/* Botón menú (⋮) */}
                       <div className="trip-menu-wrapper">
                         <button
                           className="trip-menu-btn"
@@ -174,51 +212,7 @@ export default function Trips() {
 
                         {menuOpen === t.id && (
                           <div className="trip-menu">
-                            <button
-                              className="trip-menu-btn"
-                              onClick={async () => {
-                                try {
-                                  // call backend share endpoint - backend returns { url, share }
-                                  const token = localStorage.getItem("token");
-                                  const res = await fetch(`/api/trips/${t.id}/share`, {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                      ...(token ? { Authorization: `Bearer ${token}` } : {})
-                                    },
-                                    body: JSON.stringify({ mode: "viewer", public: false })
-                                  });
-                                  if (!res.ok) {
-                                    const errText = await res.text().catch(()=>null);
-                                    throw new Error(errText || `HTTP ${res.status}`);
-                                  }
-                                  const data = await res.json();
-                                  setMenuOpen(null);
-
-                                  if (navigator.share && data?.url) {
-                                    await navigator.share({
-                                      title: "Mi viaje",
-                                      text: `Mira mi viaje a ${t.destination}`,
-                                      url: data.url,
-                                    });
-                                  } else if (data?.url) {
-                                    // copy to clipboard if available
-                                    try {
-                                      await navigator.clipboard.writeText(data.url);
-                                      alert("Enlace copiado al portapapeles");
-                                    } catch (_) {
-                                      window.prompt("Copia este enlace para compartir:", data.url);
-                                    }
-                                  } else {
-                                    alert("Enlace generado (pero no se recibió URL del servidor).");
-                                  }
-                                } catch (err) {
-                                  console.error("Error generando enlace de compartir:", err);
-                                  alert("No se pudo generar el enlace de compartir.");
-                                }
-                              }}
-                            >
-                              {/* ícono de compartir */}
+                            <button className="trip-menu-btn" onClick={() => openShareModal(t)}>
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 12V19C4 19.55 4.45 20 5 20H19C19.55 20 20 19.55 20 19V12"
                                       stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -226,11 +220,9 @@ export default function Trips() {
                                       stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </button>
-                              <button className="trip-menu-btn"
-                                      onClick={() => {navigate(`/edit-trip/${t.id}`)
-                                          setMenuOpen(null)
-                                      }}
-                              >✎</button>
+
+                            <button className="trip-menu-btn"
+                              onClick={() => {navigate(`/edit-trip/${t.id}`); setMenuOpen(null);}}>✎</button>
 
                             <button
                               className="trip-menu-btn"
@@ -238,7 +230,7 @@ export default function Trips() {
                                 if (window.confirm(`¿Seguro que deseas eliminar el viaje a ${t.destination}?`)) {
                                   try {
                                     await apiDelete(`/trips/${t.id}`);
-                                    setTrips((prev) => prev.filter((trip) => trip.id !== t.id)); // refresca la lista
+                                    setTrips((prev) => prev.filter((trip) => trip.id !== t.id));
                                     setMenuOpen(null);
                                   } catch (err) {
                                     console.error("Error eliminando viaje:", err);
@@ -246,8 +238,7 @@ export default function Trips() {
                                   }
                                 }
                               }}
-                            >🗑
-                            </button>
+                            >🗑</button>
                           </div>
                         )}
                       </div>
@@ -265,25 +256,56 @@ export default function Trips() {
               <MapSvg width={999} height={800} />
             </div>
           ) : (
-            <>
-              <div style={{ padding: 12 }}>
-                <div className="map-wrapper" aria-hidden>
-                  <MapSvg width={999} height={800} />
-                </div>
+            <div style={{ padding: 12 }}>
+              <div className="map-wrapper" aria-hidden>
+                <MapSvg width={999} height={800} />
               </div>
-            </>
+            </div>
           )}
         </section>
 
-        {/* CTA abajo */}
         <div className="trips-cta">
-          <button
-            className="btn-newtrip"
-            onClick={() => navigate("/add-trip")}
-          >
+          <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
             Nuevo Viaje &nbsp; &gt;
           </button>
         </div>
+
+        {/* Modal de compartir */}
+        {showShareModal && tripToShare && (
+          <div className="modal-overlay" onClick={() => !sharing && setShowShareModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => !sharing && setShowShareModal(false)}>×</button>
+              <h3>Compartir "{tripToShare.destination}"</h3>
+              <p className="hint">Selecciona un amigo para compartir este viaje:</p>
+
+              {friends.length === 0 ? (
+                <div className="muted">No tienes amigos con los que compartir.</div>
+              ) : (
+                <div className="list">
+                  {friends.map(f => (
+                    <label key={f.id} style={{ display: 'block', cursor: 'pointer', marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="friend"
+                        value={f.id}
+                        checked={selectedFriend && selectedFriend.id === f.id}
+                        onChange={() => setSelectedFriend(f)}
+                        disabled={sharing}
+                      /> {f.name || f.email || `Usuario ${f.id}`}
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn ghost" onClick={() => !sharing && setShowShareModal(false)}>Cancelar</button>
+                <button className="btn" onClick={submitShare} disabled={!selectedFriend || sharing}>
+                  {sharing ? 'Compartiendo…' : 'Compartir'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

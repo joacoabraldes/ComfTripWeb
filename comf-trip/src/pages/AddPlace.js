@@ -1,4 +1,3 @@
-// src/pages/TripItinerary.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/tripItinerary.css";
@@ -11,22 +10,6 @@ import Select from "react-select";
 import { apiGet, apiPost } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
-
-// const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
-//
-// function getAuthToken() {
-//     return (
-//         localStorage.getItem("token") ||
-//         (() => {
-//             try {
-//                 const u = JSON.parse(localStorage.getItem("user") || "null");
-//                 return u?.token || null;
-//             } catch (e) {
-//                 return null;
-//             }
-//         })()
-//     );
-// }
 
 export default function AddPlace() {
     // NOTE: read the param name that you defined in App.jsx (/:tripId)
@@ -56,6 +39,7 @@ export default function AddPlace() {
         zoom: 12
     });
     const [selectedLocationOnMap, setSelectedLocationOnMap] = useState(null);
+    const [showAllLocations, setShowAllLocations] = useState(false);
 
     const normalizeDate=(d)=>{
         if(!d) return null;
@@ -125,6 +109,33 @@ export default function AddPlace() {
         const lng = Number(locationInfo.longitude);
         setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
     },[locationInfo])
+
+    // filter locations to only those matching trip.destination (best-effort)
+    const filteredLocations = React.useMemo(() => {
+        if (!trip || !Array.isArray(locations) || locations.length === 0) return [];
+        const tripCity = (trip.destination || "").toString().toLowerCase().trim();
+        if (!tripCity) return [];
+
+        const cityFields = [
+            'city','ciudad','localidad','locality','admin_area','region','province','state','town','municipio'
+        ];
+
+        return locations.filter(l => {
+            // check common city-like fields
+            for (const f of cityFields) {
+                const val = l[f] || l[f.toLowerCase()];
+                if (val && val.toString().toLowerCase().includes(tripCity)) return true;
+            }
+            // check descriptive fields
+            if (l.address && l.address.toString().toLowerCase().includes(tripCity)) return true;
+            if (l.descripcion && l.descripcion.toString().toLowerCase().includes(tripCity)) return true;
+            if (l.titulo && l.titulo.toString().toLowerCase().includes(tripCity)) return false; // don't match title as city
+
+            return false;
+        });
+    }, [trip, locations]);
+
+    const availableLocations = showAllLocations ? locations : filteredLocations;
 
     const fmtDate = (d) => {
         if(!d) return "-"
@@ -274,6 +285,55 @@ export default function AddPlace() {
         }
     }
 
+    // ---------- New: call backend auto-insert endpoint ----------
+    async function handleAutoAddPlace(e) {
+        e?.preventDefault();
+        if (!selectedLocation) {
+            alert("Seleccione una ubicación.");
+            return;
+        }
+        if (!date) {
+            alert("Seleccione una fecha.");
+            return;
+        }
+
+        setAdding(true);
+        setError(null);
+        try {
+            const body = {
+                place: {
+                    fk_location: Number(selectedLocation),
+                    date,
+                    start_hour: startHour || null,
+                    end_hour: endHour || null,
+                    notes: notes || null
+                }
+            };
+
+            // call the new backend endpoint that uses routing service and inserts/reorders day places
+            const res = await apiPost(`/trips/${tripId}/places/auto`, body);
+
+            // backend returns created places for that date; to keep client state consistent we refetch the trip
+            const refreshed = await apiGet(`/trips/${tripId}`);
+            setTrip(refreshed);
+
+            // reset inputs and navigate back to itinerary view
+            setSelectedLocation("");
+            setStartHour("");
+            setEndHour("");
+            setNotes("");
+
+            navigate(`/trip_itinerary/${tripId}`);
+        } catch (err) {
+            console.error('Auto add error:', err);
+            // show backend message if available
+            const message = err?.message || (err?.response && err.response?.data && err.response.data.message) || 'No se pudo añadir automáticamente.';
+            setError(message);
+        } finally {
+            setAdding(false);
+        }
+    }
+
     if (loading) {
         return (
             <div className="trip-it-root">
@@ -328,25 +388,35 @@ export default function AddPlace() {
                         <Select
                             className="country-select"
                             classNamePrefix="react-select"
-                            options={locations.map(l => ({
+                            options={availableLocations.map(l => ({
                                 value: l.id,
-                                label: `${l.titulo} (${l.fk_interest})`
+                                label: `${l.titulo} (${l.fk_interest || ''})`
                             }))}
                             value={selectedLocation ? {
                                 value: selectedLocation,
-                                label: `${locations.find(l => l.id === selectedLocation)?.titulo || ""}`
+                                label: `${(locations.find(l => l.id === selectedLocation)?.titulo) || ""}`
                             } : ""}
                             onChange={(option) => {
                                 setSelectedLocation(option.value);
                                 const loc = locations.find(l => l.id === option.value);
                                 setLocationInfo(loc || "");
-                                if(locationInfo){
-                                    const lat = Number(locationInfo.latitude);
-                                    const lng = Number(locationInfo.longitude);
+                                if(loc){
+                                    const lat = Number(loc.latitude);
+                                    const lng = Number(loc.longitude);
                                     setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 16 }));
-                            }}}
-                            placeholder="Buscar ubicación..."
+                                }
+                            }}
+                            placeholder={availableLocations.length ? "Buscar ubicación..." : `No se encontraron lugares en ${trip.destination}`}
+                            isDisabled={availableLocations.length === 0}
                         />
+
+                        {/* show an action to reveal all locations when filter returns none */}
+                        {filteredLocations.length === 0 && locations.length > 0 && !showAllLocations && (
+                            <div style={{ marginTop: 8 }}>
+                                <small>No se encontraron lugares que coincidan con la ciudad del viaje.</small>
+                                <button type="button" className="link-button" onClick={() => setShowAllLocations(true)} style={{ marginLeft: 8 }}>Mostrar todas</button>
+                            </div>
+                        )}
 
                         <label>Fecha</label>
 
@@ -409,9 +479,12 @@ export default function AddPlace() {
                                   style={{background: "#fcf7f7", border: "1px solid #e8d1d1"}}
                                   onChange={(e) => setNotes(e.target.value)} rows={3} />
 
-                        <div style={{ marginTop: 10 }}>
+                        <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
                             <button type="submit" disabled={adding} className="btn-primary">
                                 {adding ? "Agregando…" : "Agregar al itinerario"}
+                            </button>
+                            <button type="button" disabled={adding} onClick={handleAutoAddPlace} className="btn-secondary">
+                                {adding ? "Procesando…" : "Agregar automáticamente"}
                             </button>
                         </div>
                         {error && <div className="error">{error}</div>}
@@ -432,7 +505,7 @@ export default function AddPlace() {
                                     <NavigationControl showCompass showZoom />
                                 </div>
 
-                                {locations.map((loc) => (
+                                {availableLocations.map((loc) => (
                                     <Marker
                                         key={`m-${loc.id}`}
                                         longitude={Number(loc.longitude)}
@@ -446,7 +519,7 @@ export default function AddPlace() {
                                                     longitude: loc.longitude,
                                                     titulo: loc.titulo,
                                                     interes:loc.fk_interest,
-                                                    image:loc.imagenes[0]
+                                                    image:loc.imagenes && loc.imagenes[0]
                                                 })
                                             }
                                             onMouseLeave={() => setSelectedLocationOnMap(null)}
@@ -515,7 +588,7 @@ export default function AddPlace() {
                                 />
                                 <div className="place-it-info">
                                     <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{locationInfo.titulo}</h3>
-                                    <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({locationInfo.fk_interest})</p></div></div>
+                                    <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>( {locationInfo.fk_interest} )</p></div></div>
                             <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion: </strong>
                                 {locationInfo.descripcion ? locationInfo.descripcion : ""}</p>
                             <div style={{ flex: 1, marginTop: 20 }}>
@@ -527,7 +600,7 @@ export default function AddPlace() {
                                     mapboxAccessToken={MAPBOX_TOKEN}
                                 >
                                     <NavigationControl position="top-right" />
-                                    {locations.map((loc) => (
+                                    {availableLocations.map((loc) => (
                                         <Marker
                                             key={`m-${loc.id}`}
                                             longitude={Number(loc.longitude)}
@@ -541,7 +614,7 @@ export default function AddPlace() {
                                                         longitude: loc.longitude,
                                                         titulo: loc.titulo,
                                                         interes:loc.fk_interest,
-                                                        image:loc.imagenes[0]
+                                                        image:loc.imagenes && loc.imagenes[0]
                                                     })
                                                 }
                                                 onMouseLeave={() => setSelectedLocationOnMap(null)}

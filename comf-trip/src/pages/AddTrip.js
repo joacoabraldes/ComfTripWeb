@@ -4,18 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/AddTrip.css';
 import LogoSvg from '../components/LogoSvg';
 import Select from 'react-select';
-import countryList from "react-select-country-list";
-import { allCountries  } from "country-region-data";
 import Header from "../components/Header";
 
 export default function AddTrip() {
   const [destinations, setDestinations] = useState([
-    { country: null, province: null, startDate: null, endDate: null }
+    { city: null, startDate: null, endDate: null }
   ]);
   const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
   const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  // new states:
+  const [pace, setPace] = useState(""); // 'relajado' | 'moderado' | 'intenso'
+  const [placesText, setPlacesText] = useState(""); // comma or newline separated list of places user wants to include
   const [notes, setNotes] = useState("");
   const [budget, setBudget]=useState("");
   const [loadingTrip, setLoadingTrip] = useState(false);
@@ -23,6 +24,15 @@ export default function AddTrip() {
   const [statusMessage, setStatusMessage] = useState(null);
   // Primero obtenemos el destino actual
   const currentDestination = destinations[currentDestinationIndex];
+
+  // Fixed list of allowed cities
+  const cityOptions = useMemo(() => ([
+    { value: 'barcelona_spain', label: 'Barcelona, Spain', city: 'Barcelona', country: 'Spain' },
+    { value: 'buenosaires_argentina', label: 'Buenos Aires, Argentina', city: 'Buenos Aires', country: 'Argentina' },
+    { value: 'rome_italy', label: 'Rome, Italy', city: 'Rome', country: 'Italy' },
+    { value: 'berlin_germany', label: 'Berlin, Germany', city: 'Berlin', country: 'Germany' },
+    { value: 'paris_france', label: 'Paris, France', city: 'Paris', country: 'France' },
+  ]), []);
 
   const normalizeDate=(d)=>{
       if(!d) return new Date();
@@ -62,17 +72,6 @@ export default function AddTrip() {
           mounted = false;
       };
   }, []);
-
-  const countries = useMemo(() => countryList().getData(), []);
-
-  // provinces based on country selection
-  const provinces = useMemo(() => {
-    const country = currentDestination?.country;
-    if (!country) return [];
-    const countryData = allCountries.find(c => c[0] === country.label);
-    if (!countryData) return [];
-    return countryData[2].map(r => ({ value: r[1], label: r[0] }));
-  }, [currentDestination?.country]);
 
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
@@ -183,7 +182,7 @@ export default function AddTrip() {
     setDestinations((prev) => {
       const newDest = [
         ...prev,
-        { country: null, province: null, startDate: null, endDate: null }
+        { city: null, startDate: null, endDate: null }
       ];
       setCurrentDestinationIndex(newDest.length - 1);
       return newDest;
@@ -192,24 +191,12 @@ export default function AddTrip() {
     setCurrentYear(today.getFullYear());
   };
 
-  const handleChangeCountry = (val) => {
+  const handleChangeCity = (val) => {
     setDestinations((prev) => {
       const newDestinations = [...prev];
       newDestinations[currentDestinationIndex] = {
         ...newDestinations[currentDestinationIndex],
-        country: val,
-        province: null,
-      };
-      return newDestinations;
-    });
-  };
-
-  const handleChangeProvince = (val) => {
-    setDestinations((prev) => {
-      const newDestinations = [...prev];
-      newDestinations[currentDestinationIndex] = {
-        ...newDestinations[currentDestinationIndex],
-        province: val,
+        city: val,
       };
       return newDestinations;
     });
@@ -228,18 +215,29 @@ export default function AddTrip() {
         return;
       }
 
+      if (!pace) {
+        throw new Error("Selecciona el ritmo del viaje (pace).");
+      }
+
       let createdTripId = null;
 
+      // normalize places text into array
+      const placesArray = placesText
+        .split(/[,;\n]+/)
+        .map(p => p.trim())
+        .filter(Boolean);
+
       for (const dest of destinations) {
-        if (!dest.country || !dest.province || !dest.startDate || !dest.endDate) {
+        if (!dest.city || !dest.startDate || !dest.endDate) {
           throw new Error("Por favor completa todos los destinos y fechas.");
         }
 
         const payload = {
-          destination: `${dest.province.label}, ${dest.country.label}`,
+          destination: dest.city.label, // e.g. "Barcelona, Spain"
           start_date: dest.startDate,
           end_date: dest.endDate,
           budget: budget || null,
+          // keep notes saved on the trip record as metadata
           notes: notes || null
         };
 
@@ -252,8 +250,22 @@ export default function AddTrip() {
 
         // Now ask server to build and persist itinerary for this trip
         setStatusMessage("Generando itinerario automáticamente (esto puede tardar unos segundos) ...");
-        // call itinerary endpoint with save=true so server inserts trip_places
-        await apiGet(`/trips/${createdTripId}/itinerary?save=true`);
+
+        // Send richer payload to itinerary endpoint — this is where LLM notes/pace/places go.
+        // Body: { save: true, pace, places, llm_notes, user_id, budget }
+        const itineraryBody = {
+          save: true,
+          pace, // 'relajado' | 'moderado' | 'intenso'
+          places: placesArray, // array of place names (may be empty)
+          llm_notes: notes || "", // notes meant to be used by the LLM
+          user_id: stored.id,
+          trip_id: createdTripId,
+          budget: budget || null
+        };
+
+        // Use POST so backend receives JSON body (change to GET if your backend expects query params)
+        await apiPost(`/trips/${createdTripId}/itinerary`, itineraryBody);
+
         setStatusMessage("Itinerario generado y guardado!");
       }
 
@@ -301,28 +313,17 @@ export default function AddTrip() {
             <label className="field">
               <h2 className="add-trip-subtitle">Selecciona a donde vas a viajar</h2>
 
-              {/* Selector de País */}
+              {/* City selector (restricted list) */}
               <Select
                   className="country-select"
                   classNamePrefix="react-select"
-                  options={countries}
-                  value={currentDestination.country}
-                  onChange={handleChangeCountry}
-                  placeholder="Escribe o selecciona un país"
+                  options={cityOptions}
+                  value={currentDestination.city}
+                  onChange={handleChangeCity}
+                  placeholder="Selecciona una ciudad"
+                  isClearable
               />
 
-            </label>
-            <label className="field">
-              {/* Selector de Región */}
-              <Select
-                  className="country-select"
-                  classNamePrefix="react-select"
-                  options={provinces}
-                  value={currentDestination.province}
-                  onChange={handleChangeProvince}
-                  placeholder="Escribe o selecciona una provincia"
-                  isDisabled={!currentDestination?.country}
-              />
             </label>
 
             <h2 className="add-trip-subtitle">Selecciona las fechas que vas a estar</h2>
@@ -385,7 +386,7 @@ export default function AddTrip() {
 
             {currentDestination.startDate && currentDestination.endDate && (
               <p className="date-range">
-                Se armará un plan turístico para {currentDestination.province?.label || ''}, {currentDestination.country?.label || ''} del{' '}
+                Se armará un plan turístico para {currentDestination.city?.label || ''} del{' '}
                 {currentDestination.startDate.getDate()}/{currentDestination.startDate.getMonth() + 1}/
                 {currentDestination.startDate.getFullYear()} al{' '}
                 {currentDestination.endDate.getDate()}/{currentDestination.endDate.getMonth() + 1}/
@@ -398,10 +399,28 @@ export default function AddTrip() {
                       className={"input"}
                       onChange={(e) => setBudget(e.target.value)} />
 
-            <label>Notas (opcional)</label>
+            <label>Ritmo del viaje (pace)</label>
+            <select className="input" value={pace} onChange={(e) => setPace(e.target.value)}>
+              <option value="">-- Selecciona ritmo --</option>
+              <option value="relajado">Relajado</option>
+              <option value="moderado">Moderado</option>
+              <option value="intenso">Intenso</option>
+            </select>
+
+            <label>Lugares que querés incluir (opcional)</label>
+            <textarea
+              value={placesText}
+              className={"textarea"}
+              onChange={(e) => setPlacesText(e.target.value)}
+              placeholder="Escribe nombres separados por comas o por línea."
+              rows={3}
+            />
+
+            <label>Notas del viaje (opcional)</label>
             <textarea value={notes}
                       className={"textarea"}
-                      onChange={(e) => setNotes(e.target.value)} rows={3} />
+                      onChange={(e) => setNotes(e.target.value)} rows={3}
+                      placeholder="Información que quieras que tenga en cuenta el generador." />
 
             {statusMessage && <div style={{marginBottom:12, color: "#333"}}>{statusMessage}</div>}
 

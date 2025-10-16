@@ -1,5 +1,10 @@
+/* src/styles/AddTrip.css
+   Combined & updated styles for AddTrip page
+*/
+
+/* Root layout */
 .add-trip-root {
-  display: flex;               /* mejor flex en lugar de grid */
+  display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
@@ -7,111 +12,146 @@
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   box-sizing: border-box;
   position: relative;
-  overflow: hidden;            /* evita scroll global */
+  overflow: hidden;
 }
 
+/* Container: left form + right hero */
 .add-trip-container {
   display: flex;
   width: 100%;
-  max-width: 1200px;           /* limite opcional */
-  height: 100vh;                /* altura fija respecto al viewport */
+  max-width: 1200px;
+  height: calc(100vh - 40px);
+  margin: 20px;
   background-color: white;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;            /* para que solo el hijo scrollee */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
 }
 
+/* Left column: form (scrollable) */
 .add-trip-left {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  width: 100%;                    /* ocupa todo lo disponible */
-             /* scroll SOLO aquí */
+  flex: 1 1 0;
+  min-width: 320px;
+  overflow-y: auto;   /* scroll only here */
 }
 
+/* Right column: hero */
 .add-trip-right {
-  width: 800px;
+  width: 360px; /* fixed width so left can scroll */
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #ffe5e8;
+  padding: 24px;
 }
 
+/* hero sizing */
 .hero-art {
-  width: 400px;
-  height: 400px;
-
+  width: 260px;
+  height: 260px;
+  display: block;
 }
 
+/* brand */
 .brand {
-  font-size: 35px;
-  font-weight: bold;
+  font-size: 28px;
+  font-weight: 700;
   color: #ff3951;
   text-align: center;
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
+/* Titles */
 .add-trip-title {
   font-size: 24px;
-  font-family: Arial, Helvetica, sans-serif;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
 .add-trip-subtitle {
-  font-size: 16px;
-  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
   color: #666;
-  margin: 20px 0 10px;
+  margin: 8px 0 16px;
   text-align: center;
 }
 
+/* Form container */
 .form {
   display: flex;
- padding: 20px;
+  padding: 4px 0 40px 0;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   height: 100%;
-  overflow-y: auto;
-
 }
 
+/* Generic field */
 .field {
   display: flex;
   flex-direction: column;
 }
 
-.input {
-  padding: 20px;
+/* Input styles (native selects, input-like wrappers) */
+.input,
+.input-like,
+.country-dropdown,
+.country-dropdown select {
+  padding: 10px 12px;
   border: 1px solid #e8d1d1;
   background: #fcf7f7;
-  border-radius: 10px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 14px;
   outline: none;
-  flex: 1;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
 }
 
-.input:focus {
+.input:focus,
+.input-like:focus,
+.country-dropdown:focus,
+.country-dropdown select:focus {
   border-color: #ff3951;
+  box-shadow: none;
 }
 
+/* Textarea */
 .textarea {
-  min-height: 120px;      /* altura mínima */
-  resize: vertical;       /* deja al usuario agrandar/reducir hacia abajo */
+  min-height: 120px;
+  resize: vertical;
   padding: 12px;
   border: 1px solid #e8d1d1;
   background: #fcf7f7;
-  border-radius: 10px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 14px;
   outline: none;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .textarea:focus {
   border-color: #ff3951;
 }
 
+/* Card helper around sections */
+.card {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fbfbfb;
+  box-sizing: border-box;
+}
+
+/* When a section needs white background (e.g. flights) you can add .card--white if needed */
+.card.card--white {
+  background: #fff;
+}
+
+/* Calendar & date picker */
 .calendar-header {
   display: flex;
   justify-content: space-between;
@@ -121,14 +161,13 @@
 
 .month-year {
   font-size: 16px;
-  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
   font-weight: 600;
   color: #333;
 }
 
 .arrows {
   display: flex;
-  gap: 20px;
+  gap: 12px;
 }
 
 .arrow {
@@ -137,6 +176,7 @@
   font-size: 20px;
   color: #ff3951;
   cursor: pointer;
+  padding: 6px;
 }
 
 .arrow:hover {
@@ -145,14 +185,12 @@
 
 .calendar {
   margin-top: 10px;
-  outline-color: #CBCBCB;
 }
 
 .week-days {
   display: flex;
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
   justify-content: space-around;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .week-day {
@@ -169,56 +207,60 @@
 
 .empty-day {
   width: 14.28%;
-  height: 40px;
+  height: 42px;
 }
 
 .day {
   width: 14.28%;
-  height: 40px;
+  height: 42px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 16px;
+  font-size: 15px;
   background: none;
   border: none;
   cursor: pointer;
 }
 
 .day:hover {
-  background-color: #f0f0f0;
+  background-color: #f3f3f3;
+  border-radius: 6px;
 }
 
 .selected-day {
   background-color: #ffe5e8;
   color: #ff3951;
+  border-radius: 6px;
 }
 
 .former-day {
-    background-color: #ff3951;
-    color: white;
+  background-color: #ff3951;
+  color: white;
+  border-radius: 6px;
 }
 
 .date-range {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 12px;
   color: #666;
-  font-size: 14px;
+  font-size: 13px;
 }
 
+/* Buttons */
 .btn-primary {
   background-color: #ff3951;
   color: white;
-  padding: 15px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 25px;
-  font-size: 16px;
+  border-radius: 22px;
+  font-size: 15px;
   cursor: pointer;
   text-align: center;
 }
 
 .btn-primary:disabled {
   background-color: #ff6b7a;
-  opacity: 0.7;
+  opacity: 0.8;
   cursor: not-allowed;
 }
 
@@ -229,16 +271,107 @@
 .btn-secondary {
   background: none;
   border: 1px solid #ddd;
-  padding: 15px;
+  padding: 12px 16px;
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 14px;
   color: #666;
   cursor: pointer;
-  text-align: center;
-  margin-bottom: 50px;
 }
 
-.btn-secondary:hover {
+/* Flights grid layout */
+.flights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+  margin-top: 8px;
+}
+
+/* A field that must span both columns */
+.flights-grid .wide {
+  grid-column: 1 / -1;
+}
+
+/* small screens -> single column */
+@media (max-width: 720px) {
+  .add-trip-container {
+    flex-direction: column;
+    height: auto;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .add-trip-right {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .flights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .add-trip-left {
+    padding: 16px;
+    height: auto;
+    max-height: none;
+  }
+}
+
+/* react-select overrides to make it match native inputs visually */
+/* The styles prop already sets control style, but these ensure dropdown internals align */
+.react-select__control,
+.react-select-container .react-select__control {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #e8d1d1;
+  background: #fff;
+}
+
+.react-select__control--is-focused,
+.react-select-container .react-select__control--is-focused {
   border-color: #ff3951;
-  color: #ff3951;
+  box-shadow: none;
+}
+
+.react-select__value-container {
+  padding: 0 8px;
+}
+
+.react-select__menu {
+  z-index: 9999;
+}
+
+/* labels in cards */
+.card label,
+.card .field label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+/* small helper spacing */
+.form > .card:last-child {
+  margin-bottom: 20px;
+}
+
+/* small fix for CountryDropdown package markup — target selects inside */
+.country-dropdown select,
+.country-dropdown {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+/* make sure react-select placeholder / input spacing lines up with textarea */
+.react-select__placeholder {
+  margin: 0;
+  padding: 0;
+}
+
+/* keep consistent box-sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }

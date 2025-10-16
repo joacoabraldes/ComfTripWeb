@@ -1,31 +1,59 @@
-import React, {useState, useMemo, useEffect} from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { apiPost, apiGet } from "./api";
 import { useNavigate } from 'react-router-dom';
 import '../styles/AddTrip.css';
 import LogoSvg from '../components/LogoSvg';
 import Select from 'react-select';
 import Header from "../components/Header";
+import flightsApi from '../services/flightsApiAmadeus';
+import { CountryDropdown } from 'react-country-region-selector';
+import { Country, City } from 'country-state-city';
 
 export default function AddTrip() {
-  const [destinations, setDestinations] = useState([
-    { city: null, startDate: null, endDate: null }
-  ]);
+  // small ISO map for a few countries used in UI
+  const COUNTRY_NAME_TO_CODE = {
+    'Spain': 'ES',
+    'Argentina': 'AR',
+    'Italy': 'IT',
+    'Germany': 'DE',
+    'France': 'FR'
+  };
+
+  const [destinations, setDestinations] = useState([{
+    city: null,
+    startDate: null,
+    endDate: null,
+    originCountry: null,
+    originCity: null,
+    originAirport: null,
+    destinationAirport: null,
+    flightOffers: [],
+    offersLoading: false,
+    selectedFlight: null
+  }]);
+
   const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
   const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  // new states:
-  const [pace, setPace] = useState(""); // 'relajado' | 'moderado' | 'intenso'
-  const [placesText, setPlacesText] = useState(""); // comma or newline separated list of places user wants to include
+
+  // preferences
+  const [pace, setPace] = useState("");
+  const [placesText, setPlacesText] = useState("");
   const [notes, setNotes] = useState("");
-  const [budget, setBudget]=useState("");
   const [loadingTrip, setLoadingTrip] = useState(false);
   const nav = useNavigate();
   const [statusMessage, setStatusMessage] = useState(null);
-  // Primero obtenemos el destino actual
+  const [tripsDates, setTripsDates] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // dynamic options
+  const [airportOptionsByIndex, setAirportOptionsByIndex] = useState({});
+  const [originCityOptionsByIndex, setOriginCityOptionsByIndex] = useState({});
+  const [airportsLoadingMap, setAirportsLoadingMap] = useState({});
+
   const currentDestination = destinations[currentDestinationIndex];
 
-  // Fixed list of allowed cities
   const cityOptions = useMemo(() => ([
     { value: 'barcelona_spain', label: 'Barcelona, Spain', city: 'Barcelona', country: 'Spain' },
     { value: 'buenosaires_argentina', label: 'Buenos Aires, Argentina', city: 'Buenos Aires', country: 'Argentina' },
@@ -34,156 +62,110 @@ export default function AddTrip() {
     { value: 'paris_france', label: 'Paris, France', city: 'Paris', country: 'France' },
   ]), []);
 
-  const normalizeDate=(d)=>{
-      if(!d) return new Date();
-      const date=d.split("T")[0].split("-");
-      const yy = Number(date[0]);
-      const mm =Number(date[1])-1;
-      const dd = Number(date[2]);
-      return new Date(yy, mm, dd);
-  }
-  const [tripsDates, setTripsDates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-      let mounted = true;
-      (async () => {
-          setLoading(true);
-          try {
-              const res = await apiGet("/trips");
-              if (!mounted) return;
+  const normalizeDate = (d) => {
+    if (!d) return new Date();
+    const date = d.split("T")[0].split("-");
+    const yy = Number(date[0]);
+    const mm = Number(date[1]) - 1;
+    const dd = Number(date[2]);
+    return new Date(yy, mm, dd);
+  };
 
-              if (Array.isArray(res)) {
-                  const sorted = [...res].sort((a, b) => {
-                      return normalizeDate(b.start_date) - normalizeDate(a.start_date); // fallback por fecha
-                  });
-                  const Dates = sorted.map(trip => ({
-                      start_date: normalizeDate(trip.start_date),
-                      end_date: normalizeDate(trip.end_date)
-                  }));
-                  setTripsDates(Dates);
-              }
-          } catch (err) {
-              console.error("Error cargando viajes:", err);
-          } finally {
-              if (mounted) setLoading(false);
-          }
-      })();
-      return () => {
-          mounted = false;
-      };
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await apiGet("/trips");
+        if (!mounted) return;
+        if (Array.isArray(res)) {
+          const sorted = [...res].sort((a, b) => normalizeDate(b.start_date) - normalizeDate(a.start_date));
+          const Dates = sorted.map(trip => ({ start_date: normalizeDate(trip.start_date), end_date: normalizeDate(trip.end_date) }));
+          setTripsDates(Dates);
+        }
+      } catch (err) {
+        console.error("Error cargando viajes:", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
-  const getDaysInMonth = (year, month) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
   const generateCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentYear, currentMonth);
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
     const days = [];
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push({ date: i, selected: false });
-    }
+    for (let i = 1; i <= daysInMonth; i++) days.push({ date: i, selected: false });
     return { days, firstDayOfMonth };
   };
 
   const { days, firstDayOfMonth } = generateCalendarDays();
 
-    const alreadySelected = (d) => {
-        if (!d) return false;
-        return tripsDates.some(trip => {
-            const start = new Date(trip.start_date);
-            const end = new Date(trip.end_date);
-            if (currentDestination.startDate) {
-                if(currentDestination.startDate<start && d>currentDestination.startDate){
-                    return d >= start;
-                } else if(currentDestination.startDate>end && currentDestination.startDate>d){
-                    return d<=end
-                }
-            }
-            return d >= start && d <= end;
-        });
-    };
+  const alreadySelected = (d) => {
+    if (!d) return false;
+    return tripsDates.some(trip => {
+      const start = new Date(trip.start_date);
+      const end = new Date(trip.end_date);
+      if (currentDestination.startDate) {
+        if (currentDestination.startDate < start && d > currentDestination.startDate) return d >= start;
+        else if (currentDestination.startDate > end && currentDestination.startDate > d) return d <= end;
+      }
+      return d >= start && d <= end;
+    });
+  };
 
-
-    const handleDateSelect = (day) => {
+  const handleDateSelect = (day) => {
     const selectedDate = new Date(currentYear, currentMonth, day);
+    if (selectedDate < today || alreadySelected(selectedDate)) return;
 
-    if (selectedDate < today || alreadySelected(selectedDate)) {
-      return;
-    }
-
-    setDestinations((prev) => {
-      const newDestinations = [...prev];
-      const current = { ...(newDestinations[currentDestinationIndex] || {}) };
-
+    setDestinations(prev => {
+      const newDest = [...prev];
+      const current = { ...(newDest[currentDestinationIndex] || {}) };
       const { startDate, endDate } = current;
 
       if (!startDate) {
-        // primer click -> startDate
         current.startDate = selectedDate;
         current.endDate = null;
       } else if (startDate && !endDate) {
-        // segundo click -> endDate (si es anterior, los invertimos)
-        const startNorm = startDate;
-        if (selectedDate.getTime() < startNorm.getTime()) {
-          current.endDate = startNorm;
+        if (selectedDate.getTime() < startDate.getTime()) {
+          current.endDate = startDate;
           current.startDate = selectedDate;
         } else {
           current.endDate = selectedDate;
         }
       } else {
-        // ya había un rango: tercer click -> reiniciamos rango empezando por el click
         current.startDate = selectedDate;
         current.endDate = null;
       }
 
-      newDestinations[currentDestinationIndex] = current;
-      return newDestinations;
+      newDest[currentDestinationIndex] = current;
+      return newDest;
     });
   };
 
   const isDateInRange = (day) => {
     const current = destinations[currentDestinationIndex];
     if (!current || !current.startDate) return false;
-
     const currentDate = new Date(currentYear, currentMonth, day);
     const start = current.startDate;
-
-    if (!current.endDate) {
-      return start.getTime() === currentDate.getTime();
-    }
-
-    const end =current.endDate;
+    if (!current.endDate) return start.getTime() === currentDate.getTime();
+    const end = current.endDate;
     return currentDate.getTime() >= start.getTime() && currentDate.getTime() <= end.getTime();
   };
 
-  const handlePrevMonth = () => {
-    setCurrentMonth((prev) => {
-      if (prev === 0) {
-        setCurrentYear(currentYear - 1);
-        return 11;
-      }
-      return prev - 1;
-    });
-  };
-
-  const handleNextMonth = () => {
-    setCurrentMonth((prev) => {
-      if (prev === 11) {
-        setCurrentYear(currentYear+ 1);
-        return 0;
-      }
-      return prev + 1;
-    });
-  };
+  const handlePrevMonth = () => setCurrentMonth(prev => prev === 0 ? (setCurrentYear(c => c - 1), 11) : prev - 1);
+  const handleNextMonth = () => setCurrentMonth(prev => prev === 11 ? (setCurrentYear(c => c + 1), 0) : prev + 1);
 
   const handleAddDestination = () => {
-    setDestinations((prev) => {
-      const newDest = [
-        ...prev,
-        { city: null, startDate: null, endDate: null }
-      ];
+    setDestinations(prev => {
+      const newDest = [...prev, {
+        city: null, startDate: null, endDate: null,
+        originCountry: null, originCity: null, originAirport: null, destinationAirport: null,
+        flightOffers: [], offersLoading: false, selectedFlight: null
+      }];
       setCurrentDestinationIndex(newDest.length - 1);
       return newDest;
     });
@@ -191,14 +173,323 @@ export default function AddTrip() {
     setCurrentYear(today.getFullYear());
   };
 
-  const handleChangeCity = (val) => {
-    setDestinations((prev) => {
-      const newDestinations = [...prev];
-      newDestinations[currentDestinationIndex] = {
-        ...newDestinations[currentDestinationIndex],
-        city: val,
-      };
-      return newDestinations;
+  // parse helper (used for airport option parsing)
+  const parseCityCountryFromOption = (opt) => {
+    const cityName = (opt?.meta?.cityName || opt?.cityName || '')?.trim();
+    const countryName = (opt?.meta?.countryName || opt?.countryName || '')?.trim();
+    if (cityName || countryName) return { cityName, countryName };
+
+    const label = opt?.label || '';
+    const m = label.match(/\(([^)]+)\)/);
+    if (m && m[1]) {
+      const parts = m[1].split(',').map(p => p.trim());
+      if (parts.length >= 2) {
+        return { cityName: parts[0], countryName: parts[parts.length - 1] };
+      } else if (parts.length === 1) {
+        return { cityName: parts[0], countryName: '' };
+      }
+    }
+    return { cityName: '', countryName: '' };
+  };
+
+  const reactSelectStyles = {
+    control: (provided) => ({
+      ...provided,
+      minHeight: '44px',
+      borderRadius: '8px',
+      border: '1px solid #e8d1d1',
+      boxShadow: 'none',
+      background: '#fcf7f7'
+    }),
+    valueContainer: (p) => ({ ...p, padding: '4px 8px' }),
+    input: (p) => ({ ...p, margin: 0 }),
+    placeholder: (p) => ({ ...p, margin: 0, color: '#777' }),
+    menu: (p) => ({ ...p, zIndex: 9999 })
+  };
+
+  // ----------------------
+  // CITY AUTOCOMPLETE (local country-state-city)
+  // ----------------------
+  const fetchOriginCityOptions = (input, idx) => {
+    const safeInput = typeof input === 'string' ? input.trim() : String(input || '');
+    if (!safeInput || safeInput.length < 2) {
+      setOriginCityOptionsByIndex(prev => ({ ...prev, [idx]: [] }));
+      return;
+    }
+
+    const originCountryName = destinations[idx]?.originCountry || null;
+    if (!originCountryName) {
+      setOriginCityOptionsByIndex(prev => ({ ...prev, [idx]: [] }));
+      return;
+    }
+
+    const allCountries = Country.getAllCountries();
+    const found = allCountries.find(c => c.name && c.name.toLowerCase() === originCountryName.toLowerCase());
+    const isoCode = found?.isoCode || COUNTRY_NAME_TO_CODE[originCountryName] || null;
+    if (!isoCode) {
+      setOriginCityOptionsByIndex(prev => ({ ...prev, [idx]: [] }));
+      return;
+    }
+
+    let cities = [];
+    try { cities = City.getCitiesOfCountry(isoCode) || []; } catch (e) { cities = []; }
+
+    const q = safeInput.toLowerCase();
+    const seen = new Set();
+    const out = [];
+    for (let i = 0; i < cities.length && out.length < 100; i++) {
+      const c = cities[i];
+      if (!c || !c.name) continue;
+      if (c.name.toLowerCase().includes(q)) {
+        const key = `${c.name}|||${found?.name || ''}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({
+            value: key,
+            label: `${c.name}${found?.name ? ', ' + found.name : ''}`,
+            meta: { cityName: c.name, countryName: found?.name || '' }
+          });
+        }
+      }
+    }
+    setOriginCityOptionsByIndex(prev => ({ ...prev, [idx]: out }));
+  };
+
+  // ----------------------
+  // AIRPORTS via Amadeus (sanitized keyword + proper state update)
+  // ----------------------
+  // small wrapper to call airports from non-async handlers
+  const awaitFetchAirports = (cityOrKeyword, idx, type, countryCode) => {
+    fetchAirports(cityOrKeyword, idx, type, countryCode).catch(err => {
+      console.error('fetchAirports wrapper error', err);
+    });
+  };
+
+  // fetch airports: prefer by countryCode + cityName (no free-text keyword)
+  const fetchAirports = async (keywordOrCityName, idx, type = 'destination', countryCode) => {
+    if (!keywordOrCityName && !countryCode) return;
+    setAirportsLoadingMap(prev => ({ ...prev, [idx]: true }));
+    try {
+      // If countryCode is known, ask AMADEUS for airports by country and optionally filter by city
+      if (countryCode) {
+        // flightsApi.getAirportOptionsForSelect supports (keyword, limit, countryCode, cityName)
+        const items = await flightsApi.getAirportOptionsForSelect('', 200, countryCode, keywordOrCityName || '');
+        setAirportOptionsByIndex(prev => ({
+          ...prev,
+          [idx]: { ...(prev[idx] || {}), [type]: items || [] }
+        }));
+        return;
+      }
+
+      // fallback: call the usual keyword search
+      const items = await flightsApi.getAirportOptionsForSelect(keywordOrCityName, 200);
+      setAirportOptionsByIndex(prev => ({
+        ...prev,
+        [idx]: { ...(prev[idx] || {}), [type]: items || [] }
+      }));
+    } catch (err) {
+      console.error('Error fetching airports for', keywordOrCityName, err);
+      setAirportOptionsByIndex(prev => ({ ...prev, [idx]: { ...(prev[idx] || {}), [type]: [] } }));
+    } finally {
+      setAirportsLoadingMap(prev => ({ ...prev, [idx]: false }));
+    }
+  };
+
+  // handlers
+  const handleChangeDestinationCity = (val) => {
+    setDestinations(prev => {
+      const copy = [...prev];
+      copy[currentDestinationIndex] = { ...copy[currentDestinationIndex], city: val, destinationAirport: null, flightOffers: [], selectedFlight: null };
+      return copy;
+    });
+    const cityName = val?.city || val?.label || val?.value || '';
+    const countryName = val?.country || '';
+    const countryCode = COUNTRY_NAME_TO_CODE[countryName] || undefined;
+    // call airports by country+city when we have countryCode, else fallback to keyword
+    awaitFetchAirports(cityName || (val?.label || ''), currentDestinationIndex, 'destination', countryCode);
+  };
+
+  const handleChangeOriginCountry = (countryName) => {
+    setDestinations(prev => {
+      const copy = [...prev];
+      copy[currentDestinationIndex] = { ...copy[currentDestinationIndex], originCountry: countryName, originCity: null, originAirport: null, flightOffers: [], selectedFlight: null };
+      return copy;
+    });
+    setAirportOptionsByIndex(prev => ({ ...prev, [currentDestinationIndex]: { ...(prev[currentDestinationIndex] || {}), origin: [] } }));
+    setOriginCityOptionsByIndex(prev => ({ ...prev, [currentDestinationIndex]: [] }));
+  };
+
+  const handleChangeOriginCity = (val) => {
+    setDestinations(prev => {
+      const copy = [...prev];
+      copy[currentDestinationIndex] = { ...copy[currentDestinationIndex], originCity: val, originAirport: null, flightOffers: [], selectedFlight: null };
+      return copy;
+    });
+    const cityName = val?.meta?.cityName || val?.meta?.countryName || val?.label || val?.value || '';
+    const originCountryName = destinations[currentDestinationIndex]?.originCountry || '';
+    const countryCode = COUNTRY_NAME_TO_CODE[originCountryName] || undefined;
+    awaitFetchAirports(cityName, currentDestinationIndex, 'origin', countryCode);
+  };
+
+  const handleChangeAirport = (which, opt) => {
+    setDestinations(prev => {
+      const copy = [...prev];
+      const current = { ...(copy[currentDestinationIndex] || {}) };
+      if (which === 'origin') current.originAirport = opt;
+      else current.destinationAirport = opt;
+      current.flightOffers = [];
+      current.selectedFlight = null;
+      copy[currentDestinationIndex] = current;
+      return copy;
+    });
+  };
+
+  // helpers for formatting flight offers
+  const parseISODuration = (iso) => {
+    if (!iso || typeof iso !== 'string') return '';
+    const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+    if (!m) return '';
+    const hh = m[1] ? `${parseInt(m[1],10)}h` : '';
+    const mm = m[2] ? `${parseInt(m[2],10)}m` : '';
+    return [hh, mm].filter(Boolean).join(' ');
+  };
+
+  const AIRLINE_NAMES = {
+    'AZ': 'ITA Airways',
+    'IB': 'Iberia',
+    'UX': 'Air Europa',
+    'LH': 'Lufthansa',
+    'AF': 'Air France',
+    'AA': 'American Airlines',
+    'DL': 'Delta',
+    'UA': 'United Airlines',
+    'KL': 'KLM',
+    'VY': 'Vueling',
+    // add more as you need...
+  };
+
+  // flight offers effect — updated to include meta info (flight code, airline, duration, stops)
+  useEffect(() => {
+    const idx = currentDestinationIndex;
+    const dest = destinations[idx];
+    if (!dest) return;
+
+    const originCode = dest.originAirport?.value;
+    const destCode = dest.destinationAirport?.value;
+    const depDate = dest.startDate ? dest.startDate : null;
+
+    if (!originCode || !destCode || !depDate) {
+      if (dest.flightOffers && dest.flightOffers.length > 0) {
+        setDestinations(prev => {
+          const copy = [...prev];
+          copy[idx] = { ...copy[idx], flightOffers: [], offersLoading: false, selectedFlight: null };
+          return copy;
+        });
+      }
+      return;
+    }
+
+    let mounted = true;
+    (async () => {
+      setDestinations(prev => {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], offersLoading: true, flightOffers: [], selectedFlight: null };
+        return copy;
+      });
+
+      try {
+        const res = await flightsApi.searchFlights({
+          originLocationCode: originCode,
+          destinationLocationCode: destCode,
+          departureDate: depDate,
+          adults: 1,
+          max: 12,
+          travelClass: 'ECONOMY'
+        });
+
+        if (!mounted) return;
+
+        const offers = (res?.data || []).map((offer, i) => {
+          const price = (offer?.price?.total) ? `${offer.price.total} ${offer.price.currency || ''}` : 'Precio N/A';
+          const itinerary = Array.isArray(offer.itineraries) && offer.itineraries[0];
+          let dep = '';
+          let arr = '';
+          let flightCodeStr = '';
+          let carrierCodes = [];
+          let airlineDisplay = '';
+          let stops = 0;
+          let durationStr = '';
+
+          if (itinerary && Array.isArray(itinerary.segments) && itinerary.segments.length > 0) {
+            const segments = itinerary.segments;
+            const firstSeg = segments[0];
+            const lastSeg = segments[segments.length - 1];
+
+            dep = firstSeg?.departure?.at || firstSeg?.departure?.iataCode || '';
+            arr = lastSeg?.arrival?.at || lastSeg?.arrival?.iataCode || '';
+
+            stops = Math.max(0, segments.length - 1);
+
+            const carrier = firstSeg?.carrierCode || firstSeg?.operating?.carrierCode || '';
+            const number = firstSeg?.number || firstSeg?.flightNumber || firstSeg?.operating?.number || '';
+            carrierCodes = (segments || []).map(s => s.carrierCode || s.operating?.carrierCode).filter(Boolean);
+
+            if (carrier) flightCodeStr = carrier + (number ? String(number) : '');
+            airlineDisplay = firstSeg?.operating?.carrierName || firstSeg?.carrierName || AIRLINE_NAMES[carrier] || carrier;
+
+            durationStr = parseISODuration(itinerary.duration || (offer?.itineraries?.[0]?.duration) || '');
+          }
+
+          const times = (dep && arr) ? `${dep.split('T')[1]?.slice(0,5) || ''} → ${arr.split('T')[1]?.slice(0,5) || ''}` : '';
+          const label = `${price}${times ? ' · ' + times : ''}${flightCodeStr ? ' · ' + flightCodeStr : ''}${airlineDisplay ? ' · ' + airlineDisplay : ''}`;
+
+          return {
+            id: offer?.id || `offer_${i}`,
+            label,
+            raw: offer,
+            meta: {
+              price,
+              times,
+              flightCode: flightCodeStr,
+              carrierCodes,
+              airline: airlineDisplay,
+              stops,
+              duration: durationStr
+            }
+          };
+        });
+
+        setDestinations(prev => {
+          const copy = [...prev];
+          copy[idx] = { ...copy[idx], flightOffers: offers, offersLoading: false };
+          return copy;
+        });
+      } catch (err) {
+        console.error('Error fetching flight offers', err);
+        setDestinations(prev => {
+          const copy = [...prev];
+          copy[idx] = { ...copy[idx], flightOffers: [], offersLoading: false };
+          return copy;
+        });
+      }
+    })();
+
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    currentDestinationIndex,
+    destinations[currentDestinationIndex]?.originAirport?.value,
+    destinations[currentDestinationIndex]?.destinationAirport?.value,
+    destinations[currentDestinationIndex]?.startDate ? destinations[currentDestinationIndex].startDate.toISOString() : null
+  ]);
+
+  const handleSelectFlight = (opt) => {
+    setDestinations(prev => {
+      const copy = [...prev];
+      const current = { ...(copy[currentDestinationIndex] || {}) };
+      current.selectedFlight = opt;
+      copy[currentDestinationIndex] = current;
+      return copy;
     });
   };
 
@@ -215,64 +506,47 @@ export default function AddTrip() {
         return;
       }
 
-      if (!pace) {
-        throw new Error("Selecciona el ritmo del viaje (pace).");
-      }
+      if (!pace) throw new Error("Selecciona el ritmo del viaje (pace).");
 
       let createdTripId = null;
 
-      // normalize places text into array
-      const placesArray = placesText
-        .split(/[,;\n]+/)
-        .map(p => p.trim())
-        .filter(Boolean);
+      const placesArray = placesText.split(/[,;\n]+/).map(p => p.trim()).filter(Boolean);
 
       for (const dest of destinations) {
-        if (!dest.city || !dest.startDate || !dest.endDate) {
-          throw new Error("Por favor completa todos los destinos y fechas.");
-        }
+        if (!dest.city || !dest.startDate || !dest.endDate) throw new Error("Por favor completa todos los destinos y fechas.");
+        if (!dest.originAirport || !dest.destinationAirport) throw new Error("Seleccioná origen y destino (aeropuertos) para cada destino.");
 
         const payload = {
-          destination: dest.city.label, // e.g. "Barcelona, Spain"
+          destination: dest.city.label,
           start_date: dest.startDate,
           end_date: dest.endDate,
-          budget: budget || null,
-          // keep notes saved on the trip record as metadata
           notes: notes || null
         };
 
         setStatusMessage(`Creando viaje a ${payload.destination} ...`);
         const t = await apiPost("/trips", payload);
-        if (!t || !t.trip || !t.trip.id) {
-          throw new Error("No se pudo crear el viaje");
-        }
+        if (!t || !t.trip || !t.trip.id) throw new Error("No se pudo crear el viaje");
         createdTripId = t.trip.id;
 
-        // Now ask server to build and persist itinerary for this trip
         setStatusMessage("Generando itinerario automáticamente (esto puede tardar unos segundos) ...");
 
-        // Send richer payload to itinerary endpoint — this is where LLM notes/pace/places go.
-        // Body: { save: true, pace, places, llm_notes, user_id, budget }
         const itineraryBody = {
           save: true,
-          pace, // 'relajado' | 'moderado' | 'intenso'
-          places: placesArray, // array of place names (may be empty)
-          llm_notes: notes || "", // notes meant to be used by the LLM
+          pace,
+          places: placesArray,
+          llm_notes: notes || "",
           user_id: stored.id,
           trip_id: createdTripId,
-          budget: budget || null
+          origin_airport: dest.originAirport?.value || null,
+          destination_airport: dest.destinationAirport?.value || null,
+          selected_flight: dest.selectedFlight?.raw || null
         };
 
-        // Use POST so backend receives JSON body (change to GET if your backend expects query params)
         await apiPost(`/trips/${createdTripId}/itinerary`, itineraryBody);
-
         setStatusMessage("Itinerario generado y guardado!");
       }
 
-      if (createdTripId) {
-        // navigate to loading page (you already show a spinner there)
-        nav("/load-trip", { state: { tripId: createdTripId } });
-      }
+      if (createdTripId) nav("/load-trip", { state: { tripId: createdTripId } });
     } catch (err) {
       console.error("Error creando viaje:", err);
       alert(err.message || "Ocurrió un error al crear el viaje.");
@@ -282,168 +556,237 @@ export default function AddTrip() {
     }
   };
 
-  const monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-  ];
-  const weekDays = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const weekDays = ['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
 
   if (loading) {
-      return (
-          <div className="trip-it-root">
-              <Header/>
-              <main className="trip-it-main" style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "80vh" // ocupa casi toda la pantalla
-              }}>
-                  <div style={{fontSize:25}}> Cargando… </div>
-              </main>
-          </div>
-      );
+    return (
+      <div className="trip-it-root">
+        <Header />
+        <main style={{display:'flex',justifyContent:'center',alignItems:'center',height:'80vh'}}>
+          <div style={{fontSize:25}}>Cargando…</div>
+        </main>
+      </div>
+    );
   }
+
+  const originCityOptions = originCityOptionsByIndex[currentDestinationIndex] || [];
+  const originAirportOptions = (airportOptionsByIndex[currentDestinationIndex] || {}).origin || [];
+  const destAirportOptions = (airportOptionsByIndex[currentDestinationIndex] || {}).destination || [];
+
+  // helper used by react-select to render flight options nicely
+  const renderFlightOption = (option) => {
+    const m = option.meta || {};
+    return (
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+        <div style={{ fontWeight: 700 }}>{m.price || option.label}</div>
+        <div style={{ textAlign: 'right', fontSize: 13, color: '#333' }}>
+          {m.times && <div style={{ marginBottom: 2 }}>{m.times}</div>}
+          <div>
+            {m.flightCode && <span style={{ fontWeight: 600 }}>{m.flightCode}</span>}
+            {m.airline && <span style={{ marginLeft: 8, color: '#777' }}>{m.airline}</span>}
+          </div>
+          <div style={{ color: '#666', fontSize: 12 }}>
+            { (m.stops || m.duration) && `${m.stops ? `${m.stops} stop${m.stops>1?'s':''}` : ''}${(m.stops && m.duration) ? ' · ' : ''}${m.duration || ''}` }
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="add-trip-root">
       <div className="add-trip-container">
-        {/* LEFT: Form */}
         <div className="add-trip-left">
           <form className="form" onSubmit={handleSubmit}>
-            <label className="field">
-              <h2 className="add-trip-subtitle">Selecciona a donde vas a viajar</h2>
 
-              {/* City selector (restricted list) */}
+            {/* SECTION: Destination */}
+            <section className="card">
+              <h3>Destino y Fechas</h3>
+
+              <label>Ciudad de destino</label>
               <Select
-                  className="country-select"
-                  classNamePrefix="react-select"
-                  options={cityOptions}
-                  value={currentDestination.city}
-                  onChange={handleChangeCity}
-                  placeholder="Selecciona una ciudad"
-                  isClearable
+                options={cityOptions}
+                value={currentDestination.city}
+                onChange={handleChangeDestinationCity}
+                placeholder="Selecciona ciudad de destino"
+                isClearable
+                styles={reactSelectStyles}
               />
 
-            </label>
+              <div style={{marginTop:12}}>
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                  <div style={{fontWeight:600}}>{monthNames[currentMonth]} {currentYear}</div>
+                  <div>
+                    <button type="button" className="arrow" onClick={handlePrevMonth}>‹</button>
+                    <button type="button" className="arrow" onClick={handleNextMonth}>›</button>
+                  </div>
+                </div>
 
-            <h2 className="add-trip-subtitle">Selecciona las fechas que vas a estar</h2>
+                <div style={{marginTop:8}} className="calendar">
+                  <div className="week-days">
+                    {weekDays.map((d,i)=>(<span key={i} className="week-day">{d}</span>))}
+                  </div>
+                  <div className="days-grid">
+                    {Array(firstDayOfMonth).fill(null).map((_,i)=>(<div key={`e${i}`} className="empty-day" />))}
+                    {days.map(day=>{
+                      const currentDate = new Date(currentYear, currentMonth, day.date);
+                      const isPast = currentDate < today || alreadySelected(currentDate);
+                      const start = currentDestination?.startDate && currentDestination.startDate.getTime() === currentDate.getTime();
+                      const end = currentDestination?.endDate && currentDestination.endDate.getTime() === currentDate.getTime();
+                      const inRange = isDateInRange(day.date);
 
-            <div className="calendar-header">
-              <span className="month-year">{monthNames[currentMonth]} {currentYear}</span>
-              <div className="arrows">
-                <button type="button" className="arrow" onClick={handlePrevMonth}>‹</button>
-                <button type="button" className="arrow" onClick={handleNextMonth}>›</button>
-              </div>
-            </div>
-
-            <div className="calendar" >
-              <div className="week-days">
-                {weekDays.map((day, index) => (
-                  <span key={index} className="week-day">{day}</span>
-                ))}
-              </div>
-              <div className="days-grid">
-                {Array(firstDayOfMonth).fill(null).map((_, index) => (
-                  <div key={`empty-${index}`} className="empty-day" />
-                ))}
-                {days.map((day) => {
-                  const currentDate = new Date(currentYear, currentMonth, day.date);
-                  const isPast = currentDate < today || alreadySelected(currentDate);
-
-                    const start =
-                        currentDestination?.startDate &&
-                        currentDestination.startDate.getTime() ===
-                        currentDate.getTime();
-                    const end =
-                        currentDestination?.endDate &&
-                        currentDestination.endDate.getTime() ===
-                        currentDate.getTime();
-
-                    const inRange = isDateInRange(day.date);
-
-                    return (
-                        <button
-                            type="button"
-                            key={day.date}
-                            className={`day ${inRange ? "selected-day" : ""}`}
-                            onClick={() =>
-                                !isPast && handleDateSelect(day.date)
-                            }
-                            disabled={isPast}
-                            style={{
-                                borderTopLeftRadius: start ? "90px" : "0",
-                                borderBottomLeftRadius: start ? "90px" : "0",
-                                borderTopRightRadius: end ? "90px" : "0",
-                                borderBottomRightRadius: end ? "90px" : "0",
-                            }}
-                        >
-                            {day.date}
+                      return (
+                        <button key={day.date} type="button" className={`day ${inRange ? 'selected-day' : ''}`}
+                                onClick={()=>!isPast && handleDateSelect(day.date)}
+                                disabled={isPast}
+                                style={{
+                                  borderTopLeftRadius: start ? "90px" : "0",
+                                  borderBottomLeftRadius: start ? "90px" : "0",
+                                  borderTopRightRadius: end ? "90px" : "0",
+                                  borderBottomRightRadius: end ? "90px" : "0"
+                                }}>
+                          {day.date}
                         </button>
-                    );
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {currentDestination.startDate && currentDestination.endDate && (
+                  <p className="date-range" style={{marginTop:8}}>
+                    Viaje a {currentDestination.city?.label || ''} del {currentDestination.startDate.getDate()}/{currentDestination.startDate.getMonth()+1}/{currentDestination.startDate.getFullYear()} al {currentDestination.endDate.getDate()}/{currentDestination.endDate.getMonth()+1}/{currentDestination.endDate.getFullYear()}
+                  </p>
+                )}
               </div>
+            </section>
+
+            {/* SECTION: Flight selection */}
+            <section className="card card--white">
+              <h3>Vuelos</h3>
+
+              <div className="flights-grid">
+                <div className="field">
+                  <label>País de origen</label>
+                  <CountryDropdown
+                    value={currentDestination.originCountry || ''}
+                    onChange={(val) => handleChangeOriginCountry(val)}
+                    className="country-dropdown input-like"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Ciudad de origen (escribe para buscar)</label>
+                  <Select
+                    styles={reactSelectStyles}
+                    options={originCityOptions}
+                    value={currentDestination.originCity}
+                    onChange={handleChangeOriginCity}
+                    onInputChange={(inputValue) => {
+                      // local city search; we call fetchOriginCityOptions but immediately return input for react-select
+                      fetchOriginCityOptions(String(inputValue || ''), currentDestinationIndex);
+                      return inputValue;
+                    }}
+                    placeholder={currentDestination.originCountry ? "Escribe mínimo 2 letras para buscar ciudad" : "Seleccioná país primero"}
+                    isClearable
+                    noOptionsMessage={() => 'Escribe para buscar ciudades'}
+                    isDisabled={!currentDestination.originCountry}
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Aeropuerto de origen</label>
+                  <Select
+                    styles={reactSelectStyles}
+                    options={originAirportOptions}
+                    value={currentDestination.originAirport}
+                    onChange={(opt) => handleChangeAirport('origin', opt)}
+                    placeholder={airportsLoadingMap[currentDestinationIndex] ? 'Cargando aeropuertos...' : 'Selecciona aeropuerto de origen'}
+                    isClearable
+                    isDisabled={airportsLoadingMap[currentDestinationIndex] || !currentDestination.originCity}
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Aeropuerto de destino</label>
+                  <Select
+                    styles={reactSelectStyles}
+                    options={destAirportOptions}
+                    value={currentDestination.destinationAirport}
+                    onChange={(opt) => handleChangeAirport('destination', opt)}
+                    placeholder={airportsLoadingMap[currentDestinationIndex] ? 'Cargando aeropuertos...' : 'Selecciona aeropuerto de destino'}
+                    isClearable
+                    isDisabled={airportsLoadingMap[currentDestinationIndex] || !currentDestination.city}
+                  />
+                </div>
+
+                <div className="field wide">
+                  <label>Vuelos disponibles (según día elegido)</label>
+                  <Select
+                    styles={reactSelectStyles}
+                    options={currentDestination.flightOffers || []}
+                    value={currentDestination.selectedFlight}
+                    onChange={handleSelectFlight}
+                    placeholder={currentDestination.offersLoading ? 'Buscando vuelos...' : 'Seleccioná un vuelo (si hay)'}
+                    isClearable
+                    isDisabled={currentDestination.offersLoading || !(currentDestination.flightOffers?.length > 0)}
+                    // nicer rendering: price left, times / code / airline on right
+                    formatOptionLabel={(option, { context }) => renderFlightOption(option)}
+                    // ensure selected value shows the same layout
+                    isOptionSelected={(option, value) => option.id === value?.id}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION: Preferences */}
+            <section className="card">
+              <h3>Preferencias</h3>
+
+              <label>Ritmo del viaje</label>
+              <select
+                className="input-like"
+                value={pace}
+                onChange={e => setPace(e.target.value)}
+              >
+                <option value="">-- Selecciona ritmo --</option>
+                <option value="relajado">Relajado</option>
+                <option value="moderado">Moderado</option>
+                <option value="intenso">Intenso</option>
+              </select>
+
+              <label style={{marginTop:10}}>Lugares que querés incluir (opcional)</label>
+              <textarea
+                value={placesText}
+                className="textarea"
+                onChange={e => setPlacesText(e.target.value)}
+                rows={3}
+                placeholder="Escribe nombres separados por comas o por línea."
+              />
+
+              <label style={{marginTop:10}}>Notas del viaje (opcional)</label>
+              <textarea
+                value={notes}
+                className="textarea"
+                onChange={e=>setNotes(e.target.value)}
+                rows={3}
+                placeholder="Información que quieras que tenga en cuenta el generador."
+              />
+            </section>
+
+            {statusMessage && <div style={{marginBottom:12, color:'#333'}}>{statusMessage}</div>}
+
+            <div style={{display:'flex', gap:12}}>
+              <button type="submit" className="btn-primary create-trip" disabled={loadingTrip}>
+                {loadingTrip ? 'Creando y generando itinerario...' : 'Armar Viaje'}
+              </button>
+              <button type="button" className="btn-secondary add-destination" onClick={handleAddDestination}>
+                + Agregar otro destino
+              </button>
             </div>
-
-            {currentDestination.startDate && currentDestination.endDate && (
-              <p className="date-range">
-                Se armará un plan turístico para {currentDestination.city?.label || ''} del{' '}
-                {currentDestination.startDate.getDate()}/{currentDestination.startDate.getMonth() + 1}/
-                {currentDestination.startDate.getFullYear()} al{' '}
-                {currentDestination.endDate.getDate()}/{currentDestination.endDate.getMonth() + 1}/
-                {currentDestination.endDate.getFullYear()}
-              </p>
-            )}
-
-            <label>Presupuesto (opcional)</label>
-            <input value={budget}
-                      className={"input"}
-                      onChange={(e) => setBudget(e.target.value)} />
-
-            <label>Ritmo del viaje (pace)</label>
-            <select className="input" value={pace} onChange={(e) => setPace(e.target.value)}>
-              <option value="">-- Selecciona ritmo --</option>
-              <option value="relajado">Relajado</option>
-              <option value="moderado">Moderado</option>
-              <option value="intenso">Intenso</option>
-            </select>
-
-            <label>Lugares que querés incluir (opcional)</label>
-            <textarea
-              value={placesText}
-              className={"textarea"}
-              onChange={(e) => setPlacesText(e.target.value)}
-              placeholder="Escribe nombres separados por comas o por línea."
-              rows={3}
-            />
-
-            <label>Notas del viaje (opcional)</label>
-            <textarea value={notes}
-                      className={"textarea"}
-                      onChange={(e) => setNotes(e.target.value)} rows={3}
-                      placeholder="Información que quieras que tenga en cuenta el generador." />
-
-            {statusMessage && <div style={{marginBottom:12, color: "#333"}}>{statusMessage}</div>}
-
-            <button
-              type="submit"
-              className="btn-primary create-trip"
-              disabled={loadingTrip}
-              style={{marginBottom: "0"}}
-            >
-              {loadingTrip ? 'Creando y generando itinerario...' : 'Armar Viaje'}
-            </button>
-            <button
-                type="button"
-                className="btn-secondary add-destination"
-                onClick={handleAddDestination}
-                style={{marginBottom: "20px"}}
-            >
-              + Agregar otro destino
-            </button>
           </form>
         </div>
 
-        {/* RIGHT: Logo */}
         <div className="add-trip-right">
           <div>
             <div className="hero-art" aria-hidden>

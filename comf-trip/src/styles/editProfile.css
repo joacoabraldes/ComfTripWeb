@@ -45,32 +45,16 @@
     gap: 16px;
 }
 
-.field input {
-    width: 100%;
-    height: 56px;
-    padding: 12px 14px;
-    border-radius: 8px;
-    background: #fcf7f7;
-    border: 1px solid #e8d1d1;
-    outline: none;
-    font-size: 16px;
-    color: #1e1e1e;
-    box-sizing: border-box;
-}
-
-.field input::placeholder {
-    color: #964f4f;
-}
-
 .form-actions {
     display: flex;
     justify-content: center;
     margin-top: 8px;
 }
 
-.btn-primary {
-    width: 272px;
+.edit-btn-primary {
+    width: 100%;
     height: 50px;
+    font-weight: 600;
     background: #ff3951;
     color: #fff;
     border: none;

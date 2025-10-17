@@ -214,7 +214,7 @@
   color: #FFF7F7;
   border: none;
   border-radius: 8px;
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 600;
   font-family: Inter, Arial, sans-serif;
   cursor: pointer;
@@ -222,6 +222,7 @@
   align-items: center;
   justify-content: center;
   pointer-events: auto; /* botón sí clickeable */
+    margin-bottom: 30px;
 }
 
 /* responsive */

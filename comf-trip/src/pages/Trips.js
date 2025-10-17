@@ -141,7 +141,8 @@ export default function Trips() {
         <Header />
         <main className="trips-main">
           <section className="trips-left">
-            <div className="trips-message">Cargando viajes…</div>
+              <h3 className="trips-list-title">Tus viajes</h3>
+            <div className="trips-message" style={{border:"none"}}>Cargando viajes…</div>
           </section>
           <section className="trips-right">
             <div className="map-wrapper" aria-hidden>
@@ -160,7 +161,7 @@ export default function Trips() {
       <main className="trips-main">
         <section className="trips-left">
           {trips.length === 0 ? (
-            <div className="trips-message">
+            <div className="trips-message" style={{border:"none"}}>
               No tienes ningún viaje activo actualmente
               <br />
               ¡Planea tu siguiente viaje!

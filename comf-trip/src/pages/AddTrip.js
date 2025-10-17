@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';  
-import { apiPost, apiGet, apiPut } from "./api";
+import React, { useState, useMemo, useEffect } from 'react';
+import { apiPost, apiGet } from "./api";
 import { useNavigate } from 'react-router-dom';
 import '../styles/AddTrip.css';
 import LogoSvg from '../components/LogoSvg';
@@ -7,9 +7,10 @@ import Select from 'react-select';
 import Header from "../components/Header";
 import flightsApi from '../services/flightsApi';
 import { Country, City } from 'country-state-city';
+import countryList from "react-select-country-list";
 
 export default function AddTrip() {
-  // small ISO map for a few countries used in UI (kept for destination city handling)
+  // small ISO map for a few countries used in UI
   const COUNTRY_NAME_TO_CODE = {
     'Spain': 'ES',
     'Argentina': 'AR',
@@ -30,6 +31,7 @@ export default function AddTrip() {
     offersLoading: false,
     selectedFlight: null
   }]);
+    const countryOptions = useMemo(() => countryList().getData(), []);
 
   const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
   const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
@@ -191,47 +193,6 @@ export default function AddTrip() {
     return { cityName: '', countryName: '' };
   };
 
-  const reactSelectStyles = {
-    control: (provided) => ({
-      ...provided,
-      minHeight: '44px',
-      borderRadius: '8px',
-      border: '1px solid #e8d1d1',
-      boxShadow: 'none',
-      background: '#fcf7f7'
-    }),
-    valueContainer: (p) => ({ ...p, padding: '4px 8px' }),
-    input: (p) => ({ ...p, margin: 0 }),
-    placeholder: (p) => ({ ...p, margin: 0, color: '#777' }),
-    menu: (p) => ({ ...p, zIndex: 9999 })
-  };
-
-  // ----------------------
-  // COUNTRY OPTIONS (react-select) - Spanish labels
-  // ----------------------
-  const countryIntlDisplay = useMemo(() => {
-    // Intl.DisplayNames may not exist in very old browsers; fallback to returning iso -> english name from library
-    try {
-      return new Intl.DisplayNames(['es'], { type: 'region' });
-    } catch (e) {
-      return null;
-    }
-  }, []);
-
-  const countryOptions = useMemo(() => {
-    const all = Country.getAllCountries() || [];
-    return all.map(c => {
-      const iso = c.isoCode;
-      let label;
-      try {
-        label = countryIntlDisplay ? countryIntlDisplay.of(iso) : c.name;
-      } catch (e) {
-        label = c.name;
-      }
-      return { value: iso, label };
-    }).sort((a,b) => a.label.localeCompare(b.label, 'es'));
-  }, [countryIntlDisplay]);
-
   // ----------------------
   // CITY AUTOCOMPLETE (local country-state-city)
   // ----------------------
@@ -242,15 +203,15 @@ export default function AddTrip() {
       return;
     }
 
-    const originCountryIso = destinations[idx]?.originCountry || null; // expects ISO2 now
-    if (!originCountryIso) {
+    const originCountryName = destinations[idx]?.originCountry || null;
+    if (!originCountryName) {
       setOriginCityOptionsByIndex(prev => ({ ...prev, [idx]: [] }));
       return;
     }
 
     const allCountries = Country.getAllCountries();
-    const found = allCountries.find(c => c.isoCode === originCountryIso);
-    const isoCode = found?.isoCode || null;
+    const found = allCountries.find(c => c.name && c.name.toLowerCase() === originCountryName.toLowerCase());
+    const isoCode = found?.isoCode || COUNTRY_NAME_TO_CODE[originCountryName] || null;
     if (!isoCode) {
       setOriginCityOptionsByIndex(prev => ({ ...prev, [idx]: [] }));
       return;
@@ -271,7 +232,7 @@ export default function AddTrip() {
           seen.add(key);
           out.push({
             value: key,
-            label: `${c.name}${found?.name ? ', ' + (countryIntlDisplay ? countryIntlDisplay.of(found.isoCode) : found.name) : ''}`,
+            label: `${c.name}${found?.name ? ', ' + found.name : ''}`,
             meta: { cityName: c.name, countryName: found?.name || '' }
           });
         }
@@ -281,7 +242,7 @@ export default function AddTrip() {
   };
 
   // ----------------------
-  // AIRPORTS (via flightsApi -> OurAirports)
+  // AIRPORTS via Amadeus (sanitized keyword + proper state update)
   // ----------------------
   // small wrapper to call airports from non-async handlers
   const awaitFetchAirports = (cityOrKeyword, idx, type, countryCode) => {
@@ -295,8 +256,9 @@ export default function AddTrip() {
     if (!keywordOrCityName && !countryCode) return;
     setAirportsLoadingMap(prev => ({ ...prev, [idx]: true }));
     try {
-      // flightsApi.getAirportOptionsForSelect supports (keyword, limit, countryCode, cityName)
+      // If countryCode is known, ask AMADEUS for airports by country and optionally filter by city
       if (countryCode) {
+        // flightsApi.getAirportOptionsForSelect supports (keyword, limit, countryCode, cityName)
         const items = await flightsApi.getAirportOptionsForSelect('', 200, countryCode, keywordOrCityName || '');
         setAirportOptionsByIndex(prev => ({
           ...prev,
@@ -333,13 +295,10 @@ export default function AddTrip() {
     awaitFetchAirports(cityName || (val?.label || ''), currentDestinationIndex, 'destination', countryCode);
   };
 
-  // origin country now stores ISO2 code
-  const handleChangeOriginCountry = (selected) => {
-    // selected is object { value: iso, label: spanishName } or null
-    const iso = selected ? selected.value : null;
+  const handleChangeOriginCountry = (countryName) => {
     setDestinations(prev => {
       const copy = [...prev];
-      copy[currentDestinationIndex] = { ...copy[currentDestinationIndex], originCountry: iso, originCity: null, originAirport: null, flightOffers: [], selectedFlight: null };
+      copy[currentDestinationIndex] = { ...copy[currentDestinationIndex], originCountry: countryName, originCity: null, originAirport: null, flightOffers: [], selectedFlight: null };
       return copy;
     });
     setAirportOptionsByIndex(prev => ({ ...prev, [currentDestinationIndex]: { ...(prev[currentDestinationIndex] || {}), origin: [] } }));
@@ -353,8 +312,8 @@ export default function AddTrip() {
       return copy;
     });
     const cityName = val?.meta?.cityName || val?.meta?.countryName || val?.label || val?.value || '';
-    const originCountryIso = destinations[currentDestinationIndex]?.originCountry || '';
-    const countryCode = originCountryIso || undefined; // now pass ISO2 directly
+    const originCountryName = destinations[currentDestinationIndex]?.originCountry || '';
+    const countryCode = COUNTRY_NAME_TO_CODE[originCountryName] || undefined;
     awaitFetchAirports(cityName, currentDestinationIndex, 'origin', countryCode);
   };
 
@@ -381,7 +340,21 @@ export default function AddTrip() {
     return [hh, mm].filter(Boolean).join(' ');
   };
 
-  // flight offers effect — updated to use Amadeus-backed offers (normalized earlier)
+  const AIRLINE_NAMES = {
+    'AZ': 'ITA Airways',
+    'IB': 'Iberia',
+    'UX': 'Air Europa',
+    'LH': 'Lufthansa',
+    'AF': 'Air France',
+    'AA': 'American Airlines',
+    'DL': 'Delta',
+    'UA': 'United Airlines',
+    'KL': 'KLM',
+    'VY': 'Vueling',
+    // add more as you need...
+  };
+
+  // flight offers effect — updated to include meta info (flight code, airline, duration, stops)
   useEffect(() => {
     const idx = currentDestinationIndex;
     const dest = destinations[idx];
@@ -422,79 +395,52 @@ export default function AddTrip() {
 
         if (!mounted) return;
 
-        // NOTE: when using Amadeus raw results, flightsApi.searchFlights should return normalized offers
-        // similar to the earlier Aviationstack normalization. If it returns raw Amadeus data, adjust mapping here.
-        const rawOffers = res?.data || res?.results || res || [];
-        const offers = (rawOffers || []).map((offer, i) => {
-          // attempt to read normalized structure if already provided
-          if (offer && offer.itineraries) {
-            // already normalized (from flightsApi)
-            const itinerary = Array.isArray(offer.itineraries) && offer.itineraries[0];
-            const segments = (itinerary && Array.isArray(itinerary.segments)) ? itinerary.segments : [];
-            const firstSeg = segments[0] || {};
-            const lastSeg = segments[segments.length - 1] || firstSeg || {};
-            const dep = firstSeg?.departure?.at || firstSeg?.departure?.iataCode || '';
-            const arr = lastSeg?.arrival?.at || lastSeg?.arrival?.iataCode || '';
-            const times = (dep && arr) ? `${(dep.split('T')[1] || dep).slice(0,5)} → ${(arr.split('T')[1] || arr).slice(0,5)}` : '';
-            const stops = Math.max(0, segments.length - 1);
-            const carrier = firstSeg?.carrierCode || firstSeg?.carrier || (offer.flight?.iataNumber ? offer.flight.iataNumber.replace(/\d+/g, '') : '');
-            const number = firstSeg?.number || offer.flight?.number || '';
-            const flightCodeStr = (carrier || '') + (number ? String(number) : '');
-            const airlineDisplay = offer?.raw?.airline?.name || firstSeg?.operating?.carrierName || firstSeg?.carrierName || carrier || '';
-            let durationStr = firstSeg?.duration || '';
-            if (!durationStr && itinerary && itinerary.duration) durationStr = parseISODuration(itinerary.duration);
-            const label = `${flightCodeStr ? flightCodeStr + ' · ' : ''}${airlineDisplay || offer.label || ''}`;
+        const offers = (res?.data || []).map((offer, i) => {
+          const price = (offer?.price?.total) ? `${offer.price.total} ${offer.price.currency || ''}` : 'Precio N/A';
+          const itinerary = Array.isArray(offer.itineraries) && offer.itineraries[0];
+          let dep = '';
+          let arr = '';
+          let flightCodeStr = '';
+          let carrierCodes = [];
+          let airlineDisplay = '';
+          let stops = 0;
+          let durationStr = '';
 
-            return {
-              id: offer?.id || `offer_${i}`,
-              label,
-              raw: offer,
-              meta: {
-                times,
-                flightCode: flightCodeStr,
-                carrierCodes: segments.map(s => s.carrierCode || s.carrier || '').filter(Boolean),
-                airline: airlineDisplay,
-                stops,
-                duration: durationStr
-              }
-            };
+          if (itinerary && Array.isArray(itinerary.segments) && itinerary.segments.length > 0) {
+            const segments = itinerary.segments;
+            const firstSeg = segments[0];
+            const lastSeg = segments[segments.length - 1];
+
+            dep = firstSeg?.departure?.at || firstSeg?.departure?.iataCode || '';
+            arr = lastSeg?.arrival?.at || lastSeg?.arrival?.iataCode || '';
+
+            stops = Math.max(0, segments.length - 1);
+
+            const carrier = firstSeg?.carrierCode || firstSeg?.operating?.carrierCode || '';
+            const number = firstSeg?.number || firstSeg?.flightNumber || firstSeg?.operating?.number || '';
+            carrierCodes = (segments || []).map(s => s.carrierCode || s.operating?.carrierCode).filter(Boolean);
+
+            if (carrier) flightCodeStr = carrier + (number ? String(number) : '');
+            airlineDisplay = firstSeg?.operating?.carrierName || firstSeg?.carrierName || AIRLINE_NAMES[carrier] || carrier;
+
+            durationStr = parseISODuration(itinerary.duration || (offer?.itineraries?.[0]?.duration) || '');
           }
 
-          // if Amadeus raw format: attempt to map a common brief form
-          // Amadeus flight-offers responses typically contain .data array with offers; try to support both types
-          const offerData = offer || {};
-          // try to read id, itinerary
-          const id = offerData.id || offerData.flightId || `offer_${i}`;
-          // attempt to extract first segment times (deep within offerData.itineraries or offerData.itineraries[0].segments)
-          let firstSeg = {};
-          let lastSeg = {};
-          try {
-            const itins = offerData.itineraries || offerData.itinerary || [];
-            const segs = (Array.isArray(itins) && itins[0] && Array.isArray(itins[0].segments)) ? itins[0].segments : (offerData.segments || []);
-            firstSeg = segs[0] || {};
-            lastSeg = segs[segs.length - 1] || firstSeg || {};
-          } catch (e) {
-            firstSeg = {};
-            lastSeg = {};
-          }
-          const dep = firstSeg?.departure?.at || firstSeg?.departure?.iataCode || firstSeg?.departure?.departure || '';
-          const arr = lastSeg?.arrival?.at || lastSeg?.arrival?.iataCode || lastSeg?.arrival?.arrival || '';
-          const times = (dep && arr) ? `${(String(dep).split('T')[1] || dep).slice(0,5)} → ${(String(arr).split('T')[1] || arr).slice(0,5)}` : '';
-          const stops = 0;
-          const airlineDisplay = (offerData?.validatingAirlineCodes && offerData.validatingAirlineCodes[0]) || (offerData?.carrierName) || '';
-          const label = `${airlineDisplay ? airlineDisplay + ' · ' : ''}${offerData?.summary || offerData?.label || id}`;
+          const times = (dep && arr) ? `${dep.split('T')[1]?.slice(0,5) || ''} → ${arr.split('T')[1]?.slice(0,5) || ''}` : '';
+          const label = `${price}${times ? ' · ' + times : ''}${flightCodeStr ? ' · ' + flightCodeStr : ''}${airlineDisplay ? ' · ' + airlineDisplay : ''}`;
 
           return {
-            id,
+            id: offer?.id || `offer_${i}`,
             label,
-            raw: offerData,
+            raw: offer,
             meta: {
+              price,
               times,
-              flightCode: offerData?.flightCode || '',
-              carrierCodes: offerData?.validatingAirlineCodes || [],
+              flightCode: flightCodeStr,
+              carrierCodes,
               airline: airlineDisplay,
               stops,
-              duration: offerData?.travelTime || ''
+              duration: durationStr
             }
           };
         });
@@ -531,32 +477,6 @@ export default function AddTrip() {
       copy[currentDestinationIndex] = current;
       return copy;
     });
-  };
-
-  // helper to persist flight to backend
-  // Tries POST /flights; on 409 attempts PUT /flights/:flight_id to associate with trip
-  const persistFlightToBackend = async (flightId, tripId) => {
-    if (!flightId) return;
-    try {
-      await apiPost('/flights', { flight_id: String(flightId), trip_id: tripId });
-      // success
-      return;
-    } catch (err) {
-      // If flight already exists, try to associate it to the trip via PUT
-      // check for conflict (409). apiPost may throw a generic Error; try to detect status
-      const status = err && (err.status || (err.body && err.body.status) || (err.response && err.response.status));
-      if (status === 409 || (err && String(err.message || '').includes('409'))) {
-        try {
-          await apiPut(`/flights/${encodeURIComponent(String(flightId))}`, { trip_id: tripId });
-          return;
-        } catch (uerr) {
-          console.warn('Could not update existing flight with trip association:', uerr);
-          return;
-        }
-      }
-      // For other errors, log but don't block trip creation
-      console.error('Error saving flight to backend:', err);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -605,29 +525,11 @@ export default function AddTrip() {
           trip_id: createdTripId,
           origin_airport: dest.originAirport?.value || null,
           destination_airport: dest.destinationAirport?.value || null,
-          // selected_flight: pass raw normalized/Amadeus object so backend can use it if needed
           selected_flight: dest.selectedFlight?.raw || null
         };
 
         await apiPost(`/trips/${createdTripId}/itinerary`, itineraryBody);
         setStatusMessage("Itinerario generado y guardado!");
-
-        // --- Persist selected flight to /flights endpoint (if user selected one)
-        try {
-          const sel = dest.selectedFlight;
-          // prefer a stable ID: the normalized option id, or raw.id from provider
-          const flightId =
-            (sel && (sel.raw && (sel.raw.id || sel.raw.flightOfferId || sel.raw.flight_id))) ||
-            (sel && sel.id) ||
-            null;
-
-          if (flightId) {
-            await persistFlightToBackend(flightId, createdTripId);
-          }
-        } catch (err) {
-          // log and continue; flight persistence is best-effort
-          console.error('Failed to persist selected flight for trip', err);
-        }
       }
 
       if (createdTripId) nav("/load-trip", { state: { tripId: createdTripId } });
@@ -646,7 +548,6 @@ export default function AddTrip() {
   if (loading) {
     return (
       <div className="trip-it-root">
-        <Header />
         <main style={{display:'flex',justifyContent:'center',alignItems:'center',height:'80vh'}}>
           <div style={{fontSize:25}}>Cargando…</div>
         </main>
@@ -661,10 +562,9 @@ export default function AddTrip() {
   // helper used by react-select to render flight options nicely
   const renderFlightOption = (option) => {
     const m = option.meta || {};
-    const leftBold = m.airline ? `${m.flightCode ? m.flightCode + ' · ' : ''}${m.airline}` : option.label;
     return (
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
-        <div style={{ fontWeight: 700 }}>{leftBold}</div>
+        <div style={{ fontWeight: 700 }}>{m.price || option.label}</div>
         <div style={{ textAlign: 'right', fontSize: 13, color: '#333' }}>
           {m.times && <div style={{ marginBottom: 2 }}>{m.times}</div>}
           <div>
@@ -696,7 +596,8 @@ export default function AddTrip() {
                 onChange={handleChangeDestinationCity}
                 placeholder="Selecciona ciudad de destino"
                 isClearable
-                styles={reactSelectStyles}
+                className="dropdown-select"
+                classNamePrefix="react-select"
               />
 
               <div style={{marginTop:12}}>
@@ -753,20 +654,22 @@ export default function AddTrip() {
               <div className="flights-grid">
                 <div className="field">
                   <label>País de origen</label>
-                  <Select
-                    options={countryOptions}
-                    value={countryOptions.find(c => c.value === currentDestination.originCountry) || null}
-                    onChange={(opt) => handleChangeOriginCountry(opt)}
-                    placeholder="Seleccioná país de origen"
-                    styles={reactSelectStyles}
-                    isClearable
-                  />
+                    <Select
+                        className="dropdown-select"
+                        classNamePrefix="react-select"
+                        options={countryOptions}
+                        value={currentDestination.originCountry  || null}
+                        onChange={(val) => handleChangeOriginCountry(val)}
+                        placeholder="Selecciona tu nacionalidad"
+                        isDisabled={loading}
+                    />
                 </div>
 
                 <div className="field">
                   <label>Ciudad de origen (escribe para buscar)</label>
                   <Select
-                    styles={reactSelectStyles}
+                      className="dropdown-select"
+                      classNamePrefix="react-select"
                     options={originCityOptions}
                     value={currentDestination.originCity}
                     onChange={handleChangeOriginCity}
@@ -785,7 +688,8 @@ export default function AddTrip() {
                 <div className="field">
                   <label>Aeropuerto de origen</label>
                   <Select
-                    styles={reactSelectStyles}
+                      className="dropdown-select"
+                      classNamePrefix="react-select"
                     options={originAirportOptions}
                     value={currentDestination.originAirport}
                     onChange={(opt) => handleChangeAirport('origin', opt)}
@@ -798,7 +702,8 @@ export default function AddTrip() {
                 <div className="field">
                   <label>Aeropuerto de destino</label>
                   <Select
-                    styles={reactSelectStyles}
+                      className="dropdown-select"
+                      classNamePrefix="react-select"
                     options={destAirportOptions}
                     value={currentDestination.destinationAirport}
                     onChange={(opt) => handleChangeAirport('destination', opt)}
@@ -811,14 +716,15 @@ export default function AddTrip() {
                 <div className="field wide">
                   <label>Vuelos disponibles (según día elegido)</label>
                   <Select
-                    styles={reactSelectStyles}
+                      className="dropdown-select"
+                      classNamePrefix="react-select"
                     options={currentDestination.flightOffers || []}
                     value={currentDestination.selectedFlight}
                     onChange={handleSelectFlight}
                     placeholder={currentDestination.offersLoading ? 'Buscando vuelos...' : 'Seleccioná un vuelo (si hay)'}
                     isClearable
                     isDisabled={currentDestination.offersLoading || !(currentDestination.flightOffers?.length > 0)}
-                    // nicer rendering: airline/flight code left, times/stops/duration on the right
+                    // nicer rendering: price left, times / code / airline on right
                     formatOptionLabel={(option, { context }) => renderFlightOption(option)}
                     // ensure selected value shows the same layout
                     isOptionSelected={(option, value) => option.id === value?.id}
@@ -832,16 +738,20 @@ export default function AddTrip() {
               <h3>Preferencias</h3>
 
               <label>Ritmo del viaje</label>
-              <select
-                className="input-like"
-                value={pace}
-                onChange={e => setPace(e.target.value)}
-              >
-                <option value="">-- Selecciona ritmo --</option>
-                <option value="relajado">Relajado</option>
-                <option value="moderado">Moderado</option>
-                <option value="intenso">Intenso</option>
-              </select>
+              <Select
+                  className="dropdown-select"
+                  classNamePrefix="react-select"
+                  placeholder="-- Selecciona ritmo --"
+                  options={[
+                      { value: "Relajado", label: "Relajado" },
+                      { value: "Moderado", label: "Moderado" },
+                      { value: "Intenso", label: "Intenso" },
+                  ]}
+                  value={pace ? { value: pace, label: pace } : null}
+                  onChange={(option) => setPace(option.value)}
+                  isSearchable={false}
+              />
+
 
               <label style={{marginTop:10}}>Lugares que querés incluir (opcional)</label>
               <textarea

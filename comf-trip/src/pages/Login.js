@@ -40,9 +40,9 @@ export default function Login() {
         <div className="auth-left">
           <h1 className="auth-title">Iniciar Sesion</h1>
 
-          <form className="form" onSubmit={submit}>
-            <label className="field">
-              <span className="field-label">Nombre de usuario o Email</span>
+          <form className="auth-form" onSubmit={submit}>
+            <label className="auth-field">
+              <span className="auth-field-label">Nombre de usuario o Email</span>
               <input
                 className="input"
                 name="email" // kept the same name to minimize other changes; this is the identifier
@@ -52,11 +52,12 @@ export default function Login() {
                 autoComplete="username"
                 aria-label="Nombre de usuario o Email"
                 required
+                disabled={loading}
               />
             </label>
 
-            <label className="field">
-              <span className="field-label">Contraseña</span>
+            <label className="auth-field">
+              <span className="auth-field-label">Contraseña</span>
               <input
                 className="input"
                 name="password"
@@ -65,17 +66,18 @@ export default function Login() {
                 onChange={handle}
                 autoComplete="current-password"
                 required
+                disabled={loading}
               />
             </label>
 
             <button className="forgot">¿Olvidaste tu contraseña?</button>
 
-            <button type="submit" className="btn-primary login" disabled={loading}>
+            <button type="submit" className="auth-btn-primary login" disabled={loading}>
               {loading ? "Entrando..." : "Iniciar"}
             </button>
             <div className="footer-cta">
               <span>Not registered?</span>
-              <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}}>Register</button>
+              <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>Register</button>
             </div>
           </form>
         </div>

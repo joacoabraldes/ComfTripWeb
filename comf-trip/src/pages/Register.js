@@ -1,7 +1,6 @@
 // src/pages/Register.jsx
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {useAuth} from "../auth/AuthProvider";
 import Select from "react-select";
 import countryList from "react-select-country-list";
 import { apiPost } from "./api";
@@ -77,64 +76,64 @@ export default function Register() {
           <h1 className="auth-title">Registrarse</h1>
           <p className="auth-sub">Crea tu cuenta para empezar a disfrutar de nuestros servicios.</p>
 
-          <form className="form" onSubmit={handleSubmit}>
-            <label className="field">
-              <span className="field-label">Nombre</span>
-              <input className="input" name="name" value={form.name} onChange={handleChange} placeholder="Nombre" required />
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label className="auth-field">
+              <span className="auth-field-label">Nombre</span>
+              <input className="input" name="name" value={form.name} onChange={handleChange} placeholder="Nombre" required disabled={loading}/>
             </label>
 
-            <label className="field">
-              <span className="field-label">Email</span>
-              <input className="input" name="email" type="email" value={form.email} onChange={handleChange} placeholder="Email" required />
+            <label className="auth-field">
+              <span className="auth-field-label">Email</span>
+              <input className="input" name="email" type="email" value={form.email} onChange={handleChange} placeholder="Email" required disabled={loading}/>
             </label>
 
-            <label className="field">
-              <span className="field-label">Teléfono</span>
-              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Teléfono" />
+            <label className="auth-field">
+              <span className="auth-field-label">Teléfono</span>
+              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Teléfono" disabled={loading} />
             </label>
 
-            <label className="field">
-              <span className="field-label">Contraseña</span>
-              <input className="input" name="password" type="password" value={form.password} onChange={handleChange} placeholder="Contraseña" required />
+            <label className="auth-field">
+              <span className="auth-field-label">Contraseña</span>
+              <input className="input" name="password" type="password" value={form.password} onChange={handleChange} placeholder="Contraseña" required  disabled={loading}/>
             </label>
 
             <div className="grid-2">
-              <label className="field">
-                <span className="field-label">Nacionalidad</span>
+              <label className="auth-field">
+                <span className="auth-field-label">Nacionalidad</span>
                 <Select
-                    className="country-select"
+                    className="dropdown-select"
                     classNamePrefix="react-select"
                     options={options}
                     value={options.find(opt => opt.label === form.nationality) || null}
                     onChange={handleCountryChange}
                     placeholder="Selecciona tu nacionalidad"
+                    isDisabled={loading}
                 />
               </label>
 
-              <label className="field">
-                <span className="field-label">Fecha de nacimiento</span>
-                <input className="input" name="birthdate" type="date" value={form.birthdate} onChange={handleChange} />
+              <label className="auth-field">
+                <span className="auth-field-label">Fecha de nacimiento</span>
+                <input className="input" name="birthdate" type="date" value={form.birthdate} onChange={handleChange} disabled={loading} />
               </label>
             </div>
 
             <label className="agree">
-              <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} />
+              <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} disabled={loading}/>
               <span style={{fontSize:15}}>
                 By checking the box you agree to our <button type="button" className="linkish" onClick={() => alert('Términos')}>Terms</button> and <button type="button" className="linkish" onClick={() => alert('Conditions')}>Conditions</button>.
               </span>
             </label>
 
-            <button type="submit" disabled={loading} className="btn-primary">
+            <button type="submit" disabled={loading} className="auth-btn-primary">
               {loading ? "Registrando…" : "Registrarme"}
             </button>
 
             {message && <div className="message">{message}</div>}
+              <div className="footer-cta">
+                  <span>Already a member?</span>
+                  <button className="linkish" onClick={() => navigate("/login")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>Log In</button>
+              </div>
           </form>
-
-          <div className="footer-cta">
-            <span>Already a member?</span>
-            <button className="linkish" onClick={() => navigate("/login")} style={{marginLeft:6, fontSize:"20px"}}>Log In</button>
-          </div>
         </div>
 
         {/* RIGHT: art + logo */}

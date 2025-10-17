@@ -339,7 +339,7 @@ export default function EditPlace() {
                             />
                             <div className="place-it-info">
                                 <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{place.location?.titulo}</h3>
-                                <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>({place.location?.fk_interest})</p></div></div>
+                                </div></div>
                         <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>
                             <strong>Descripcion:</strong> {locationData?.descripcion ?? "-"}
                         </p>

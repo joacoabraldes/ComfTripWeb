@@ -104,14 +104,15 @@
   margin-top: 36px;
 }
 
-.btn-primary {
+.start-btn-primary {
   background: #ff3951;
   color: #fff;
   border: none;
   padding: 14px 28px;
   border-radius: 8px;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
+    font-weight: 600;
 }
 
 /* linkish used on Register buttons to avoid anchor issues */

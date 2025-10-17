@@ -73,14 +73,14 @@
     margin-bottom: 50px;
 }
 
-.profile-field .field-label {
+.profile-field .profile-field-label {
     display: block;
     font-size: 20px;
     color: #ff3951; /* Rosa como en tu screenshot */
     margin-bottom: 8px;
 }
 
-.profile-field .field-value {
+.profile-field .profile-field-value {
     font-size: 25px;
     color: #000000;
     margin-left: 8px;

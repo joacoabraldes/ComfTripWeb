@@ -7,6 +7,7 @@ import "../styles/map.css";
 import Header from "../components/Header";
 import "../styles/header.css";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 const API_URL_RAW = (process.env.REACT_APP_API_URL || "").replace(/\/$/, ""); // user-provided base
@@ -246,25 +247,37 @@ export default function MapPage() {
           <h2>Localidades</h2>
 
           <label htmlFor="interest-select" style={{ display: "block", marginBottom: 8 }}>Filtrar por categoría</label>
-          <select
-            id="interest-select"
-            value={selectedInterest}
-            onChange={(e) => setSelectedInterest(e.target.value)}
-            style={{ width: "100%", padding: 8, marginBottom: 12 }}
-          >
-            <option value="">Todas</option>
-            {interests.map((it) => (
-              <option key={it.id ?? it.slug ?? it.title} value={it.slug ?? it.id ?? it.title}>
-                {it.title ?? it.slug ?? it.id}
-              </option>
-            ))}
-          </select>
+            <Select
+                className="dropdown-select"
+                classNamePrefix="react-select"
+                placeholder="Todas"
+                options={interests.map(it => ({
+                    value: it.slug ?? it.id ?? it.title,
+                    label: it.title ?? it.slug ?? it.id
+                }))}
+                value={
+                    selectedInterest
+                        ? {
+                            value: selectedInterest,
+                            label:
+                                interests.find(i =>
+                                    i.slug === selectedInterest ||
+                                    i.id === selectedInterest ||
+                                    i.title === selectedInterest
+                                )?.title || selectedInterest
+                        }
+                        : null
+                }
+                onChange={(option) => setSelectedInterest(option.value)}
+                isSearchable={false}
+            />
 
-          <div style={{ marginBottom: 12 }}>
-            <button onClick={() => fetchLocations(selectedInterest)} style={{ marginRight: 8 }}>
+
+            <div style={{ marginBottom: 12 , marginTop:20, display:"flex", gap:3}}>
+            <button className="btn-primary" onClick={() => fetchLocations(selectedInterest)} style={{ marginRight: 8 }}>
               Aplicar
             </button>
-            <button onClick={() => { setSelectedInterest(""); fetchLocations(""); }}>
+            <button className="btn-secondary" onClick={() => { setSelectedInterest(""); fetchLocations(""); }}>
               Mostrar todo
             </button>
           </div>

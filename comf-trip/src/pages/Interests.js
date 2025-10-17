@@ -117,10 +117,6 @@ export default function InterestsPage() {
     }
   }
 
-  if (loading) {
-    return <div className="interests-root">Cargando…</div>;
-  }
-
   return (
     <div className="interests-root">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -150,6 +146,7 @@ export default function InterestsPage() {
                 className={`interest-card ${isSel ? "selected" : ""}`}
                 onClick={() => toggle(it.id)}
                 aria-pressed={isSel}
+                disabled={loading}
               >
                 <div className="interest-image" aria-hidden>
                   <img
@@ -170,7 +167,7 @@ export default function InterestsPage() {
         </div>
 
         <div className="interests-actions">
-          <button className="btn-primary" onClick={submitInterests} disabled={loading}>
+          <button className="start-btn-primary" onClick={submitInterests} disabled={loading}>
             {loading ? "Guardando…" : "Comenzar con ComfTrip"}
           </button>
         </div>

@@ -115,23 +115,23 @@ export default function ProfilePage() {
 
                 <>
                   <div className="profile-field">
-                    <span className="field-label">Mail</span>
-                    <span className="field-value">{profile.email || "—"}</span>
+                    <span className="profile-field-label">Mail</span>
+                    <span className="profile-field-value">{profile.email || "—"}</span>
                   </div>
 
                   <div className="profile-field">
-                    <span className="field-label">Numero de telefono</span>
-                    <span className="field-value">{profile.phone || "—"}</span>
+                    <span className="profile-field-label">Numero de telefono</span>
+                    <span className="profile-field-value">{profile.phone || "—"}</span>
                   </div>
 
                   <div className="profile-field">
-                    <span className="field-label">Fecha de Nacimiento</span>
-                    <span className="field-value">{profile.birthdate || "—"}</span>
+                    <span className="profile-field-label">Fecha de Nacimiento</span>
+                    <span className="profile-field-value">{profile.birthdate || "—"}</span>
                   </div>
 
                   <div className="profile-field">
-                    <span className="field-label">Nacionalidad</span>
-                    <span className="field-value">{profile.nationality || "—"}</span>
+                    <span className="profile-field-label">Nacionalidad</span>
+                    <span className="profile-field-value">{profile.nationality || "—"}</span>
                   </div>
                 </>
 

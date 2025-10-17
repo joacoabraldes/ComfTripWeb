@@ -95,30 +95,6 @@
   flex-direction: column;
 }
 
-/* Input styles (native selects, input-like wrappers) */
-.input,
-.input-like,
-.country-dropdown,
-.country-dropdown select {
-  padding: 10px 12px;
-  border: 1px solid #e8d1d1;
-  background: #fcf7f7;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 44px;
-}
-
-.input:focus,
-.input-like:focus,
-.country-dropdown:focus,
-.country-dropdown select:focus {
-  border-color: #ff3951;
-  box-shadow: none;
-}
-
 /* Textarea */
 .textarea {
   min-height: 120px;
@@ -250,12 +226,15 @@
 .btn-primary {
   background-color: #ff3951;
   color: white;
-  padding: 12px 18px;
   border: none;
-  border-radius: 22px;
-  font-size: 15px;
+  border-radius: 10px;
+  font-size: 18px;
   cursor: pointer;
   text-align: center;
+    font-weight: 600;
+    height: 50px;
+    width: 100%;
+    margin-bottom: 20px;
 }
 
 .btn-primary:disabled {
@@ -271,11 +250,13 @@
 .btn-secondary {
   background: none;
   border: 1px solid #ddd;
-  padding: 12px 16px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 16px;
   color: #666;
   cursor: pointer;
+    height: 50px;
+    font-weight: 600;
+    width: 40%;
 }
 
 /* Flights grid layout */
@@ -317,33 +298,9 @@
   }
 }
 
-/* react-select overrides to make it match native inputs visually */
-/* The styles prop already sets control style, but these ensure dropdown internals align */
-.react-select__control,
-.react-select-container .react-select__control {
-  min-height: 44px;
-  border-radius: 8px;
-  border: 1px solid #e8d1d1;
-  background: #fff;
-}
-
-.react-select__control--is-focused,
-.react-select-container .react-select__control--is-focused {
-  border-color: #ff3951;
-  box-shadow: none;
-}
-
-.react-select__value-container {
-  padding: 0 8px;
-}
-
-.react-select__menu {
-  z-index: 9999;
-}
-
 /* labels in cards */
 .card label,
-.card .field label {
+.card .change-field label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
@@ -354,19 +311,6 @@
 /* small helper spacing */
 .form > .card:last-child {
   margin-bottom: 20px;
-}
-
-/* small fix for CountryDropdown package markup — target selects inside */
-.country-dropdown select,
-.country-dropdown {
-  font-size: 14px;
-  line-height: 1.2;
-}
-
-/* make sure react-select placeholder / input spacing lines up with textarea */
-.react-select__placeholder {
-  margin: 0;
-  padding: 0;
 }
 
 /* keep consistent box-sizing */

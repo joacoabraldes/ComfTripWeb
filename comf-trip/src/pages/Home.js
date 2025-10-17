@@ -405,7 +405,11 @@ export default function Home() {
                   <button className="see-all" onClick={() => navigate("/trips")}>Ver todos</button>
                 )}
               </div>
-            )}<button className="btn-primary" onClick={() => navigate("/add-trip")}>Nuevo viaje</button>
+            )}<div className="trips-cta">
+              <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
+                  Nuevo Viaje &nbsp; &gt;
+              </button>
+          </div>
           </section>
             </div>)}</div>)}
         </div>

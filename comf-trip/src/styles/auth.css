@@ -34,10 +34,11 @@
 
 /* Left column: the form area */
 .auth-left {
+    height: 100%;
+    width: 100%;
   display:flex;
   flex-direction:column;
   gap:20px;
-  padding-top: 20px;
 }
 
 /* Title */
@@ -56,7 +57,7 @@
 }
 
 /* stacked inputs form */
-.form {
+.auth-form {
   display:flex;
   flex-direction:column;
   gap:18px;
@@ -64,41 +65,57 @@
 }
 
 /* each input row uses the pale rounded rectangle that Figma shows */
-.field {
+.auth-field {
   display:flex;
   flex-direction:column;
   gap:6px;
 }
 
-.field-label {
+.auth-field-label {
   color: var(--muted-text);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 300;
   margin-left: 6px; /* small left spacing like Figma */
 }
 
 /* the visible input box: use pale background and big height */
-.input {
-  width: 100%;
-  padding: 20px 18px;
-  border-radius: var(--input-radius);
-  border: none;
-  background: var(--muted-bg);
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
+.input{
+    padding: 10px 12px;
+    border: 1px solid #e8d1d1;
+    background: #fcf7f7;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 56px;
 }
 
+.input:focus{
+    border-color: #ff3951;
+    box-shadow: none;
+}
+.input::placeholder {
+    color: #964f4f;
+}
+.input:disabled{
+    background-color: #f3f3f3;
+    color: #bbb;
+}
+.input:disabled::placeholder{
+    background-color: #f3f3f3;
+    color: #bbb;
+}
 /* big register button (Figma big pill) */
-.btn-primary {
+.auth-btn-primary {
   width: 100%;
-  height: 82px; /* matches Figma visual */
+  height: 60px; /* matches Figma visual */
   border-radius: var(--btn-radius);
   background: var(--accent);
   color: #FCFCFC;
   font-weight: 600;
   border: none;
-  font-size: 30px;
+  font-size: 25px;
   cursor:pointer;
   display:flex;
   align-items:center;
@@ -106,11 +123,20 @@
 }
 
 /* smaller login button uses slightly different font-size in login screen */
-.btn-primary.login {
-  height: 82px;
-  font-size: 35px;
+.auth-btn-primary.login {
+  height: 60px;
+  font-size: 30px;
 }
-
+.auth-btn-primary:disabled {
+    background-color: #ff6b7a;
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+.auth-btn-primary.login:disabled {
+    background-color: #ff6b7a;
+    opacity: 0.8;
+    cursor: not-allowed;
+}
 /* grid two small fields (nationality + birthdate) */
 .grid-2 {
   display:grid;
@@ -156,8 +182,9 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  min-height: 520px;
-  padding-top: 20px;
+    height: 100%;
+    width: 100%;
+
 }
 
 /* artwork container placeholder — replace inner content with exported Figma SVG or PNG */
@@ -201,7 +228,7 @@
 }
 
 /* Contenedor principal del select */
-.country-select .react-select__control {
+.dropdown-select .react-select__control {
   background: #fcf7f7;       /* mismo fondo que los inputs */
   border: 1px solid #e8d1d1; /* mismo borde */
   border-radius: 8px;
@@ -210,13 +237,13 @@
     margin-left: 2px;
 }
 
-.country-select .react-select__control--is-focused {
+.dropdown-select .react-select__control--is-focused {
   border: #ff3951;     /* borde rojo cuando está enfocado */
   box-shadow: 0 0 0 1px #ff3951;
 }
 
 /* Texto del placeholder */
-.country-select .react-select__placeholder {
+.dropdown-select .react-select__placeholder {
   color: #964f4f;
 }
 .country-select .react-select__input-container {
@@ -225,7 +252,7 @@
   display: flex;
 }
 /* Input interno (cuando escribís) */
-.country-select .react-select__input-container input {
+.dropdown-select .react-select__input-container input {
 
   border: none !important;
   box-shadow: none !important;
@@ -237,34 +264,62 @@
 }
 
 /* Texto seleccionado */
-.country-select .react-select__single-value {
+.dropdown-select .react-select__single-value {
   color: #1e1e1e;
   font-size: 16px;
 }
 
 /* Indicador de la flechita */
-.country-select .react-select__dropdown-indicator {
+.dropdown-select .react-select__dropdown-indicator {
   color: #964f4f;
 }
+.dropdown-select .react-select__dropdown-indicator:disabled {
+    color: black !important;
+}
 
-.country-select .react-select__dropdown-indicator:hover {
+.dropdown-select .react-select__dropdown-indicator:hover {
   color: #ff3951;
 }
 
-/* El separador de la flechita lo sacamos */
-.country-select .react-select__indicator-separator {
-  display: none;
-}
-
-.country-select .react-select__option--is-focused {
+.dropdown-select .react-select__option--is-focused {
   background-color: #ffe5e8; /* color de hover */
   color: #1e1e1e;           /* color de texto */
 }
 
-.country-select .react-select__option--is-selected {
+.dropdown-select .react-select__option--is-selected {
   background-color: #ff3951; /* color cuando está seleccionado */
   color: #fff;
 }
+
+.dropdown-select .react-select__menu {
+    z-index: 9999;
+}
+
+.dropdown-select .react-select__value-container {
+    padding: 0 10px;
+}
+/* Estado deshabilitado */
+.dropdown-select .react-select__control--is-disabled {
+    background-color: #f3f3f3;    /* gris clarito */
+    border-color: #d6caca;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Cambiar el color del texto y del icono cuando está deshabilitado */
+.dropdown-select .react-select__single-value--is-disabled {
+    color: #999 !important;
+}
+
+.dropdown-select .react-select__dropdown-indicator {
+    transition: color 0.2s;
+}
+
+.dropdown-select .react-select__control--is-disabled,
+.react-select__dropdown-indicator {
+    color: #bbb;  /* gris clarito */
+}
+
 
 /* small responsive tweaks */
 @media (max-width: 1024px){
@@ -274,5 +329,5 @@
   }
   .auth-right { order: -1; } /* show art above form on smaller screens */
   .brand { font-size: 48px; }
-  .btn-primary { height: 64px; font-size: 22px; }
+  .auth-btn-primary { height: 64px; font-size: 22px; }
 }

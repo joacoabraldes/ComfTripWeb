@@ -91,44 +91,50 @@ export default function ChangePassword() {
 
         <form className="change-form" onSubmit={handleSubmit}>
 
-          <label className="field">
-            <div className="field-label">Contraseña actual</div>
+          <label className="change-field">
+            <div className="change-field-label">Contraseña actual</div>
             <input
               type="password"
               name="currentPassword"
+              className={"input"}
               value={form.currentPassword}
               onChange={handleChange}
               placeholder="Ingrese la contraseña actual"
               required
+              disabled={loading}
             />
           </label>
 
-          <label className="field">
-            <div className="field-label">Nueva contraseña</div>
+          <label className="change-field">
+            <div className="change-field-label">Nueva contraseña</div>
             <input
               type="password"
               name="newPassword"
               value={form.newPassword}
+              className={"input"}
               onChange={handleChange}
               placeholder="Ingrese la nueva contraseña"
               required
+              disabled={loading}
             />
           </label>
 
-          <label className="field">
-            <div className="field-label">Confirmar nueva contraseña</div>
+          <label className="change-field">
+            <div className="change-field-label">Confirmar nueva contraseña</div>
             <input
               type="password"
               name="confirmPassword"
               value={form.confirmPassword}
+              className={"input"}
               onChange={handleChange}
               placeholder="Confirme su nueva contraseña"
               required
+              disabled={loading}
             />
           </label>
 
           <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button type="submit" className="edit-btn-primary" disabled={loading}>
               {loading ? "Guardando…" : "Confirmar"}
             </button>
           </div>

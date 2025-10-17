@@ -91,10 +91,6 @@ export default function EditProfile() {
         return <div className="profile-root" style={{fontSize:25}}>Cargando...</div>;
     }
 
-    if (loading) {
-        return <div className="profile-root" style={{fontSize:25}}>Guardando cambios del perfil…</div>;
-    }
-
     return (
         <div className="edit-root">
             <Header/>
@@ -115,7 +111,7 @@ export default function EditProfile() {
                 </div>
 
                 <form className="edit-form" onSubmit={handleSubmit}>
-                    <label className="field">
+                    <label className="edit-field">
                         <input
                             type="text"
                             name="name"
@@ -123,10 +119,12 @@ export default function EditProfile() {
                             onChange={handleChange}
                             placeholder="Nombre"
                             required
+                            disabled={loading}
+                            className={"input"}
                         />
                     </label>
 
-                    <label className="field">
+                    <label className="edit-field">
                         <input
                             type="email"
                             name="email"
@@ -134,43 +132,50 @@ export default function EditProfile() {
                             onChange={handleChange}
                             placeholder="Mail"
                             required
+                            disabled={loading}
+                            className={"input"}
                         />
                     </label>
 
-                    <label className="field">
+                    <label className="edit-field">
                         <input
                             type="text"
                             name="phone"
                             value={form.phone}
                             onChange={handleChange}
                             placeholder="Número de Teléfono"
+                            disabled={loading}
+                            className={"input"}
                         />
                     </label>
 
-                    <label className="field">
+                    <label className="edit-field">
                         <input
                             type="date"
                             name="birthdate"
                             value={form.birthdate}
                             onChange={handleChange}
                             placeholder="Fecha de nacimiento"
+                            disabled={loading}
+                            className={"input"}
                         />
                     </label>
 
                     {/* Aquí reemplazamos el input de nacionalidad */}
-                    <label className="field">
+                    <label className="edit-field">
                         <Select
-                            className="country-select"
+                            className="dropdown-select"
                             classNamePrefix="react-select"
                             options={options}
                             value={options.find(opt => opt.label === form.nationality) || null}
                             onChange={handleCountryChange}
                             placeholder="Selecciona tu nacionalidad"
+                            isDisabled={loading}
                         />
                     </label>
 
                     <div className="form-actions">
-                        <button type="submit" className="btn-primary" disabled={loading}>
+                        <button type="submit" className="edit-btn-primary" disabled={loading}>
                             {loading ? "Guardando…" : "Guardar Cambios"}
                         </button>
                     </div>

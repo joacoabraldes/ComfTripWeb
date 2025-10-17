@@ -146,15 +146,10 @@ export default function EditTrip() {
         const currentDate = new Date(currentYear, currentMonth, day);
         const start = current.startDate;
 
-        if (!current.endDate) {
-            return start === currentDate;
-        }
-
+        if (!current.endDate) return false;
         const end = current.endDate;
-        return (
-            currentDate >= start &&
-            currentDate <= end
-        );
+        return currentDate > start && currentDate < end
+
     };
 
     const isDateFormer=(day)=>{
@@ -304,25 +299,27 @@ export default function EditTrip() {
                                         currentDestination?.endDate &&
                                         currentDestination.endDate.getTime() ===
                                         currentDate.getTime();
+                                    const inRange=isDateInRange(day.date)
 
                                     return (
                                         <button
                                             type="button"
                                             key={day.date}
-                                            className={`day ${isDateFormer(day.date)? "former-day" : (isDateInRange(day.date) ? "selected-day" : "")}`}
+                                            className={`day ${isDateFormer(day.date)? "former-day" : (inRange || start || end ? "selected-day" : "")}`}
                                             onClick={() =>
                                                 !isPast && handleDateSelect(day.date)
                                             }
                                             disabled={isPast}
                                             style={{
-                                                borderTopLeftRadius: start ? "90px" : "0",
-                                                borderBottomLeftRadius: start ? "90px" : "0",
-                                                borderTopRightRadius: end ? "90px" : "0",
-                                                borderBottomRightRadius: end ? "90px" : "0"
+                                                borderTopLeftRadius: end || inRange ? "0" : "90px",
+                                                borderBottomLeftRadius: end || inRange ? "0" : "90px",
+                                                borderTopRightRadius: start || inRange? "0" : "90px",
+                                                borderBottomRightRadius: start || inRange ? "0" : "90px",
                                             }}
                                         >
                                             {day.date}
                                         </button>
+
                                     );
                                 })}
                             </div>

@@ -5,6 +5,7 @@ import "../styles/home.css";
 import Header from "../components/Header";
 import { apiGet } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
+import OptimizedImage from "../components/OptimizedImage";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function Home() {
@@ -629,8 +630,15 @@ export default function Home() {
                   const img = imgs && imgs.length ? imgs[0] : null;
                   return (
                     <div className="carousel-item" key={loc.id} onClick={() => navigate(`/locations/${loc.id}`)}>
-                      <div className="carousel-image" style={{ backgroundImage: img ? `url(${img})` : undefined }}>
-                        {!img && <div className="no-img">No image</div>}
+                      <div className="carousel-image">
+                        {!img ? (<div className="no-img">No image</div>) :(
+                          <OptimizedImage
+                              src={img}
+                              alt={img}
+                              width={400}
+                              height={260}
+
+                          />)}
                       </div>
                       <div className="carousel-body">
                         <div className="carousel-title">{loc.titulo}</div>

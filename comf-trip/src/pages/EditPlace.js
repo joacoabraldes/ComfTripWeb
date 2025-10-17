@@ -332,17 +332,18 @@ export default function EditPlace() {
                 <section className="trip-it-right">
                     <div className="place-detail">
                         <div className="place-it-row">
+                            {place.location?.imagenes &&
                             <img
                                 src={place.location?.imagenes[0]}
                                 className="place-image"
                                 alt="Lugar actual"
-                            />
+                            />}
                             <div className="place-it-info">
                                 <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{place.location?.titulo}</h3>
                                 </div></div>
-                        <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>
+                        {locationData?.descripcion && <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>
                             <strong>Descripcion:</strong> {locationData?.descripcion ?? "-"}
-                        </p>
+                        </p>}
                         <div style={{ flex: 1, marginTop: 20 }}>
                             <Map
                                 {...viewState}

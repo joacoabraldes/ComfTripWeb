@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import "../styles/explore.css";
 import { apiGet } from "./api";
+import OptimizedImage from "../components/OptimizedImage";
 
 const safeParseImages = (im) => {
   if (!im) return [];
@@ -59,6 +60,9 @@ export default function Explore() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState(null);
 
+    const scrollRoot = typeof document !== "undefined"
+        ? document.querySelector(".explorar-main")
+        : null;
   // initial load: categories + popular locations
   useEffect(() => {
     let mounted = true;
@@ -307,23 +311,34 @@ export default function Explore() {
               <div className="small-muted">{filteredExperiences.length} resultados</div>
             </div>
 
-            <div className="experiences-grid">
-              {filteredExperiences.length === 0 ? (
-                <div className="muted">No se encontraron lugares para esta categoría.</div>
-              ) : (
-                filteredExperiences.map((exp) => (
-                  <div key={exp.id} className="experience-card" onClick={() => handleExperienceClick(exp)}>
-                    <div className="card-image">
-                      {exp.image ? <img src={exp.image} alt={exp.title} /> : <div className="no-image">No image</div>}
-                    </div>
-                    <div className="card-content">
-                      <h3 className="card-title">{exp.title}</h3>
-                      <p className="card-description">{exp.description}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+              <div className="experiences-grid">
+                  {filteredExperiences.length === 0 ? (
+                      <div className="muted">No se encontraron lugares para esta categoría.</div>
+                  ) : (
+                      filteredExperiences.map((exp, idx) => (
+                          <div key={exp.id} className="experience-card" onClick={() => handleExperienceClick(exp)}>
+                              <div className="card-image">
+                                  {exp.image ? (
+                                      <OptimizedImage
+                                          src={exp.image}
+                                          alt={exp.title}
+                                          width={400}
+                                          height={260}
+                                          scrollRoot={scrollRoot}
+                                          priority={idx < 6}  // primeras rápido
+                                      />
+                                  ) : (
+                                      <div className="no-image">No image</div>
+                                  )}
+                              </div>
+                              <div className="card-content">
+                                  <h3 className="card-title">{exp.title}</h3>
+                                  <p className="card-description">{exp.description}</p>
+                              </div>
+                          </div>
+                      ))
+                  )}
+              </div>
           </div>
 
           {/* popular below */}
@@ -332,23 +347,30 @@ export default function Explore() {
               <h2>Populares</h2>
             </div>
 
-            <div className="experiences-grid">
-              {popularExperiences.length === 0 ? (
-                <div className="muted">No hay populares por ahora.</div>
-              ) : (
-                popularExperiences.map((exp) => (
-                  <div key={exp.id} className="experience-card" onClick={() => handleExperienceClick(exp)}>
-                    <div className="card-image">
-                      {exp.image ? <img src={exp.image} alt={exp.title} /> : <div className="no-image">No image</div>}
-                    </div>
-                    <div className="card-content">
-                      <h3 className="card-title">{exp.title}</h3>
-                      <p className="card-description">{exp.description}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+              <div className="experiences-grid">
+                  {popularExperiences.map((exp, idx) => (
+                      <div key={exp.id} className="experience-card" onClick={() => handleExperienceClick(exp)}>
+                          <div className="card-image">
+                              {exp.image ? (
+                                  <OptimizedImage
+                                      src={exp.image}
+                                      alt={exp.title}
+                                      width={400}
+                                      height={260}
+                                      scrollRoot={scrollRoot}
+                                      priority={idx < 6}  // primeras rápido
+                                  />
+                              ) : (
+                                  <div className="no-image">No image</div>
+                              )}
+                          </div>
+                          <div className="card-content">
+                              <h3 className="card-title">{exp.title}</h3>
+                              <p className="card-description">{exp.description}</p>
+                          </div>
+                      </div>
+                  ))}
+              </div>
           </div>
         </div>
       </main>

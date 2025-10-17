@@ -347,3 +347,18 @@
   .experiences-grid { grid-template-columns: 1fr; }
   .modal-image { height: 200px; }
 }
+.img-skeleton {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg,#eee 0%,#f7f7f7 50%,#eee 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+}
+.img-fallback {
+    position: absolute; inset: 0;
+    display:flex; align-items:center; justify-content:center;
+    color:#888; font-size:12px;
+}
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

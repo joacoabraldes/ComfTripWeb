@@ -19,6 +19,7 @@
 /* left area text */
 .map-left {
   max-width: 600px;
+    height: 100%;
   color: rgba(0,0,0,0.7);
 }
 
@@ -37,7 +38,7 @@
   width: 100%;
 }
 /* Buttons */
-.btn-primary {
+.map-btn-primary {
     background-color: #ff3951;
     color: white;
     border: none;
@@ -51,17 +52,17 @@
     margin-bottom: 20px;
 }
 
-.btn-primary:disabled {
+.map-btn-primary:disabled {
     background-color: #ff6b7a;
     opacity: 0.8;
     cursor: not-allowed;
 }
 
-.btn-primary:hover:not(:disabled) {
+.map-btn-primary:hover:not(:disabled) {
     background-color: #e0223a;
 }
 
-.btn-secondary {
+.map-btn-secondary {
     background: none;
     border: 1px solid #ddd;
     border-radius: 10px;

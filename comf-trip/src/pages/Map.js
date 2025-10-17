@@ -69,7 +69,7 @@ export default function MapPage() {
   const [interests, setInterests] = useState([]);
   const [selectedInterest, setSelectedInterest] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // resolved endpoints (detected at runtime)
@@ -150,7 +150,6 @@ export default function MapPage() {
 
   // fetch locations (optionally with interest slug)
   const fetchLocations = useCallback(async (interest = "") => {
-    setLoading(true);
     setError(null);
     try {
       let baseUrl = endpoints.locations;
@@ -243,18 +242,19 @@ export default function MapPage() {
       <Header/>
 
       <main className="map-main" style={{ display: "flex", flex: 1 }}>
-        <section className="map-left" style={{ width: 320, padding: 16, boxSizing: "border-box" }}>
+        <section className="map-left" style={{ width: 400, padding: 16, boxSizing: "border-box" }}>
           <h2>Localidades</h2>
 
-          <label htmlFor="interest-select" style={{ display: "block", marginBottom: 8 }}>Filtrar por categoría</label>
+          <label htmlFor="interest-select" style={{ display: "block", marginBottom: 15 }}>Filtrar por categoría</label>
+            <div style={{marginBottom:20}}>
             <Select
                 className="dropdown-select"
                 classNamePrefix="react-select"
-                placeholder="Todas"
-                options={interests.map(it => ({
+                options={[{value: "", label: "Todas"},
+                    ...interests.map(it => ({
                     value: it.slug ?? it.id ?? it.title,
                     label: it.title ?? it.slug ?? it.id
-                }))}
+                }))]}
                 value={
                     selectedInterest
                         ? {
@@ -265,22 +265,21 @@ export default function MapPage() {
                                     i.id === selectedInterest ||
                                     i.title === selectedInterest
                                 )?.title || selectedInterest
-                        }
-                        : null
+                        }:{value: "", label: "Todas"}
                 }
                 onChange={(option) => setSelectedInterest(option.value)}
                 isSearchable={false}
-            />
+            /> </div>
 
 
-            <div style={{ marginBottom: 12 , marginTop:20, display:"flex", gap:3}}>
-            <button className="btn-primary" onClick={() => fetchLocations(selectedInterest)} style={{ marginRight: 8 }}>
+            {/*<div style={{ marginBottom: 12 , marginTop:20, display:"flex", gap:3}}>
+            <button className="map-btn-primary" onClick={() => fetchLocations(selectedInterest)} style={{ marginRight: 8 }}>
               Aplicar
             </button>
-            <button className="btn-secondary" onClick={() => { setSelectedInterest(""); fetchLocations(""); }}>
+            <button className="map-btn-secondary" onClick={() => { setSelectedInterest(""); fetchLocations(""); }}>
               Mostrar todo
             </button>
-          </div>
+          </div>*/}
 
           <div style={{ maxHeight: "60vh", overflow: "auto" }}>
             {loading && <p>Cargando...</p>}
@@ -292,7 +291,7 @@ export default function MapPage() {
             )}
             {!loading && !error && locations.length === 0 && <p>No hay localidades</p>}
 
-            <ul style={{ listStyle: "none", padding: 0 }}>
+              {!loading && <ul style={{ listStyle: "none", padding: 0 }}>
               {locations.map((loc) => (
                 <li
                   key={loc.id}
@@ -310,7 +309,7 @@ export default function MapPage() {
                   <div style={{ fontSize: 13, color: "#666" }}>{loc.fk_interest}</div>
                 </li>
               ))}
-            </ul>
+            </ul> }
           </div>
         </section>
 

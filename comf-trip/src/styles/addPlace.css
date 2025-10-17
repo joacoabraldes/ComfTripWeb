@@ -15,7 +15,6 @@
 
 }
 
-.trip-it-form select,
 .trip-it-form input{
     width: 100%;
     padding: 20px;
@@ -38,22 +37,6 @@
 }
 
 
-.trip-it-form select option{
-    font-size: 16px;
-    padding: 10px 16px;     /* 🔹 más espacio vertical y horizontal */
-    background-color: #fff; /* fondo blanco por defecto */
-    color: #333;            /* texto gris normal */
-    cursor: pointer;
-
-}
-
-.trip-it-form select option:checked {
-    background-color: #ff3951; /* rojo principal */
-    color: white;
-}
-
-
-.trip-it-form select:focus,
 .trip-it-form input:focus,
 .trip-it-form textarea:focus {
     outline: none;

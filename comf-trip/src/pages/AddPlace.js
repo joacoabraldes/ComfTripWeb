@@ -418,7 +418,7 @@ export default function AddPlace() {
                     <form onSubmit={handleAddPlace} className="trip-it-form" style={{overflowY: "auto"}}>
                         <label>Ubicación</label>
                         <Select
-                            className="country-select"
+                            className="dropdown-select"
                             classNamePrefix="react-select"
                             options={availableLocations.map(l => ({
                                 value: l.id,

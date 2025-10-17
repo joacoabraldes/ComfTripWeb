@@ -56,6 +56,7 @@
   width: 100%;
   max-height: calc(100vh - 280px);
   padding-top: 10px;
+    padding-bottom: 10px;
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -255,7 +256,6 @@
     font-size: 12px;
   }
   .btn-newtrip {
-    width: 260px;
     height: 52px;
     font-size: 16px;
   }

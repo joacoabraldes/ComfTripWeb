@@ -152,9 +152,9 @@ export default function AddTrip() {
     if (!current || !current.startDate) return false;
     const currentDate = new Date(currentYear, currentMonth, day);
     const start = current.startDate;
-    if (!current.endDate) return start.getTime() === currentDate.getTime();
+    if (!current.endDate) return false;
     const end = current.endDate;
-    return currentDate.getTime() >= start.getTime() && currentDate.getTime() <= end.getTime();
+    return currentDate.getTime() > start.getTime() && currentDate.getTime() < end.getTime();
   };
 
   const handlePrevMonth = () => setCurrentMonth(prev => prev === 0 ? (setCurrentYear(c => c - 1), 11) : prev - 1);
@@ -623,14 +623,14 @@ export default function AddTrip() {
                       const inRange = isDateInRange(day.date);
 
                       return (
-                        <button key={day.date} type="button" className={`day ${inRange ? 'selected-day' : ''}`}
+                        <button key={day.date} type="button" className={`day ${inRange || start || end ? 'selected-day' : ''}`}
                                 onClick={()=>!isPast && handleDateSelect(day.date)}
                                 disabled={isPast}
                                 style={{
-                                  borderTopLeftRadius: start ? "90px" : "0",
-                                  borderBottomLeftRadius: start ? "90px" : "0",
-                                  borderTopRightRadius: end ? "90px" : "0",
-                                  borderBottomRightRadius: end ? "90px" : "0"
+                                  borderTopLeftRadius: end || inRange ? "0" : "90px",
+                                  borderBottomLeftRadius: end || inRange ? "0" : "90px",
+                                  borderTopRightRadius: start || inRange? "0" : "90px",
+                                  borderBottomRightRadius: start || inRange ? "0" : "90px",
                                 }}>
                           {day.date}
                         </button>

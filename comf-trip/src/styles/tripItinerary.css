@@ -1,31 +1,47 @@
 /* src/styles/tripItinerary.css */
+
+/* === theme / variables === */
+:root{
+  --accent: #FF3951;       /* main accent (changed from blue to your page color) */
+  --accent-strong: #e03446;
+  --muted: #666;
+  --muted-2: #999;
+  --bg: #ffffff;
+  --card-shadow: 0 8px 20px rgba(12,13,14,0.06);
+}
+
+/* === layout === */
 .trip-it-root {
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--bg);
   color: #1d1b20;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   box-sizing: border-box;
-  position: relative;}
+  position: relative;
+}
+
 .trip-it-main {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* mitad izquierda y derecha */
+  grid-template-columns: 1fr 1fr; /* left / right */
   gap: 30px;
-  height: calc(100vh - 140px); /* toda la pantalla menos header + espacio botón */
+  height: calc(100vh - 140px);
   padding: 40px 20px 0 20px;
   box-sizing: border-box;
   width: 100%;
   margin: 28px auto;
   align-items: start;
 }
-.trip-it-left { display: flex;
+
+.trip-it-left {
+  display: flex;
   flex-direction: column;
-  height: 100%; /* ocupa todo */
-  overflow-y: auto; /* scroll si hay muchos viajes */
+  height: 100%;
+  overflow-y: auto;
   padding-bottom: 20px;
   margin-left: 150px;
 }
 
-.trip-it-right{
+.trip-it-right {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -35,98 +51,112 @@
   padding-left: 50px;
 }
 
-.trip-it-right img{
+.trip-it-right img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* mantiene proporción */
+  object-fit: contain;
 }
 
+/* === back link === */
 .back-link {
   background: none;
   border: none;
-  color: #FF3951;
+  color: var(--accent);
   cursor: pointer;
   font-weight: 800;
-  position: fixed;   /* la hace fija en la pantalla */
-  top: 70px;         /* distancia desde arriba */
-  left: 100px;        /* distancia desde la izquierda */
-  text-align: left;  /* opcional */
-  margin-bottom: 0;  /* elimina margin innecesario */
-  z-index: 1000;     /* para que quede encima de otros elementos */}
-
-.trip-detail-row {
-  margin: 6px 0;
-  color: #555;
+  position: fixed;
+  top: 70px;
+  left: 100px;
+  text-align: left;
+  margin-bottom: 0;
+  z-index: 1000;
 }
 
-.trip-it-created {
-  font-size: 14px;
-  color: #999;
-  margin-top: 8px;
-}
+/* small metadata rows */
+.trip-detail-row { margin: 6px 0; color: #555; }
+.trip-it-created { font-size: 12px; color: var(--muted-2); margin-top: 8px; }
 
-.places-list { width: 100%;
+/* === places list === */
+.places-list {
+  width: 100%;
   height: 100%;
-    padding-right: 20px;
+  padding-top: 10px;
+  padding-right: 20px;
   overflow-y: auto;
   flex-grow: 1;
   flex-direction: column;
   gap: 10px;
-  padding-bottom: 20px}
+  margin-top: 8px;
+}
 
 .place-item {
-    gap: 12px;
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid #f1f1f1;
-    background: #fff;
-    margin-bottom: 8px;
-    display: flex;
-    padding-right: 20px;
-    justify-content: space-between; /* texto a izq, bandera a der */
-    align-items: center;
-    text-align: left;
-    cursor: pointer;
-    transition: box-shadow .12s ease, transform .06s ease;
+  gap: 12px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #f1f1f1;
+  background: #fff;
+  margin-bottom: 8px;
+  display: flex;
+  padding-right: 20px;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow .12s ease, transform .06s ease;
 }
-.place-item:hover{
+.place-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.04);
 }
-.place-title { font-weight:600; }
-.place-meta { font-size:13px; color:#666; margin-top:6px; }
-.place-notes { margin-top:6px; color:#444; font-size:13px; }
-.btn-link { background:none; border:1px solid #ddd; padding:6px 8px; border-radius:6px; cursor:pointer; }
-.muted { color:#999; font-size:14px; }
-.map-panel { border-radius:8px; overflow:hidden; }
-.error { color:#b00020; margin-top:6px; font-size:14px; }
+
+.place-title { font-weight: 600; }
+.place-meta { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.place-notes { margin-top: 6px; color: #444; font-size: 13px; }
+
+.btn-link {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.muted { color: var(--muted-2); font-size: 14px; }
+
+.map-panel { border-radius: 8px; overflow: hidden; }
+
+.error { color: #b00020; margin-top: 6px; font-size: 14px; }
+
+/* responsive */
 @media (max-width: 980px) {
   .trip-it-main { grid-template-columns: 1fr; padding: 12px; }
   .map-panel { height: 320px; }
+  .back-link { left: 20px; top: 64px; }
+  .trip-it-left { margin-left: 12px; }
+  .trip-it-right { padding-left: 12px; }
 }
 
-.place-detail{
+/* === place detail / image === */
+.place-detail {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   overflow-y: auto;
-
 }
 
 .place-it-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px; /* espacio entre imagen e info */
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 10px;
 }
 
 .place-it-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-
 
 .place-image {
   height: 180px;
@@ -136,4 +166,144 @@
   transition: transform 0.2s;
 }
 
+/* === menu / menu button (single, deduplicated) === */
+.trip-menu {
+  position: absolute;
+  top: 100%;   /* appears below the button */
+  right: 0;    /* aligned to right edge of wrapper */
+  margin-top: 6px;
+  background-color: #f1f1f1;
+  border-radius: 12px;
+  padding: 6px 10px;
+  display: flex;
+  gap: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
 
+.trip-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.trip-menu-btn {
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  height: 40px;
+  width: 40px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+.trip-menu-btn:hover { background-color: #ffe5e8; }
+
+/* === day header and separator (more visually distinct) === */
+.day-header {
+  /* main look is handled inline in JSX, but keep some fallbacks here */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.day-separator {
+  height: 10px; /* slightly taller for clearer separation */
+  background: linear-gradient(90deg, rgba(249,245,246,1) 0%, rgba(243,241,243,1) 100%);
+  border-radius: 8px;
+  margin-top: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+/* === buttons used inside the day header (accent instead of blue) === */
+
+/* Outline button (Mostrar ruta) — looks like a button, has svg spacing for icon on left */
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background .12s ease, transform .06s ease, color .12s ease;
+}
+.btn-outline svg { margin-right: 8px; display: inline-block; vertical-align: middle; }
+.btn-outline:hover { background: rgba(255,57,81,0.06); }
+.btn-outline.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* smaller primary button for + Añadir */
+.btn-small {
+  background: var(--accent);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background .12s ease, transform .06s ease;
+}
+.btn-small:hover { background: var(--accent-strong); }
+
+/* === popup image spinner uses accent === */
+.img-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(0,0,0,0.06);
+  border-top-color: var(--accent);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* === small visual tweaks to help separation of items === */
+.place-item { transition: box-shadow .12s ease, transform .06s ease; }
+.place-item:hover { transform: translateY(-2px); }
+
+/* === popup styling === */
+.place-popUp { min-width: 160px; }
+.place-popUp .img-popUp { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; }
+
+/* === utility (avoid duplicates) === */
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #e6e6e6;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* keep map-wrapper styling consistent with layout */
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  display: block;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+/* make menu z-index safe inside lists */
+.trip-menu { z-index: 1100; }

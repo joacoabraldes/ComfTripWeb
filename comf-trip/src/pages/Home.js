@@ -270,405 +270,443 @@ export default function Home() {
     }
 
     return (
-    <div className="home-root">
-      <Header />
+        <div className="home-root">
+            <Header/>
 
-      <main className="hero">
-        <div className="hero-left">
-          <div className="hero-top">
+            <main className="hero">
+                <div className="hero-left"><div style={{ marginTop: (currentPlace && nextPlace) ? "20px": "", marginBottom:(currentPlace && nextPlace) ? "40px":""}}>
+                    <div className="hero-box">
 
-            <h1 style={{ margin: 0 }}>
-              {currentTrip ? `Estas en ${currentTrip.destination}` : (nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?")}
-            </h1>
-            <p className="hero-sub" style={{ marginBottom: 0 }}>
-              {nextTrip
-                ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
-                : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
-            </p>
-              <div className="home-actions" >
-                  {nextTrip && (
-                      <button className="btn-ghost" onClick={() => navigate(`/trip_itinerary/${nextTrip.id}`)}>
-                          Ver itinerario<div>
-                          ▶
-                      </div>
-                      </button>
-                  )}
-              </div>
-          </div>
-            {currentPlace || nextPlace ? (
-                <div>{currentPlace && (
-                    <div style={{ paddingBottom: "5px" }}>
-                        <h3>Actividad actual:</h3>
-                        <button className="place-row"
-                                onClick={() => {
-                                    if (currentPlace && currentPlace.location) {
-                                        const lat = Number(currentPlace.location.latitude);
-                                        const lng = Number(currentPlace.location.longitude);
-                                        if (!isNaN(lat) && !isNaN(lng)) {
-                                            setViewState({
-                                                latitude: lat,
-                                                longitude: lng,
-                                                zoom: 16,
-                                            });
-                                        } else {
-                                            console.warn("⚠️ Coordenadas inválidas en nextPlace:", currentPlace.location);
-                                        }
-                                    }
-                                }}>
-                            <img
-                                src={safeParseImages(currentPlace.location?.imagenes)[0]}
-                                className="place-img"
-                                alt="Lugar actual"
-                            />
-                            <div className="place-info">
-                                <h2>{currentPlace.location?.titulo}</h2>
-                                <p className="sub-title">
-                                    {fmtDate(currentPlace.date)}
-                                </p>
-                                <p className="sub-title">
-                                    {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)}
-                                </p>
-                                {currentPlace.notes && (<p>
-                                        Notas: {currentPlace.notes}
-                                    </p>)}
-                            </div>
-                        </button>
-
+                        <h1 style={{margin: 0}}>
+                            {currentTrip ? `Estas en ${currentTrip.destination}` : (nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?")}
+                        </h1>
+                        <p className="hero-sub" style={{marginBottom: 0}}>
+                            {nextTrip
+                                ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
+                                : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
+                        </p>
+                        <div className="home-actions">
+                            {nextTrip && (
+                                <button className="btn-ghost"
+                                        onClick={() => navigate(`/trip_itinerary/${nextTrip.id}`)}>
+                                    Ver itinerario
+                                    <div>
+                                        ▶
+                                    </div>
+                                </button>
+                            )}
+                        </div>
                     </div>
-                )}<p className="sub-title">
-                    {hasNextToday ? timeBetween() :(currentPlace? "Esta es la última actividad del día": "")}
-                </p>
-                    {nextPlace && (
-                        <div>
-                            <h3>Próxima actividad:</h3>
-                            <button className="place-row"
-                                    onClick={() => {
-                                        if (nextPlace && nextPlace.location) {
-                                            const lat = Number(nextPlace.location.latitude ?? nextPlace.location.latitud);
-                                            const lng = Number(nextPlace.location.longitude ?? nextPlace.location.longitud);
-                                            if (!isNaN(lat) && !isNaN(lng)) {
-                                                setViewState({
-                                                    latitude: lat,
-                                                    longitude: lng,
-                                                    zoom: 16,
-                                                });
-                                            } else {
-                                                console.warn("⚠️ Coordenadas inválidas en nextPlace:", nextPlace.location);
+                    {currentPlace || nextPlace ? (
+                        <div>{currentPlace && (
+                            <div className="hero-box" style={{marginTop:"20px"}}>
+                                <h3 style={{margin:0, marginBottom:"10px"}}>Actividad actual:</h3>
+                                <button className="place-row"
+                                        onClick={() => {
+                                            if (currentPlace && currentPlace.location) {
+                                                const lat = Number(currentPlace.location.latitude);
+                                                const lng = Number(currentPlace.location.longitude);
+                                                if (!isNaN(lat) && !isNaN(lng)) {
+                                                    setViewState({
+                                                        latitude: lat,
+                                                        longitude: lng,
+                                                        zoom: 16,
+                                                    });
+                                                } else {
+                                                    console.warn("⚠️ Coordenadas inválidas en nextPlace:", currentPlace.location);
+                                                }
                                             }
-                                        }
-                                    }}>
-                                <img
-                                    src={safeParseImages(nextPlace.location?.imagenes)[0]}
-                                    className="place-img"
-                                    alt="Próximo lugar"
-                                />
-                                <div className="place-info">
-                                    <h2>{nextPlace.location?.titulo}</h2>
-                                    <p>
-                                        {fmtDate(nextPlace.date)}
-                                    </p>
-                                    <p>
-                                        {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)}
-                                    </p>
-                                    {nextPlace.notes && (<p>
-                                        Notas: {nextPlace.notes}
-                                    </p>)}
-                                </div>
-                            </button>
-                        </div>
-                    )}
-
-                </div>
-            ) : (<div> {!nextPlace && currentTrip ? (<div className="muted">No tienes mas actividades en este viaje. Agrega uno nuevo </div>) : (<div>
-
-          <section style={{ marginTop: 22 }}>
-            <h3 style={{ marginBottom: 10 }}>Tus viajes</h3>
-              { trips.length === 0 ? (
-              <div className="muted">No tienes viajes. Empieza creando uno 😉</div>
-            ) : (
-              <div className="trips-preview">
-                {trips.slice(0, 4).map((t) => (
-                  <button
-                    key={t.id}
-                    className="trip-card"
-                    onClick={() => navigate(`/trip_itinerary/${t.id}`)}
-                  >
-                    <div className="trip-card-left">
-                      <div className="trip-destination">{t.destination}</div>
-                      <div className="trip-dates">{fmtDate(t.start_date)} — {fmtDate(t.end_date)}</div>
-                    </div>
-                    <div className="trip-card-right">
-                      ▶
-                    </div>
-                  </button>
-                ))}
-                {trips.length > 4 && (
-                  <button className="see-all" onClick={() => navigate("/trips")}>Ver todos</button>
-                )}
-              </div>
-            )}<div className="trips-cta">
-              <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
-                  Nuevo Viaje &nbsp; &gt;
-              </button>
-          </div>
-          </section>
-            </div>)}</div>)}
-        </div>
-
-        <div className="hero-right">
-            {currentTrip ? (
-                <div style={{ flex: 1, marginTop: 20 }}>
-                    <Map
-                        {...viewState}
-                        onMove={(evt) => setViewState(evt.viewState)}
-                        style={{ flex: 1, marginTop: 20, background: "#ddd", height: "500px" }}
-                        mapStyle="mapbox://styles/mapbox/streets-v11"
-                        mapboxAccessToken={MAPBOX_TOKEN}
-                    >
-                        <NavigationControl position="top-right" />
-                        {markers.map((m) => {
-                            const isCurrent = currentPlace && m.place.id === currentPlace.id;
-                            const isNext = nextPlace && m.place.id === nextPlace.id;
-
-                            // elegir color según tipo
-                            let fillColor = "#ff3951"; // rojo por defecto
-                            let sizeMarker="24";
-                            if (isCurrent) {fillColor = "#9b30ff";// violeta
-                                sizeMarker="30";}
-                            else if (isNext) {fillColor = "#00cc66"; // verde
-                                sizeMarker="30";}
-
-                            return (
-                                <Marker
-                                    key={`m-${m.place.id}`}
-                                    longitude={Number(m.longitude)}
-                                    latitude={Number(m.latitude)}
-                                    anchor="bottom"
-                                >
-                                    <div
-                                        onMouseEnter={() =>
-                                            setSelectedLocationOnMap({
-                                                latitude: m.latitude,
-                                                longitude: m.longitude,
-                                                titulo: m.title,
-                                                interes:"",
-                                                date: m.place.date,
-                                                startHour: m.place.start_hour,
-                                                endHour: m.place.end_hour,
-                                                image: safeParseImages(m.images)[0]
-                                            })
-                                        }
-                                        onMouseLeave={() => setSelectedLocationOnMap(null)}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setViewState((v) => ({
-                                                ...v,
-                                                latitude: Number(m.latitude),
-                                                longitude: Number(m.longitude),
-                                                zoom: 16
-                                            }));
-                                        }}
-                                    >
-                                        <svg
-                                            width={sizeMarker}
-                                            height={sizeMarker}
-                                            viewBox="0 0 24 24"
-                                            style={{ transform: "translate(-12px,-24px)", cursor: "pointer" }}
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-                                                fill={fillColor}
-                                            />
-                                            <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                        </svg>
-                                    </div>
-                                </Marker>
-                            );
-                        })}
-
-                        {filteredPopular.map((m) => (
-                            <Marker
-                                key={`m-${m.id}`}
-                                longitude={Number(m.longitude)}
-                                latitude={Number(m.latitude)}
-                                anchor="bottom">
-                                <div
-                                    onMouseEnter={() =>
-                                        setSelectedLocationOnMap({
-                                            latitude: m.latitude,
-                                            longitude: m.longitude,
-                                            titulo: m.titulo,
-                                            interes:m.fk_interest,
-                                            date: "",
-                                            startHour:"",
-                                            endHour:"",
-                                            image: safeParseImages(m.imagenes)[0]
-                                        })
-                                    }
-                                    onMouseLeave={() => setSelectedLocationOnMap(null)}
-                                    onClick={(e) => {
-                                        e.originalEvent && e.originalEvent.stopPropagation();
-                                        setViewState((v) => ({ ...v, latitude: Number(m.latitude), longitude: Number(m.longitude), zoom: 16 }));
-                                    }}
-                                >
-                                    <svg
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        style={{ transform: "translate(-12px,-24px)", cursor: "pointer" }}
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="blue" />
-                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                    </svg></div>
-                            </Marker>
-                        ))}
-
-                        {selectedLocationOnMap && (
-                            <Popup
-                                longitude={Number(selectedLocationOnMap.longitude)}
-                                latitude={Number(selectedLocationOnMap.latitude)}
-                                anchor="bottom"
-                                closeButton={false}
-                                offset={[-12, -53]}
-                            >
-                                <div className="place-popUp">
+                                        }}>
+                                    {currentPlace.location?.imagenes &&
                                     <img
-                                        src={selectedLocationOnMap.image}
-                                        className="img-popUp"
+                                        src={safeParseImages(currentPlace.location?.imagenes)[0]}
+                                        className="place-img"
                                         alt="Lugar actual"
-                                    />
+                                    />}
                                     <div className="place-info">
-                                        <h3>{selectedLocationOnMap.titulo}</h3>
-                                        {selectedLocationOnMap && (<p>
-                                            {selectedLocationOnMap.interes}
+                                        <h2>{currentPlace.location?.titulo}</h2>
+                                        <p className="sub-title">
+                                            {fmtDate(currentPlace.date)}
+                                        </p>
+                                        <p className="sub-title">
+                                            {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)}
+                                        </p>
+                                        {currentPlace.notes && (<p>
+                                            Notas: {currentPlace.notes}
                                         </p>)}
-                                        {selectedLocationOnMap.date && (<p>
-                                            {fmtDate(selectedLocationOnMap.date)}
-                                        </p>)}
-                                        {selectedLocationOnMap.startHour && (
-                                        <p>
-                                            {fmtHour(selectedLocationOnMap.startHour)} - {fmtHour(selectedLocationOnMap.endHour)}
-                                        </p>)}
+                                        <p className="sub-title">
+                                            {hasNextToday ? timeBetween() : "Esta es la última actividad del día"}
+                                        </p>
                                     </div>
-                                </div>
-                            </Popup>
+                                </button>
+
+                            </div>
                         )}
-                        <div className="map-legend">
-                            <table>
-                                <tbody>
-                                <tr>
-                                    <td><svg
-                                        width="24"
-                                        height="24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#9b30ff" />
-                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                    </svg></td>
-                                    <td>Actividad actual</td>
-                                </tr>
-                                <tr>
-                                    <td><svg
-                                        width="24"
-                                        height="24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#00cc66" />
-                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                    </svg></td>
-                                    <td>Próxima actividad</td>
-                                </tr>
-                                <tr>
-                                    <td><svg
-                                        width="24"
-                                        height="24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff3951" />
-                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                    </svg></td>
-                                    <td>Otros lugares del viaje</td>
-                                </tr>
-                                <tr>
-                                    <td><svg
-                                        width="24"
-                                        height="24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="blue" />
-                                        <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                                    </svg></td>
-                                    <td>Lugares populares</td>
-                                </tr>
-                                </tbody>
-                            </table>
+                            {nextPlace && (
+                                <div className="hero-box" style={{marginTop:"20px"}}>
+                                    <h3 style={{margin:"0", marginBottom:"10px"}}>Próxima actividad:</h3>
+                                    <button className="place-row"
+                                            onClick={() => {
+                                                if (nextPlace && nextPlace.location) {
+                                                    const lat = Number(nextPlace.location.latitude ?? nextPlace.location.latitud);
+                                                    const lng = Number(nextPlace.location.longitude ?? nextPlace.location.longitud);
+                                                    if (!isNaN(lat) && !isNaN(lng)) {
+                                                        setViewState({
+                                                            latitude: lat,
+                                                            longitude: lng,
+                                                            zoom: 16,
+                                                        });
+                                                    } else {
+                                                        console.warn("⚠️ Coordenadas inválidas en nextPlace:", nextPlace.location);
+                                                    }
+                                                }
+                                            }}>{nextPlace.location?.imagenes &&
+                                        <img
+                                            src={safeParseImages(nextPlace.location?.imagenes)[0]}
+                                            className="place-img"
+                                            alt="Próximo lugar"
+                                        />}
+                                        <div className="place-info">
+                                            <h2>{nextPlace.location?.titulo}</h2>
+                                            <p>
+                                                {fmtDate(nextPlace.date)}
+                                            </p>
+                                            <p>
+                                                {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)}
+                                            </p>
+                                            {nextPlace.notes && (<p>
+                                                Notas: {nextPlace.notes}
+                                            </p>)}
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+
                         </div>
+                    ) : (<div> {!nextPlace && currentTrip ? (
+                        <div className="muted">No tienes mas actividades en este viaje. Agrega uno nuevo </div>) : (
+                        <div>
 
-                    </Map>
-                </div>)
-                : (<div>
-          <h3 style={{ marginTop: 0 }}>Lugares recomendados</h3>
-
-          <div className="carousel">
-            <div className="carousel-inner" style={{ transform: `translateX(-${index * 100}%)` }}>
-
-                {popular.length === 0 ? (
-                <div className="carousel-item empty">No hay lugares para mostrar</div>
-              ) : (
-                popular.map((loc) => {
-                  const imgs = (() => {
-                    try {
-                      if (!loc.imagenes) return [];
-                      if (Array.isArray(loc.imagenes)) return loc.imagenes;
-                      return JSON.parse(loc.imagenes);
-                    } catch (e) {
-                      return typeof loc.imagenes === "string" ? loc.imagenes.split(",") : [];
-                    }
-                  })();
-                  const img = imgs && imgs.length ? imgs[0] : null;
-                  return (
-                    <div className="carousel-item" key={loc.id} onClick={() => navigate(`/locations/${loc.id}`)}>
-                      <div className="carousel-image">
-                        {!img ? (<div className="no-img">No image</div>) :(
-                          <OptimizedImage
-                              src={img}
-                              alt={img}
-                              width={400}
-                              height={260}
-
-                          />)}
-                      </div>
-                      <div className="carousel-body">
-                        <div className="carousel-title">{loc.titulo}</div>
-                        <div className="carousel-sub">{loc.fk_interest}</div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {popular.length > 1 && (
-              <>
-                <button className="carousel-nav left" onClick={goPrev}>‹</button>
-                <button className="carousel-nav right" onClick={goNext}>›</button>
-                <div className="carousel-dots">
-                  {popular.map((_, i) => (
-                    <button
-                      key={i}
-                      className={`dot ${i === index ? "active" : ""}`}
-                      onClick={() => setIndex(i)}
-                      aria-label={`Go to ${i+1}`}
-                    />
-                  ))}
+                            <section className="hero-box" style={{marginTop:"30px", paddingTop:0}}>
+                                <h3 style={{marginBottom: 10}}>Tus viajes</h3>
+                                {trips.length === 0 ? (
+                                    <div className="muted">No tienes viajes. Empieza creando uno 😉</div>
+                                ) : (
+                                    <div className="trips-preview">
+                                        {trips.slice(0, 4).map((t) => (
+                                            <button
+                                                key={t.id}
+                                                className="trip-card"
+                                                onClick={() => navigate(`/trip_itinerary/${t.id}`)}
+                                            >
+                                                <div className="trip-card-left">
+                                                    <div className="trip-destination">{t.destination}</div>
+                                                    <div
+                                                        className="trip-dates">{fmtDate(t.start_date)} — {fmtDate(t.end_date)}</div>
+                                                </div>
+                                                <div className="trip-card-right">
+                                                    ▶
+                                                </div>
+                                            </button>
+                                        ))}
+                                        {trips.length > 4 && (
+                                            <button className="see-all" onClick={() => navigate("/trips")}>Ver
+                                                todos</button>
+                                        )}
+                                    </div>
+                                )}
+                            </section>
+                        </div>)}</div>)}</div>
                 </div>
-              </>
-            )}
-          </div></div>)}
+
+                <div className="hero-right">
+                    {currentTrip ? (
+                            <div style={{flex: 1, marginTop: 20}}>
+                                <Map
+                                    {...viewState}
+                                    onMove={(evt) => setViewState(evt.viewState)}
+                                    style={{flex: 1, marginTop: 20, background: "#ddd", height: "500px"}}
+                                    mapStyle="mapbox://styles/mapbox/streets-v11"
+                                    mapboxAccessToken={MAPBOX_TOKEN}
+                                >
+                                    <NavigationControl position="top-right"/>
+                                    {markers.map((m) => {
+                                        const isCurrent = currentPlace && m.place.id === currentPlace.id;
+                                        const isNext = nextPlace && m.place.id === nextPlace.id;
+
+                                        // elegir color según tipo
+                                        let fillColor = "#ff3951"; // rojo por defecto
+                                        let sizeMarker = "24";
+                                        if (isCurrent) {
+                                            fillColor = "#9b30ff";// violeta
+                                            sizeMarker = "30";
+                                        } else if (isNext) {
+                                            fillColor = "#00cc66"; // verde
+                                            sizeMarker = "30";
+                                        }
+
+                                        return (
+                                            <Marker
+                                                key={`m-${m.place.id}`}
+                                                longitude={Number(m.longitude)}
+                                                latitude={Number(m.latitude)}
+                                                anchor="bottom"
+                                            >
+                                                <div
+                                                    onMouseEnter={() =>
+                                                        setSelectedLocationOnMap({
+                                                            latitude: m.latitude,
+                                                            longitude: m.longitude,
+                                                            titulo: m.title,
+                                                            interes: "",
+                                                            date: m.place.date,
+                                                            startHour: m.place.start_hour,
+                                                            endHour: m.place.end_hour,
+                                                            image: safeParseImages(m.images)[0]
+                                                        })
+                                                    }
+                                                    onMouseLeave={() => setSelectedLocationOnMap(null)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setViewState((v) => ({
+                                                            ...v,
+                                                            latitude: Number(m.latitude),
+                                                            longitude: Number(m.longitude),
+                                                            zoom: 16
+                                                        }));
+                                                    }}
+                                                >
+                                                    <svg
+                                                        width={sizeMarker}
+                                                        height={sizeMarker}
+                                                        viewBox="0 0 24 24"
+                                                        style={{transform: "translate(-12px,-24px)", cursor: "pointer"}}
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                            fill={fillColor}
+                                                        />
+                                                        <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                                                    </svg>
+                                                </div>
+                                            </Marker>
+                                        );
+                                    })}
+
+                                    {filteredPopular.map((m) => (
+                                        <Marker
+                                            key={`m-${m.id}`}
+                                            longitude={Number(m.longitude)}
+                                            latitude={Number(m.latitude)}
+                                            anchor="bottom">
+                                            <div
+                                                onMouseEnter={() =>
+                                                    setSelectedLocationOnMap({
+                                                        latitude: m.latitude,
+                                                        longitude: m.longitude,
+                                                        titulo: m.titulo,
+                                                        interes: m.fk_interest,
+                                                        date: "",
+                                                        startHour: "",
+                                                        endHour: "",
+                                                        image: safeParseImages(m.imagenes)[0]
+                                                    })
+                                                }
+                                                onMouseLeave={() => setSelectedLocationOnMap(null)}
+                                                onClick={(e) => {
+                                                    e.originalEvent && e.originalEvent.stopPropagation();
+                                                    setViewState((v) => ({
+                                                        ...v,
+                                                        latitude: Number(m.latitude),
+                                                        longitude: Number(m.longitude),
+                                                        zoom: 16
+                                                    }));
+                                                }}
+                                            >
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    style={{transform: "translate(-12px,-24px)", cursor: "pointer"}}
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <path
+                                                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                        fill="blue"/>
+                                                    <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                                                </svg>
+                                            </div>
+                                        </Marker>
+                                    ))}
+
+                                    {selectedLocationOnMap && (
+                                        <Popup
+                                            longitude={Number(selectedLocationOnMap.longitude)}
+                                            latitude={Number(selectedLocationOnMap.latitude)}
+                                            anchor="bottom"
+                                            closeButton={false}
+                                            offset={[-12, -53]}
+                                        >
+                                            <div className="place-popUp">
+                                                <img
+                                                    src={selectedLocationOnMap.image}
+                                                    className="img-popUp"
+                                                    alt="Lugar actual"
+                                                />
+                                                <div className="place-info">
+                                                    <h3>{selectedLocationOnMap.titulo}</h3>
+                                                    {selectedLocationOnMap && (<p>
+                                                        {selectedLocationOnMap.interes}
+                                                    </p>)}
+                                                    {selectedLocationOnMap.date && (<p>
+                                                        {fmtDate(selectedLocationOnMap.date)}
+                                                    </p>)}
+                                                    {selectedLocationOnMap.startHour && (
+                                                        <p>
+                                                            {fmtHour(selectedLocationOnMap.startHour)} - {fmtHour(selectedLocationOnMap.endHour)}
+                                                        </p>)}
+                                                </div>
+                                            </div>
+                                        </Popup>
+                                    )}
+                                    <div className="map-legend">
+                                        <table>
+                                            <tbody>
+                                            <tr>
+                                                <td>
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                            fill="#9b30ff"/>
+                                                        <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                                                    </svg>
+                                                </td>
+                                                <td>Actividad actual</td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                            fill="#00cc66"/>
+                                                        <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                                                    </svg>
+                                                </td>
+                                                <td>Próxima actividad</td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                            fill="#ff3951"/>
+                                                        <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                                                    </svg>
+                                                </td>
+                                                <td>Otros lugares del viaje</td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                                            fill="blue"/>
+                                                        <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                                                    </svg>
+                                                </td>
+                                                <td>Lugares populares</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </Map>
+                            </div>)
+                        : (<div>
+                            <h3 style={{marginTop: 0}}>Lugares recomendados</h3>
+
+                            <div className="carousel">
+                                <div className="carousel-inner" style={{transform: `translateX(-${index * 100}%)`}}>
+
+                                    {popular.length === 0 ? (
+                                        <div className="carousel-item empty">No hay lugares para mostrar</div>
+                                    ) : (
+                                        popular.map((loc) => {
+                                            const imgs = (() => {
+                                                try {
+                                                    if (!loc.imagenes) return [];
+                                                    if (Array.isArray(loc.imagenes)) return loc.imagenes;
+                                                    return JSON.parse(loc.imagenes);
+                                                } catch (e) {
+                                                    return typeof loc.imagenes === "string" ? loc.imagenes.split(",") : [];
+                                                }
+                                            })();
+                                            const img = imgs && imgs.length ? imgs[0] : null;
+                                            return (
+                                                <div className="carousel-item" key={loc.id}
+                                                     onClick={() => navigate(`/locations/${loc.id}`)}>
+                                                    <div className="carousel-image">
+                                                        {!img ? (<div className="no-img">No image</div>) : (
+                                                            <OptimizedImage
+                                                                src={img}
+                                                                alt={img}
+                                                                width={400}
+                                                                height={260}
+
+                                                            />)}
+                                                    </div>
+                                                    <div className="carousel-body">
+                                                        <div className="carousel-title">{loc.titulo}</div>
+                                                        <div className="carousel-sub">{loc.fk_interest}</div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+
+                                {popular.length > 1 && (
+                                    <>
+                                        <button className="carousel-nav left" onClick={goPrev}>‹</button>
+                                        <button className="carousel-nav right" onClick={goNext}>›</button>
+                                        <div className="carousel-dots">
+                                            {popular.map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    className={`dot ${i === index ? "active" : ""}`}
+                                                    onClick={() => setIndex(i)}
+                                                    aria-label={`Go to ${i + 1}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>)}
+                </div>
+                {!currentTrip && <div className="trips-cta">
+                    <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
+                        Nuevo Viaje &nbsp; &gt;
+                    </button>
+                </div>}
+            </main>
         </div>
-      </main>
-    </div>
-  );
+    );
 }

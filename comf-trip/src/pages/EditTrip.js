@@ -109,7 +109,7 @@ export default function EditTrip() {
             const end=normalizeDate(stored.end_date);
 
                 if (selectedDate<end && selectedDate>start) {
-                    return newDestinations;
+                    current.startDate=selectedDate;
                 }
                 else if(selectedDate<=start){
                     current.startDate=selectedDate;
@@ -353,7 +353,7 @@ export default function EditTrip() {
                             onChange={(e) => setNotes(e.target.value)}
                             rows={3}
                         />
-
+                    <div>
                         <button
                             type="submit"
                             className="btn-primary create-trip"
@@ -361,7 +361,7 @@ export default function EditTrip() {
                             disabled={loading}
                         >
                             {loading ? "Guardando..." : "Guardar Cambios"}
-                        </button>
+                        </button></div>
                     </form>
                 </div>
 

@@ -253,7 +253,7 @@ export default function EditPlace() {
     return (
         <div className="trip-it-root">
             <Header />
-            <main className="trip-it-main">
+            <main className="trip-it-main" style={{paddingTop:50}}>
                 <section className="trip-it-left">
                     <h2 className="trip-it-title">{trip.destination}</h2>
                     <div className="trip-it-dates">
@@ -329,7 +329,7 @@ export default function EditPlace() {
                     </form>
                 </section>
 
-                <section className="trip-it-right">
+                <section className="trip-it-right" style={{paddingRight:60}}>
                     <div className="place-detail">
                         <div className="place-it-row">
                             {place.location?.imagenes &&

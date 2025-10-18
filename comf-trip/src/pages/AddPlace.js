@@ -407,7 +407,7 @@ export default function AddPlace() {
         <div className="trip-it-root">
             <Header/>
 
-            <main className="trip-it-main">
+            <main className="trip-it-main" style={{paddingTop:50}}>
                 <section className="trip-it-left" >
 
                     <h2 className="trip-it-title">{trip.destination}</h2>
@@ -514,7 +514,7 @@ export default function AddPlace() {
                                   style={{background: "#fcf7f7", border: "1px solid #e8d1d1"}}
                                   onChange={(e) => setNotes(e.target.value)} rows={3} />
 
-                        <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                        <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
                             <button type="submit" disabled={adding} className="btn-primary">
                                 {adding ? "Agregando…" : "Agregar al itinerario"}
                             </button>

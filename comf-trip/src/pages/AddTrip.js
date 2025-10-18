@@ -19,11 +19,22 @@ export default function AddTrip() {
     'France': 'FR'
   };
 
+  // ---------- Helper to normalize country value (string or react-select option) ----------
+  const getCountryName = (countryVal) => {
+    if (!countryVal) return '';
+    if (typeof countryVal === 'string') return countryVal;
+    // react-select option from countryList() usually has { label, value }
+    if (typeof countryVal === 'object') {
+      return (countryVal.label || countryVal.value || countryVal.name || '').toString();
+    }
+    return '';
+  };
+
   const [destinations, setDestinations] = useState([{
     city: null,
     startDate: null,
     endDate: null,
-    originCountry: null, // now store ISO2 codes (e.g. 'AR', 'ES')
+    originCountry: null, // stores the react-select option object (or null)
     originCity: null,
     originAirport: null,
     destinationAirport: null,
@@ -31,7 +42,7 @@ export default function AddTrip() {
     offersLoading: false,
     selectedFlight: null
   }]);
-    const countryOptions = useMemo(() => countryList().getData(), []);
+  const countryOptions = useMemo(() => countryList().getData(), []);
 
   const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
   const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
@@ -203,7 +214,8 @@ export default function AddTrip() {
       return;
     }
 
-    const originCountryName = destinations[idx]?.originCountry || null;
+    const originCountryVal = destinations[idx]?.originCountry || null;
+    const originCountryName = getCountryName(originCountryVal);
     if (!originCountryName) {
       setOriginCityOptionsByIndex(prev => ({ ...prev, [idx]: [] }));
       return;
@@ -295,10 +307,11 @@ export default function AddTrip() {
     awaitFetchAirports(cityName || (val?.label || ''), currentDestinationIndex, 'destination', countryCode);
   };
 
-  const handleChangeOriginCountry = (countryName) => {
+  // Store the react-select option object (so the Select shows the selected value).
+  const handleChangeOriginCountry = (option) => {
     setDestinations(prev => {
       const copy = [...prev];
-      copy[currentDestinationIndex] = { ...copy[currentDestinationIndex], originCountry: countryName, originCity: null, originAirport: null, flightOffers: [], selectedFlight: null };
+      copy[currentDestinationIndex] = { ...copy[currentDestinationIndex], originCountry: option, originCity: null, originAirport: null, flightOffers: [], selectedFlight: null };
       return copy;
     });
     setAirportOptionsByIndex(prev => ({ ...prev, [currentDestinationIndex]: { ...(prev[currentDestinationIndex] || {}), origin: [] } }));
@@ -312,7 +325,7 @@ export default function AddTrip() {
       return copy;
     });
     const cityName = val?.meta?.cityName || val?.meta?.countryName || val?.label || val?.value || '';
-    const originCountryName = destinations[currentDestinationIndex]?.originCountry || '';
+    const originCountryName = getCountryName(destinations[currentDestinationIndex]?.originCountry || '');
     const countryCode = COUNTRY_NAME_TO_CODE[originCountryName] || undefined;
     awaitFetchAirports(cityName, currentDestinationIndex, 'origin', countryCode);
   };

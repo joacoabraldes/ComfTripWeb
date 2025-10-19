@@ -35,7 +35,9 @@
     "eject": "react-scripts eject",
     "server": "node server.js",
     "dev-server": "nodemon server.js",
-    "dev": "concurrently \"npm start\" \"npm run dev-server\""
+    "dev": "concurrently \"npm start\" \"npm run dev-server\"",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "eslintConfig": {
     "extends": [

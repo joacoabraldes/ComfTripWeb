@@ -60,9 +60,57 @@ export default function TripItinerary() {
   const [offersLoading, setOffersLoading] = useState(false);
   const [selectedFlightOption, setSelectedFlightOption] = useState(null);
 
+    // ---- locations picker (only for the trip's city) ----
+    const [locationsOptions, setLocationsOptions] = useState([]);
+    const [locationsLoading, setLocationsLoading] = useState(false);
+    const [selectedLocationOption, setSelectedLocationOption] = useState(null);
+    const [addingLocation, setAddingLocation] = useState(false);
+    const [addLocationMessage, setAddLocationMessage] = useState(null);
+
   // loading flags for airports
   const [destinationAirportsLoading, setDestinationAirportsLoading] = useState(false);
   const [originAirportsLoading, setOriginAirportsLoading] = useState(false);
+
+    // Primary color handling (read from CSS var --primary-color or fallback to old blue)
+    // We'll compute a lighter tint and an RGB object for rgba shadows
+    const [primaryColor, setPrimaryColor] = useState('#FF7485'); // fallback
+    const [primaryLight, setPrimaryLight] = useState('#FF7485'); // default will be overwritten by effect
+    const [primaryRgb, setPrimaryRgb] = useState({ r: 25, g: 120, b: 200 });
+
+    // helpers to compute lighter color & rgb
+    const hexToRgb = (hex) => {
+        if (!hex) return { r: 25, g: 120, b: 200 };
+        let h = String(hex).replace('#', '').trim();
+        if (h.length === 3) h = h.split('').map(c => c + c).join('');
+        if (h.length !== 6) return { r: 25, g: 120, b: 200 };
+        const num = parseInt(h, 16);
+        return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    };
+    const lightenHex = (hex, percent) => {
+        const rgb = hexToRgb(hex);
+        const r = Math.round(rgb.r + (255 - rgb.r) * percent);
+        const g = Math.round(rgb.g + (255 - rgb.g) * percent);
+        const b = Math.round(rgb.b + (255 - rgb.b) * percent);
+        const toHex = (v) => v.toString(16).padStart(2, '0');
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    };
+
+    useEffect(() => {
+        // read primary color from CSS var if set
+        try {
+            const cssVal = getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '';
+            const prim = cssVal.trim() || '#FF7485';
+            const light = lightenHex(prim, 0.28); // 28% closer to white => lighter variant
+            setPrimaryColor(prim);
+            setPrimaryLight(light);
+            setPrimaryRgb(hexToRgb(light));
+        } catch (e) {
+            // ignore, keep defaults
+            setPrimaryColor('#FF7485');
+            setPrimaryLight('#FF7485');
+            setPrimaryRgb({ r: 25, g: 120, b: 200 });
+        }
+    }, []);
 
   // small fallback map for a few countries (keeps compatibility with older labels)
   const FALLBACK_NAME_TO_ISO = {
@@ -196,7 +244,8 @@ export default function TripItinerary() {
             const country = parsed.countryName || '';
             const iso = getIsoFromCountryName(country);
             // fetch destination airports using iso when available
-            await fetchDestinationAirports(city || dest, 200, iso);
+              // NOTE: do NOT await here — we want the page to render immediately and let airports load in background
+              fetchDestinationAirports(city || dest, 200, iso);
           }
         } catch (e) {
           // ignore non-fatal
@@ -288,6 +337,66 @@ export default function TripItinerary() {
       setDestinationAirportsLoading(false);
     }
   };
+
+    /**
+     * Fetch locations by country and filter to the trip city.
+     * IMPORTANT: this version removes any locations that are already present
+     * in the current trip (so the select never shows duplicates).
+     *
+     * countryQuery: string (sent to ?country=...)
+     * cityName: string (optional) - will filter client-side to the trip city
+     */
+    const fetchLocationsForCountry = async (countryQuery, cityName = '') => {
+        if (!countryQuery) {
+            setLocationsOptions([]);
+            return;
+        }
+        setLocationsLoading(true);
+        try {
+            const res = await apiGet(`/locations?country=${encodeURIComponent(countryQuery)}&limit=500`);
+            const rows = Array.isArray(res) ? res : [];
+
+            // Normalize fields (support english/spanish variations)
+            const normalized = rows.map(r => ({
+                id: Number(r.id ?? r.ID ?? r.id),
+                title: String(r.title ?? r.titulo ?? r.descripcion ?? r.description ?? '').trim(),
+                city: String(r.city ?? r.city_name ?? '').trim(),
+                country: String(r.country ?? r.country_name ?? '').trim(),
+                latitude: r.latitude ?? r.latitud ?? r.lat,
+                longitude: r.longitude ?? r.longitud ?? r.lng,
+                images: r.images ?? r.imagenes ?? []
+            })).filter(x => Number.isFinite(x.id));
+
+            // Build set of existing location IDs from trip.places to exclude duplicates.
+            const existingIds = new Set((trip?.places || []).map(p => {
+                return Number(p.fk_location ?? p.fk_locations ?? p.location?.id ?? p.location?.fk_location ?? NaN);
+            }).filter(Number.isFinite));
+
+            // Filter by cityName if provided (case-insensitive partial match), then exclude existing IDs.
+            const filtered = normalized.filter(item => {
+                if (cityName) {
+                    if (!item.city) return false;
+                    if (!String(item.city).toLowerCase().includes(String(cityName).toLowerCase())) return false;
+                }
+                // Exclude if this location id is already in the trip
+                if (existingIds.has(Number(item.id))) return false;
+                return true;
+            });
+
+            const opts = filtered.map(r => ({
+                value: Number(r.id),
+                label: `${r.title || 'Sin título'}${r.city ? ` — ${r.city}` : ''}`,
+                meta: r
+            }));
+
+            setLocationsOptions(opts);
+        } catch (err) {
+            console.error('fetchLocationsForCountry', err);
+            setLocationsOptions([]);
+        } finally {
+            setLocationsLoading(false);
+        }
+    };
 
   // reset origin dependent fields on country change
   useEffect(() => {
@@ -416,6 +525,40 @@ export default function TripItinerary() {
     }
   };
 
+    const handleAddLocationToItinerary = async () => {
+        if (!selectedLocationOption) {
+            setAddLocationMessage('Seleccioná un lugar primero.');
+            return;
+        }
+        // Use trip.start_date as the insertion date (YYYY-MM-DD). Fallback to today.
+        const dateOnly = trip?.start_date ? String(trip.start_date).split('T')[0] : (new Date()).toISOString().slice(0,10);
+
+        setAddingLocation(true);
+        setAddLocationMessage(null);
+        try {
+            const payload = {
+                place: {
+                    fk_location: Number(selectedLocationOption.value),
+                    date: dateOnly
+                    // optional: you could add start_hour / end_hour / notes here
+                }
+            };
+            await apiPost(`/trips/${tripId}/places/auto`, payload);
+            // refresh trip contents after insertion
+            const fresh = await apiGet(`/trips/${tripId}`);
+            setTrip(fresh);
+            setSelectedLocationOption(null);
+            setAddLocationMessage('Lugar agregado y reordenado en el día inicial del viaje.');
+        } catch (err) {
+            console.error('handleAddLocationToItinerary', err);
+            const msg = (err && (err.message || (err.body && err.body.message))) ? (err.message || err.body.message) : 'Error al agregar lugar';
+            setAddLocationMessage(String(msg));
+        } finally {
+            setAddingLocation(false);
+            window.setTimeout(()=> setAddLocationMessage(null), 3500);
+        }
+    };
+
   const handleRemoveFlight = async () => {
     const fid = backendFlight?.flight_id || backendFlight?.flightId;
     if (!fid) return;
@@ -444,6 +587,44 @@ export default function TripItinerary() {
     ev.stopPropagation(); // prevent parent handlers from firing
     setMenuOpen(prev => (prev === placeId ? null : placeId));
   };
+
+    // Re-filter current locationsOptions whenever trip.places changes (remove any that became duplicates)
+    useEffect(() => {
+        if (!Array.isArray(locationsOptions) || locationsOptions.length === 0) return;
+        const existingIds = new Set((trip?.places || []).map(p =>
+            Number(p.fk_location ?? p.fk_locations ?? p.location?.id ?? NaN)
+        ).filter(Number.isFinite));
+        // Only update if there are items to drop
+        const filtered = locationsOptions.filter(opt => !existingIds.has(Number(opt.value)));
+        if (filtered.length !== locationsOptions.length) {
+            setLocationsOptions(filtered);
+            // if selected option is now removed, clear selection
+            if (selectedLocationOption && existingIds.has(Number(selectedLocationOption.value))) {
+                setSelectedLocationOption(null);
+            }
+        }
+    }, [trip?.places]); // run whenever trip.places changes
+
+
+    // when trip loads, set a sensible default date for auto-add (use first day in grouped keys or trip.start_date)
+    useEffect(() => {
+        if (!trip) return;
+
+        // detect country & city from trip.destination ("City, Country")
+        const dest = trip.destination || '';
+        const parsed = parseCityCountryFromString(dest);
+        const city = parsed.cityName || '';         // e.g. "Rome"
+        const country = parsed.countryName || dest || ''; // e.g. "Italy" or fallback to whole dest
+
+        // fetch locations for this country but filter client-side to the trip city
+        if (country) {
+            fetchLocationsForCountry(country, city);
+        } else if (dest) {
+            fetchLocationsForCountry(dest, city);
+        } else {
+            setLocationsOptions([]);
+        }
+    }, [trip]);
 
   // actual delete action from menu
   const handleDeletePlace = async (ev, place) => {
@@ -830,6 +1011,72 @@ export default function TripItinerary() {
     </section>
   );
 
+    // ---------- Add location from city card ----------
+    // ---------- Add location (only from trip's city) ----------
+    const addLocationCard = (
+        <section className="card card--white" style={{ marginBottom: 16, padding: 16, borderRadius: 12, boxShadow: '0 6px 20px rgba(12,13,14,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <h3 style={{ margin: 0, fontSize: 18 }}>Agregar lugares de la ciudad del viaje</h3>
+                <div style={{ color: '#666', fontSize: 13 }}>{trip.destination}</div>
+            </div>
+
+            <div style={{ marginTop: 6 }}>
+                <div style={{ marginBottom: 8, fontSize: 13, color: '#444' }}>Seleccioná lugar (solo lugares de la ciudad del itinerario)</div>
+
+                <Select
+                    className="dropdown-select"
+                    classNamePrefix="react-select"
+                    options={locationsOptions}
+                    value={selectedLocationOption}
+                    onChange={(opt) => setSelectedLocationOption(opt)}
+                    isLoading={locationsLoading}
+                    placeholder={locationsLoading ? 'Cargando lugares...' : (locationsOptions.length === 0 ? 'No hay lugares para mostrar' : 'Seleccioná un lugar')}
+                    isClearable
+                    onFocus={() => {
+                        // ensure locations are loaded on focus
+                        const parsed = parseCityCountryFromString(trip.destination || '');
+                        const country = parsed.countryName || (trip.destination || '');
+                        const city = parsed.cityName || '';
+                        fetchLocationsForCountry(country, city);
+                    }}
+                    noOptionsMessage={() => locationsLoading ? 'Cargando...' : 'No hay lugares en la ciudad'}
+                    formatOptionLabel={(opt) => {
+                        const meta = opt?.meta || {};
+                        const city = meta?.city || '';
+                        return (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                                <div style={{ fontWeight: 700 }}>{opt.label}</div>
+                                <div style={{ color: '#666', fontSize: 12 }}>{city || meta?.country || ''}</div>
+                            </div>
+                        );
+                    }}
+                />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+                <button className="btn-primary" onClick={handleAddLocationToItinerary} disabled={addingLocation || !selectedLocationOption}>
+                    {addingLocation ? 'Agregando...' : 'Agregar al itinerario'}
+                </button>
+
+                <button
+                    className="btn-secondary"
+                    onClick={() => {
+                        // refresh locations for trip's city
+                        const parsed = parseCityCountryFromString(trip.destination || '');
+                        const country = parsed.countryName || (trip.destination || '');
+                        const city = parsed.cityName || '';
+                        fetchLocationsForCountry(country, city);
+                    }}
+                    disabled={locationsLoading}
+                >
+                    Buscar
+                </button>
+
+                {addLocationMessage && <div style={{ marginLeft: 8, color: '#333' }}>{addLocationMessage}</div>}
+            </div>
+        </section>
+    );
+
   // ---------- Right-hand place detail component ----------
   const PlaceDetail = ({ p }) => {
     const loc = p.location || {};
@@ -851,7 +1098,7 @@ export default function TripItinerary() {
             <div style={{ color: '#666', marginTop: 6 }}>{fmtDate(p.date)} {p.start_hour ? `· ${String(p.start_hour).slice(0,5)}${p.end_hour ? ` — ${String(p.end_hour).slice(0,5)}` : ''}` : ''}</div>
             {website && (
               <div style={{ marginTop: 10 }}>
-                <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noreferrer" style={{ color: '#1978c8' }}>
+                  <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noreferrer" style={{ color: primaryLight }}>
                   Ver sitio
                 </a>
               </div>
@@ -906,10 +1153,13 @@ export default function TripItinerary() {
             </div>
           </div>
 
-          {/* Flight card */}
+
 
             <section style={{overflowY:"auto", paddingRight:20}}>
+                {/* Flight card */}
                 {flightCard}
+                {/* Add location from city card */}
+                {addLocationCard}
           <h3 style={{ marginTop: 18, marginBottom: 8 }}>Itinerario por día</h3>
 
           <div style={{ marginTop: 8 }}>
@@ -931,7 +1181,7 @@ export default function TripItinerary() {
                     <div
                       className="day-header"
                       style={{
-                          background: isActive ? '#1978c8' : '#fff',
+                          background: isActive ? primaryLight : '#fff',
                           color: isActive ? '#fff' : '#222',
                       }}
                     >
@@ -1022,7 +1272,7 @@ export default function TripItinerary() {
                                 {p.notes && <div style={{ fontSize: 13, color: "#444" }}>{p.notes}</div>}
                                 {website && (
                                   <div style={{ marginTop: 6 }}>
-                                    <a href={website.startsWith("http") ? website : `https://${website}`} target="_blank" rel="noreferrer" style={{ color: "#1978c8", fontSize: 13 }}>
+                                      <a href={website.startsWith("http") ? website : `https://${website}`} target="_blank" rel="noreferrer" style={{ color: '#FF7485', fontSize: 13 }}>
                                       Ver sitio
                                     </a>
                                   </div>
@@ -1110,7 +1360,7 @@ export default function TripItinerary() {
                     id="day-route-line"
                     type="line"
                     paint={{
-                      "line-color": "#1978c8",
+                        "line-color": '#FF7485',
                       "line-width": 5,
                       "line-opacity": 0.95
                     }}
@@ -1136,8 +1386,9 @@ export default function TripItinerary() {
                   anchor="center"
                 >
                   <div style={{
-                    width: 30, height: 30, borderRadius: 18, background: '#1978c8', color:'#fff',
-                    display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, boxShadow:'0 6px 18px rgba(25,120,200,0.18)'
+                      width: 30, height: 30, borderRadius: 18, background: '#FF7485', color:'#fff',
+                      display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700,
+                      boxShadow: primaryRgb ? `0 6px 18px rgba(${primaryRgb.r},${primaryRgb.g},${primaryRgb.b},0.18)` : '0 6px 18px rgba(25,120,200,0.18)'
                   }}>
                     {pt.index}
                   </div>
@@ -1150,7 +1401,7 @@ export default function TripItinerary() {
                   key={`m-${m.place.id}`}
                   longitude={Number(m.longitude)}
                   latitude={Number(m.latitude)}
-                  anchor="bottom">
+                  anchor="center">
                   <div
                     onMouseEnter={(e) => {
                       try { if (e?.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') e.nativeEvent.stopImmediatePropagation(); } catch(e){}
@@ -1169,9 +1420,9 @@ export default function TripItinerary() {
                       setViewState((v) => ({ ...v, latitude: Number(m.latitude), longitude: Number(m.longitude), zoom: 16 }));
                       setSelectedLocationOnMap({ latitude: m.latitude, longitude: m.longitude, place: m.place, titulo: m.title, image: null, imageUrl: img, loadImage: !!img, imageLoading: !!img });
                     }}
-                    style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+                    style={{ cursor: 'pointer', pointerEvents: 'auto', transform: 'translateY(-6px)' }}
                   >
-                    <svg width="28" height="28" viewBox="0 0 24 24" style={{ transform: "translate(-14px,-28px)" }} xmlns="http://www.w3.org/2000/svg">
+                      <svg width="28" height="28" viewBox="0 0 24 24" style={{ display: "block" }} xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff3951" />
                       <circle cx="12" cy="9" r="2.5" fill="#fff" />
                     </svg>

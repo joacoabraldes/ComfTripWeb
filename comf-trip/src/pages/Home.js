@@ -275,7 +275,7 @@ export default function Home() {
 
             <main className="hero">
                 <div className="hero-left"><div style={{ marginTop: (currentPlace && nextPlace) ? "20px": "", marginBottom:(currentPlace && nextPlace) ? "40px":""}}>
-                    <div className="hero-box">
+                    <div>
 
                         <h1 style={{margin: 0}}>
                             {currentTrip ? `Estas en ${currentTrip.destination}` : (nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?")}

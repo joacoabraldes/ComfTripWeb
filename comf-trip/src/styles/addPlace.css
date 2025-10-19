@@ -15,6 +15,7 @@
 
 }
 
+
 .trip-it-form input{
     width: 100%;
     padding: 20px;
@@ -30,10 +31,10 @@
     resize: vertical;       /* deja al usuario agrandar/reducir hacia abajo */
     padding: 12px;
     font-size: 16px;
+    width: 100%;
     border: 1px solid #e6e6e6;
     border-radius: 8px;
     background: #fcf7f7;
-    transition: border 0.2s, box-shadow 0.2s;
 }
 
 
@@ -41,7 +42,6 @@
 .trip-it-form textarea:focus {
     outline: none;
     border-color: #ff3951;
-    box-shadow: 0 0 0 2px rgba(255, 57, 81, 0.2);
 }
 
 .selected-day-it {
@@ -63,5 +63,29 @@
     outline: 3px solid #ffb3bd;  /* borde rojo claro */
     outline-offset: 2px;         /* separación para que se note */
 }
+.trip-it-card {
+    margin-bottom: 16px;
+    padding: 20px;
+    border-radius: 8px;
+    background: white;
+    box-sizing: border-box;
+    box-shadow: 0 6px 20px rgba(12,13,14,0.06)
+}
 
+.trip-it-card label,
+.trip-it-card .field label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+
+    padding-bottom: 10px;
+}
+
+
+/* small helper spacing */
+.trip-it-form > .trip-it-card:last-child {
+    margin-bottom: 20px;
+}
 

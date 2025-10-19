@@ -725,7 +725,8 @@ export default function TripItinerary() {
                 value={countryOptions.find(c => c.value === originCountryIso) || null}
                 onChange={(opt) => setOriginCountryIso(opt ? opt.value : null)}
                 placeholder="Seleccioná país de origen"
-                styles={reactSelectStyles}
+                className="dropdown-select"
+                classNamePrefix="react-select"
                 isClearable
               />
             </div>
@@ -733,7 +734,8 @@ export default function TripItinerary() {
             <div className="field">
               <label style={{ display:'block', marginBottom:6, fontSize:13, color:'#444' }}>Ciudad de origen</label>
               <Select
-                styles={reactSelectStyles}
+                  className="dropdown-select"
+                  classNamePrefix="react-select"
                 options={originCityOptions}
                 value={originCityValue}
                 onChange={(val) => setOriginCityValue(val)}
@@ -748,7 +750,8 @@ export default function TripItinerary() {
             <div className="field">
               <label style={{ display:'block', marginBottom:6, fontSize:13, color:'#444' }}>Aeropuerto de origen</label>
               <Select
-                styles={reactSelectStyles}
+                  className="dropdown-select"
+                  classNamePrefix="react-select"
                 options={originAirportOptions}
                 value={originAirportValue}
                 onChange={(opt) => setOriginAirportValue(opt)}
@@ -767,7 +770,8 @@ export default function TripItinerary() {
             <div className="field">
               <label style={{ display:'block', marginBottom:6, fontSize:13, color:'#444' }}>Aeropuerto de destino</label>
               <Select
-                styles={reactSelectStyles}
+                  className="dropdown-select"
+                  classNamePrefix="react-select"
                 options={destinationAirportOptions}
                 value={destinationAirportValue}
                 onChange={(opt) => setDestinationAirportValue(opt)}
@@ -790,7 +794,8 @@ export default function TripItinerary() {
             <div className="field wide">
               <label style={{ display:'block', marginBottom:6, fontSize:13, color:'#444' }}>Vuelos disponibles</label>
               <Select
-                styles={reactSelectStyles}
+                  className="dropdown-select"
+                  classNamePrefix="react-select"
                 options={flightOffers}
                 value={selectedFlightOption}
                 onChange={(opt) => setSelectedFlightOption(opt)}
@@ -886,11 +891,11 @@ export default function TripItinerary() {
     <div className="trip-it-root" style={{ background: '#f6f7f9', minHeight: '100vh' }}>
       <Header/>
 
-      <main className="trip-it-main" style={{ padding: "70px 20px 40px 20px", display: 'grid', gridTemplateColumns: '1fr 560px', gap: 20 }}>
-        <section style={{ minWidth: 0 }}>
+      <main className="trip-it-main" style={{ padding: "70px 20px 40px 20px", display: 'grid', gridTemplateColumns: '1fr 560px' }}>
+        <section className="trip-it-left">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
-              <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
+                <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
               <h2 style={{ marginTop: 8, marginBottom: 4 }}>{trip.destination}</h2>
               <div style={{ color: '#666' }}>{fmtDate(trip.start_date)} — {fmtDate(trip.end_date)}</div>
             </div>
@@ -902,8 +907,9 @@ export default function TripItinerary() {
           </div>
 
           {/* Flight card */}
-          {flightCard}
 
+            <section style={{overflowY:"auto", paddingRight:20}}>
+                {flightCard}
           <h3 style={{ marginTop: 18, marginBottom: 8 }}>Itinerario por día</h3>
 
           <div style={{ marginTop: 8 }}>
@@ -925,14 +931,8 @@ export default function TripItinerary() {
                     <div
                       className="day-header"
                       style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '10px 14px',
-                        borderRadius: 10,
-                        background: isActive ? '#1978c8' : '#fff',
-                        color: isActive ? '#fff' : '#222',
-                        boxShadow: '0 4px 14px rgba(12,13,14,0.04)'
+                          background: isActive ? '#1978c8' : '#fff',
+                          color: isActive ? '#fff' : '#222',
                       }}
                     >
                       <div style={{ display:'flex', alignItems:'center', gap:12 }}>
@@ -984,16 +984,7 @@ export default function TripItinerary() {
                             className="place-item"
                             style={{
                               border: `1px solid ${selectedLocationOnMap && selectedLocationOnMap.place?.id === p.id ? '#ff3951' : '#eee'}`,
-                              borderRadius: 8,
                               backgroundColor: isPast ? "#fafafa" : "#fff",
-                              marginBottom: 8,
-                              padding: 12,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 12,
-                              cursor: "pointer",
-                              transition: 'box-shadow .12s ease, transform .06s ease'
                             }}
                             onMouseEnter={(e)=> e.currentTarget.style.boxShadow = '0 8px 20px rgba(12,13,14,0.06)'}
                             onMouseLeave={(e)=> e.currentTarget.style.boxShadow = 'none'}
@@ -1019,13 +1010,10 @@ export default function TripItinerary() {
                               }
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 30, flex: 1 }}>
                               <div style={{ minWidth: 92 }}>
                                 <div style={{ fontSize: 14, color: "#222", fontWeight: 700 }}>
                                   { (p.start_hour ? String(p.start_hour).slice(0,5) : "—") } { p.end_hour ? `— ${String(p.end_hour).slice(0,5)}` : "" }
-                                </div>
-                                <div style={{ fontSize: 12, color: "#666" }}>
-                                  { (p.location?.titulo) ?? `Lugar #${p.fk_location}` }
                                 </div>
                               </div>
 
@@ -1054,7 +1042,6 @@ export default function TripItinerary() {
                                   onClick={(ev) => togglePlaceMenu(ev, p.id)}
                                   aria-haspopup="true"
                                   aria-expanded={menuOpen === p.id}
-                                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 18, padding: '6px 8px' }}
                                 >
                                   ⋮
                                 </button>
@@ -1099,11 +1086,11 @@ export default function TripItinerary() {
 
           <div style={{ marginTop: 10 }}>
             <button onClick={() => navigate(`/add_place/${tripId}`)} className="btn-primary">Agregar al itinerario</button>
-          </div>
+          </div></section>
         </section>
 
         {/* Right column: map / selected place / route */}
-        <section style={{ height: 'calc(100vh - 140px)' }}>
+        <section className="trip-it-right" >
           <div className="map-wrapper" style={{ height: '100%', borderRadius: 12, overflow: 'hidden', boxShadow: '0 10px 30px rgba(12,13,14,0.06)' }}>
             <Map
               {...viewState}

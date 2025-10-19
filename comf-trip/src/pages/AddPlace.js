@@ -404,7 +404,7 @@ export default function AddPlace() {
     }
 
     return (
-        <div className="trip-it-root">
+        <div className="trip-it-root" style={{background: "#fbfbfb"}}>
             <Header/>
 
             <main className="trip-it-main" style={{paddingTop:50}}>
@@ -416,7 +416,8 @@ export default function AddPlace() {
                     </div>
                     <h3 style={{ marginTop: 18 }}>Agregar punto al itinerario</h3>
                     <form onSubmit={handleAddPlace} className="trip-it-form" style={{overflowY: "auto"}}>
-                        <label>Ubicación</label>
+                        <div className="trip-it-card">
+                            <label>Ubicación</label>
                         <Select
                             className="dropdown-select"
                             classNamePrefix="react-select"
@@ -447,12 +448,12 @@ export default function AddPlace() {
 
                         {/* show an action to reveal all locations when filter returns none */}
                         {filteredLocations.length === 0 && locations.length > 0 && !showAllLocations && (
-                            <div style={{ marginTop: 8 }}>
+                            <div style={{ marginTop: 20 }}>
                                 <small>No se encontraron lugares que coincidan con la ciudad del viaje.</small>
-                                <button type="button" className="link-button" onClick={() => setShowAllLocations(true)} style={{ marginLeft: 8 }}>Mostrar todas</button>
+                                <button type="button" className="btn-small" onClick={() => setShowAllLocations(true)} style={{ marginLeft: 8 }}>Mostrar todas</button>
                             </div>
-                        )}
-
+                        )}</div>
+                        <div className="trip-it-card">
                         <label>Fecha</label>
 
                         <div style={ {borderRadius: "12px", padding:"20px", border: "1px solid #e6e6e6"}}>
@@ -495,24 +496,24 @@ export default function AddPlace() {
                         </div>
                         </div>
 
-                        <label >Hora inicio</label>
+                        <label style={{paddingTop:"20px"}}>Hora inicio</label>
                         <TimePicker
                             value={startHour}
                             onChange={setStartHour}
                             occupiedSlots={occupiedSlots}
                             disabled={!date}/>
-                        <label>Hora fin</label>
+                        <label style={{paddingTop:"20px"}}>Hora fin</label>
                         <TimePicker
                             value={endHour}
                             onChange={setEndHour}
                             occupiedSlots={occupiedSlots}
                             minTime={startHour}   // <--- no permite horas anteriores a startHour
                             maxTime={nextOccupiedStart || null} // null = sin límite superior
-                            disabled={!startHour.split(":")[1]}/>
+                            disabled={!startHour.split(":")[1]}/></div>
+                        <div className="trip-it-card">
                         <label>Notas (opcional)</label>
                         <textarea value={notes}
-                                  style={{background: "#fcf7f7", border: "1px solid #e8d1d1"}}
-                                  onChange={(e) => setNotes(e.target.value)} rows={3} />
+                                  onChange={(e) => setNotes(e.target.value)} rows={3} /></div>
 
                         <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
                             <button type="submit" disabled={adding} className="btn-primary">

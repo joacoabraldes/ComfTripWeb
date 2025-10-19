@@ -109,7 +109,7 @@ export default function EditTrip() {
             const end=normalizeDate(stored.end_date);
 
                 if (selectedDate<end && selectedDate>start) {
-                    current.startDate=selectedDate;
+                    return newDestinations;
                 }
                 else if(selectedDate<=start){
                     current.startDate=selectedDate;
@@ -357,7 +357,7 @@ export default function EditTrip() {
                         <button
                             type="submit"
                             className="btn-primary create-trip"
-                            style={{marginBottom:"0"}}
+                            style={{marginBottom:"20px", marginTop:"20px"}}
                             disabled={loading}
                         >
                             {loading ? "Guardando..." : "Guardar Cambios"}

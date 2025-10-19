@@ -232,7 +232,7 @@
   background: #fcf7f7;       /* mismo fondo que los inputs */
   border: 1px solid #e8d1d1; /* mismo borde */
   border-radius: 8px;
-  min-height: 56px;
+  min-height: 50px;
   box-shadow: none;
     margin-left: 2px;
 }

@@ -185,24 +185,34 @@ async function fetchOurAirportsCsvText() {
       if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
       return await res.text();
     } catch (err) {
-      console.warn('fetchOurAirportsCsvText proxy failed, falling back to direct fetch:', err);
+      console.warn('fetchOurAirportsCsvText proxy failed, falling back to public hosts:', err);
     }
   }
 
-  const candidates = [OURAIRPORTS_PRIMARY, OURAIRPORTS_FALLBACK];
+  // Preferir hosts que suelen ser más fiables (fallback primero), y añadir raw.githubusercontent como alternativa
+  const candidates = [
+    OURAIRPORTS_FALLBACK, // github.io mirror (más estable)
+    'https://raw.githubusercontent.com/davidmegginson/ourairports-data/master/airports.csv',
+    OURAIRPORTS_PRIMARY   // intento final (puede fallar por cert)
+  ];
+
   for (const u of candidates) {
     try {
+      // intentar fetch; el navegador ya bloqueará si hay error de certificado
       const res = await fetch(u, { method: 'GET', headers: { Accept: 'text/csv' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status} from ${u}`);
       const text = await res.text();
       if (text && text.length > 100) return text;
+      console.warn(`fetchOurAirportsCsvText: fetched ${u} but content too small`);
     } catch (err) {
       console.warn(`fetchOurAirportsCsvText: failed to fetch ${u}:`, err);
+      // si el error fue ERR_CERT_DATE_INVALID lo verás en la consola del navegador; aquí simplemente seguimos
     }
   }
 
-  throw new Error('Could not fetch OurAirports CSV from proxy or public hosts (CORS or network issue). Use PROXY_BASE to fetch/cache the CSV server-side.');
+  throw new Error('Could not fetch OurAirports CSV from proxy or public hosts (CORS, cert or network issue). Use PROXY_BASE to fetch/cache the CSV server-side.');
 }
+
 
 function normalizeHeaderKey(k) {
   return String(k || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');

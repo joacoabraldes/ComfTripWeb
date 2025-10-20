@@ -1,6 +1,7 @@
 // src/pages/Home.jsx
 import React, {useEffect, useState, useRef} from "react";
 import { useNavigate } from "react-router-dom";
+import { Country, City } from 'country-state-city';
 import "../styles/home.css";
 import Header from "../components/Header";
 import { apiGet } from "./api";
@@ -88,7 +89,8 @@ export default function Home() {
         return `${hour}:${min}`
     }
 
-  function goPrev() {
+
+        function goPrev() {
     setIndex((i) => (i - 1 + carouselLen) % carouselLen);
   }
   function goNext() {
@@ -136,6 +138,8 @@ export default function Home() {
         longitude: -58.3816,
         zoom: 11
     });
+
+
     const [selectedLocationOnMap, setSelectedLocationOnMap] = useState(null);
     useEffect(() => {
         function updateStatus() {
@@ -200,6 +204,63 @@ export default function Home() {
         setLoadingCurrent(false);
         return () => clearInterval(interval);
     }, [nextTrip]);
+
+    useEffect(() => {
+        if (!currentTrip) return;
+
+        (async () => {
+            try {
+                const destination = currentTrip.destination || "";
+                const [cityRaw, countryRaw] = destination.split(",").map((s) => s.trim());
+                if (!cityRaw || !countryRaw) return;
+
+                const normalize = (s) =>
+                    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+                console.log("🌍 Buscando coordenadas para:", cityRaw, countryRaw);
+
+                // Buscar país (tolerante a diferencias de nombre)
+                const country = Country.getAllCountries().find(
+                    (c) =>
+                        normalize(c.name) === normalize(countryRaw) ||
+                        normalize(c.name).includes(normalize(countryRaw)) ||
+                        normalize(countryRaw).includes(normalize(c.name))
+                );
+
+                if (!country) {
+                    console.warn("❌ País no encontrado:", countryRaw);
+                    return;
+                }
+
+                console.log("✅ País encontrado:", country.name, country.isoCode);
+
+                const cities = City.getCitiesOfCountry(country.isoCode);
+                const match = cities.find(
+                    (c) =>
+                        normalize(c.name) === normalize(cityRaw) ||
+                        normalize(c.name).includes(normalize(cityRaw)) ||
+                        normalize(cityRaw).includes(normalize(c.name))
+                );
+
+                if (!match) {
+                    console.warn(`❌ Ciudad "${cityRaw}" no encontrada en ${country.name}`);
+                    console.log("Ejemplos:", cities.slice(0, 10).map((c) => c.name));
+                    return;
+                }
+
+                console.log("✅ Ciudad encontrada:", match.name, match.latitude, match.longitude);
+
+                setViewState({
+                    latitude: Number(match.latitude),
+                    longitude: Number(match.longitude),
+                    zoom: 13,
+                });
+            } catch (err) {
+                console.error("Error obteniendo coordenadas:", err);
+            }
+        })();
+    }, [currentTrip]);
+
 
     const timeBetween=()=>{
         if(!hasNextToday) return "";
@@ -549,11 +610,12 @@ export default function Home() {
                                             offset={[-12, -53]}
                                         >
                                             <div className="place-popUp">
+                                                {selectedLocationOnMap.image &&
                                                 <img
                                                     src={selectedLocationOnMap.image}
                                                     className="img-popUp"
                                                     alt="Lugar actual"
-                                                />
+                                                />}
                                                 <div className="place-info">
                                                     <h3>{selectedLocationOnMap.titulo}</h3>
                                                     {selectedLocationOnMap && (<p>

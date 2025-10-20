@@ -9,8 +9,8 @@
 
 /* Grid principal */
 .trips-main {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* mitad izquierda y derecha */
+    margin-left: 200px;
+    margin-right: 200px;
   gap: 24px;
   height: calc(100vh - 140px); /* toda la pantalla menos header + espacio botón */
   padding: 100px 20px 0 20px;
@@ -45,6 +45,13 @@
   border: 1px solid #f1f1f1;
 }
 
+.filter-card{
+    box-shadow: 0 4px 14px rgba(12,13,14,0.04);
+    border-radius: 8px;
+    background-color: white;
+    padding: 20px;
+}
+
 .trips-list-title {
   margin: 0 0 12px 0;
   font-size: 30px;
@@ -57,7 +64,7 @@
   max-height: calc(100vh - 280px);
   padding-top: 10px;
     padding-bottom: 10px;
-  overflow: auto;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -87,7 +94,6 @@
 .trips-list-item.active {
   background: #fff6f7;
   border-color: rgba(255,57,81,0.25);
-  box-shadow: 0 8px 20px rgba(255,57,81,0.06);
 }
 
 .trip-item-main {
@@ -225,6 +231,24 @@
   pointer-events: auto; /* botón sí clickeable */
     margin-bottom: 30px;
 }
+
+.trips-filters {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.trips-filters select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    font-family: Inter, Arial, sans-serif;
+    cursor: pointer;
+}
+
 
 /* responsive */
 @media (max-width: 1400px) {

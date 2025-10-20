@@ -298,7 +298,7 @@ font-size: 18px; margin-top: 20px}
 }
 .place-popUp{
     display: flex;
-    align-items: flex-start; /* centra verticalmente la imagen y el texto */
+    align-items: center;
     gap: 8px; /* espacio entre imagen e info */
     padding: 5px;
 }
@@ -313,7 +313,7 @@ font-size: 18px; margin-top: 20px}
 
 
 .img-popUp {
-    width: 80px;
+    width: 100px;
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid #ccc;

@@ -23,6 +23,8 @@ export default function TripItinerary() {
   const [trip, setTrip] = useState(null);
   const [error, setError] = useState(null);
 
+  const [clickOnMap, setClickOnMap]=useState(false);
+
   // map state
   const [viewState, setViewState] = useState({
     latitude: -34.6037,
@@ -136,21 +138,6 @@ export default function TripItinerary() {
     }
     if (FALLBACK_NAME_TO_ISO[countryName]) return FALLBACK_NAME_TO_ISO[countryName];
     return undefined;
-  };
-
-  const reactSelectStyles = {
-    control: (provided) => ({
-      ...provided,
-      minHeight: '44px',
-      borderRadius: '8px',
-      border: '1px solid #e8d1d1',
-      boxShadow: 'none',
-      background: '#fcf7f7'
-    }),
-    valueContainer: (p) => ({ ...p, padding: '4px 8px' }),
-    input: (p) => ({ ...p, margin: 0 }),
-    placeholder: (p) => ({ ...p, margin: 0, color: '#777' }),
-    menu: (p) => ({ ...p, zIndex: 9999 })
   };
 
   const countryIntlDisplay = useMemo(() => {
@@ -279,9 +266,10 @@ export default function TripItinerary() {
     if (!originCountryIso) { setOriginCityOptions([]); return; }
     const found = Country.getAllCountries().find(c => c.isoCode === originCountryIso);
     if (!found) { setOriginCityOptions([]); return; }
-    let cities = [];
+    let cities;
     try { cities = City.getCitiesOfCountry(found.isoCode) || []; } catch (e){ cities = []; }
-    const out = []; const seen = new Set();
+      let out = [];
+    const seen = new Set();
     for (let i=0;i<cities.length && out.length<100;i++){
       const c = cities[i];
       if (!c || !c.name) continue;
@@ -379,8 +367,8 @@ export default function TripItinerary() {
                     if (!String(item.city).toLowerCase().includes(String(cityName).toLowerCase())) return false;
                 }
                 // Exclude if this location id is already in the trip
-                if (existingIds.has(Number(item.id))) return false;
-                return true;
+                return !existingIds.has(Number(item.id));
+
             });
 
             const opts = filtered.map(r => ({
@@ -734,7 +722,7 @@ export default function TripItinerary() {
     const deltaLat = Math.abs(maxLat - minLat);
     const maxDelta = Math.max(deltaLng, deltaLat);
     // heuristic zoom based on span (loose mapping)
-    let zoom = 12;
+    let zoom;
     if (maxDelta < 0.005) zoom = 16;
     else if (maxDelta < 0.02) zoom = 15;
     else if (maxDelta < 0.1) zoom = 13;
@@ -1000,7 +988,7 @@ export default function TripItinerary() {
           </div>
 
           <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-            <button className="btn-primary" onClick={handleSaveSelectedFlight} disabled={loadingFlight || !selectedFlightOption}>
+            <button className="btn-primary" style={{marginTop:15}}  onClick={handleSaveSelectedFlight} disabled={loadingFlight || !selectedFlightOption}>
               {loadingFlight ? 'Guardando...' : 'Guardar vuelo'}
             </button>
           </div>
@@ -1054,12 +1042,12 @@ export default function TripItinerary() {
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-                <button className="btn-primary" onClick={handleAddLocationToItinerary} disabled={addingLocation || !selectedLocationOption}>
+                <button className="btn-primary"  style={{marginTop:15}}  onClick={handleAddLocationToItinerary} disabled={addingLocation || !selectedLocationOption}>
                     {addingLocation ? 'Agregando...' : 'Agregar al itinerario'}
                 </button>
 
                 <button
-                    className="btn-secondary"
+                    className="btn-secondary" style={{marginTop:15}}
                     onClick={() => {
                         // refresh locations for trip's city
                         const parsed = parseCityCountryFromString(trip.destination || '');
@@ -1142,7 +1130,7 @@ export default function TripItinerary() {
         <section className="trip-it-left">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
-                <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
+                {/*<button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>*/}
               <h2 style={{ marginTop: 8, marginBottom: 4 }}>{trip.destination}</h2>
               <div style={{ color: '#666' }}>{fmtDate(trip.start_date)} — {fmtDate(trip.end_date)}</div>
             </div>
@@ -1152,6 +1140,7 @@ export default function TripItinerary() {
               <div style={{ fontWeight: 700 }}>{fmtDate(trip.created_at)}</div>
             </div>
           </div>
+            <div style={{background:"#ff3951", height:3, marginBottom:20, marginTop:10}}></div>
 
 
 
@@ -1242,6 +1231,7 @@ export default function TripItinerary() {
                               // when user clicks a place, center map immediately and start lazy-loading image
                               if (selectedLocationOnMap?.place?.id === p.id) {
                                 setSelectedLocationOnMap(null);
+                                setClickOnMap(false)
                               } else {
                                 const imageUrl = (loc.imagenes && loc.imagenes[0]) || (loc.images && loc.images[0]) || (p.images && p.images[0]) || null;
                                 setSelectedLocationOnMap({
@@ -1254,6 +1244,7 @@ export default function TripItinerary() {
                                   loadImage: !!imageUrl, // only load if we have an url
                                   imageLoading: !!imageUrl
                                 });
+                                setClickOnMap(true);
                                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
                                   setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 14 }));
                                 }
@@ -1409,13 +1400,23 @@ export default function TripItinerary() {
                       if (!Number.isFinite(Number(m.latitude)) || !Number.isFinite(Number(m.longitude))) return;
                       // hover: don't load image (so we don't hammer network)
                       const img = (m.images && m.images.length) ? m.images[0] : null;
+                        if (selectedLocationOnMap && selectedLocationOnMap.titulo!==m.title) setClickOnMap(false);
                       setSelectedLocationOnMap({ latitude: m.latitude, longitude: m.longitude, place: m.place, titulo: m.title, image: null, imageUrl: img, loadImage: false, imageLoading: false });
                     }}
-                    onMouseLeave={(e) => { try { if (e?.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') e.nativeEvent.stopImmediatePropagation(); } catch(e){} e.stopPropagation(); setSelectedLocationOnMap(null); }}
+                    onMouseLeave={(e) => {
+                        try {
+                            if (e?.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') e.nativeEvent.stopImmediatePropagation();
+                        } catch (e) {
+                        }
+                        e.stopPropagation();
+                        if (!clickOnMap) setSelectedLocationOnMap(null);
+
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!Number.isFinite(Number(m.latitude)) || !Number.isFinite(Number(m.longitude))) return;
                       // click: center + load image
+                        setClickOnMap(!clickOnMap)
                       const img = (m.images && m.images.length) ? m.images[0] : null;
                       setViewState((v) => ({ ...v, latitude: Number(m.latitude), longitude: Number(m.longitude), zoom: 16 }));
                       setSelectedLocationOnMap({ latitude: m.latitude, longitude: m.longitude, place: m.place, titulo: m.title, image: null, imageUrl: img, loadImage: !!img, imageLoading: !!img });
@@ -1436,20 +1437,20 @@ export default function TripItinerary() {
                   latitude={Number(selectedLocationOnMap.latitude)}
                   anchor="bottom"
                   closeButton={false}
-                  offset={[-12, -53]}
+                  offset={[0, -20]}
                 >
-                  <div className="place-popUp" style={{ minWidth: 160 }}>
-                    {/* if image is loading show spinner */}
-                    {selectedLocationOnMap.imageLoading ? (
-                      <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div className="img-spinner" />
-                      </div>
-                    ) : selectedLocationOnMap.image ? (
-                      <img src={selectedLocationOnMap.image} className="img-popUp" alt="Lugar actual" style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6 }} />
-                    ) : null}
+                  <div className="place-popUp">
+                      {/* if image is loading show spinner */}
+                      {selectedLocationOnMap.imageLoading ? (
+                          <div style={{ width: '50px', height:'100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div className="img-spinner" />
+                          </div>
+                      ) : selectedLocationOnMap.imageUrl && <div className="img-popup-container">
+                              <img src={selectedLocationOnMap.imageUrl} className="img-popUp" alt="Lugar actual"/></div>
+                      }
 
                     <div className="place-info" style={{ paddingTop: 8 }}>
-                      <h3 style={{ margin: '8px 0 4px 0' }}>{selectedLocationOnMap.titulo}</h3>
+                      <h3>{selectedLocationOnMap.titulo}</h3>
                       {selectedLocationOnMap.place?.date && (<p style={{ margin: 0 }}>{fmtDate(selectedLocationOnMap.place.date)}</p>)}
                       {selectedLocationOnMap.place?.start_hour && (<p style={{ margin: 0 }}>{String(selectedLocationOnMap.place.start_hour).slice(0,5)} - {String(selectedLocationOnMap.place.end_hour).slice(0,5)}</p>)}
                     </div>

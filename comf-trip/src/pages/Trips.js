@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MapSvg from "../components/MapSvg";
 import "../styles/trips.css";
 import Header from "../components/Header";
 import "../styles/header.css";
@@ -20,7 +19,16 @@ export default function Trips() {
   const [tripToShare, setTripToShare] = useState(null);
   const [sharing, setSharing] = useState(false);
 
-  // obtener ID del usuario actual desde token
+    const [typeFilter, setTypeFilter] = useState("");
+    const [countryFilter, setCountryFilter] = useState("");
+    const [provinceFilter, setProvinceFilter] = useState("");
+    const [creatorFilter, setCreatorFilter] = useState("");
+
+// opciones dinámicas
+    const [availableCountries, setAvailableCountries] = useState([]);
+    const [availableProvinces, setAvailableProvinces] = useState([]);
+
+    // obtener ID del usuario actual desde token
   const getCurrentUserId = () => {
     try {
       const token = localStorage.getItem("token");
@@ -96,7 +104,49 @@ export default function Trips() {
     };
   }, []);
 
-  // funciones para compartir viajes
+    useEffect(() => {
+        const countries = [...new Set(trips.map(t => t.destination.split(",")[1]).filter(Boolean))];
+        setAvailableCountries(countries);
+    }, [trips]);
+
+    useEffect(() => {
+        setProvinceFilter("");
+        if (countryFilter) {
+            const provinces = [...new Set(
+                trips.filter(t => t.destination.split(",")[1] === countryFilter)
+                    .map(t => t.destination.split(",")[0])
+                    .filter(Boolean)
+            )];
+            setAvailableProvinces(provinces);
+        } else {
+            setAvailableProvinces([]);
+        }
+    }, [countryFilter, trips]);
+
+    const filteredTrips = trips.filter(t => {
+        const start = normalizeDate(t.start_date);
+        const end = normalizeDate(t.end_date);
+        const today = new Date();
+
+        // Tipo de viaje
+        if (typeFilter === "current" && !(today >= start && today <= end)) return false;
+        if (typeFilter === "upcoming" && !(today < start)) return false;
+        if (typeFilter === "past" && !(today > end)) return false;
+
+        // País / provincia
+        if (countryFilter && t.destination.split(",")[1] !== countryFilter) return false;
+        if (provinceFilter && t.destination.split(",")[0] !== provinceFilter) return false;
+
+        // Creador
+        const isMine = currentUserId && Number(t.user_id) === Number(currentUserId);
+        if (creatorFilter === "me" && !isMine) return false;
+        else if (creatorFilter === "others" && isMine) return false;
+
+        return true;
+    });
+
+
+    // funciones para compartir viajes
   async function loadFriends() {
     try {
       const res = await apiGet('/friends');
@@ -140,15 +190,9 @@ export default function Trips() {
       <div className="trips-root">
         <Header />
         <main className="trips-main">
-          <section className="trips-left">
               <h3 className="trips-list-title">Tus viajes</h3>
             <div className="trips-message" style={{border:"none"}}>Cargando viajes…</div>
-          </section>
-          <section className="trips-right">
-            <div className="map-wrapper" aria-hidden>
-              <MapSvg width={999} height={800} />
-            </div>
-          </section>
+
         </main>
       </div>
     );
@@ -159,7 +203,7 @@ export default function Trips() {
       <Header />
 
       <main className="trips-main">
-        <section className="trips-left">
+
           {trips.length === 0 ? (
             <div className="trips-message" style={{border:"none"}}>
               No tienes ningún viaje activo actualmente
@@ -169,9 +213,43 @@ export default function Trips() {
           ) : (
             <>
               <h3 className="trips-list-title">Tus viajes</h3>
+                <div className="trips-filters">
+                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                        <option value="">Todos los viajes</option>
+                        <option value="current">Viajes actuales</option>
+                        <option value="upcoming">Próximos viajes</option>
+                        <option value="past">Viajes anteriores</option>
+                    </select>
 
-              <div className="trips-list" role="list">
-                {trips.map((t) => {
+                    <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)}>
+                        <option value="">Todos los países</option>
+                        {availableCountries.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
+                    </select>
+
+                    <select
+                        value={provinceFilter}
+                        onChange={(e) => setProvinceFilter(e.target.value)}
+                        disabled={!countryFilter}
+                    >
+                        <option value="">Todas las provincias</option>
+                        {availableProvinces.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                        ))}
+                    </select>
+
+                    <select value={creatorFilter} onChange={(e) => setCreatorFilter(e.target.value)}>
+                        <option value="">Todos</option>
+                        <option value="me">Creados por mí</option>
+                        <option value="others">Creados por otros</option>
+                    </select>
+                </div>
+                <div style={{background:"#ff3951", height:2, marginBottom:20, marginTop:20}}></div>
+
+
+                <div className="trips-list" role="list">
+                {filteredTrips.map((t) => {
                   const isOwner = currentUserId ? Number(t.user_id) === Number(currentUserId) : null;
                   return (
                     <div
@@ -249,21 +327,7 @@ export default function Trips() {
               </div>
             </>
           )}
-        </section>
 
-        <section className="trips-right">
-          {trips.length === 0 ? (
-            <div className="map-wrapper" aria-hidden>
-              <MapSvg width={999} height={800} />
-            </div>
-          ) : (
-            <div style={{ padding: 12 }}>
-              <div className="map-wrapper" aria-hidden>
-                <MapSvg width={999} height={800} />
-              </div>
-            </div>
-          )}
-        </section>
 
         <div className="trips-cta">
           <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>

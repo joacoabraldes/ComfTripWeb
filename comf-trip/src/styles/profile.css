@@ -1,4 +1,4 @@
-.profile-root {
+/* .profile-root {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -76,7 +76,7 @@
 .profile-field .profile-field-label {
     display: block;
     font-size: 20px;
-    color: #ff3951; /* Rosa como en tu screenshot */
+    color: #ff3951; // Rosa como en tu screenshot 
     margin-bottom: 8px;
 }
 
@@ -140,7 +140,7 @@
 
 
 
-/* Responsive */
+// Responsive 
 @media (max-width: 700px) {
     .profile-main {
         flex-direction: column;
@@ -150,4 +150,136 @@
         align-items: center;
         text-align: center;
     }
+}
+*/
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.bg-background {
+  background: #f9f9f9;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.md\\:flex-row {
+  flex-direction: row;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.md\\:items-start {
+  align-items: flex-start;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.md\\:text-left {
+  text-align: left;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.text-muted-foreground {
+  color: #666666;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.btn-edit,
+.btn-change,
+.btn-logout {
+  border: none;
+  padding: 8px 16px;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-edit {
+  background-color: #fff0f3;
+  color: #ff3951;
+}
+.btn-edit:hover {
+  background-color: #ffd6e0;
+}
+
+.btn-change {
+  background-color: #fff0f3;
+  color: #ff3951;
+}
+.btn-change:hover {
+  background-color: #ffd6e0;
+}
+
+.btn-logout {
+  background-color: #eee;
+  color: #000;
+}
+.btn-logout:hover {
+  background-color: #ccc;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .md\:flex-row {
+    flex-direction: column;
+    align-items: center;
+  }
+  .md\:text-left {
+    text-align: center;
+  }
 }

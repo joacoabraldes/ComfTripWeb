@@ -1,6 +1,7 @@
 // src/pages/Home.jsx
 import React, {useEffect, useState, useRef} from "react";
 import { useNavigate } from "react-router-dom";
+import {Calendar, MapPin, Clock } from "lucide-react";
 import { Country, City } from 'country-state-city';
 import "../styles/home.css";
 import Header from "../components/Header";
@@ -8,6 +9,7 @@ import { apiGet } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 import OptimizedImage from "../components/OptimizedImage";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -341,11 +343,20 @@ export default function Home() {
                         <h1 style={{margin: 0}}>
                             {currentTrip ? `Estas en ${currentTrip.destination}` : (nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?")}
                         </h1>
-                        <p className="hero-sub" style={{marginBottom: 0}}>
-                            {nextTrip
-                                ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
-                                : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
-                        </p>
+                        <div style={{ display: "flex", alignItems: "center", marginTop: 20 }}>
+                            <Calendar
+                                size={18}
+                                color="#8a6b80"
+                                strokeWidth={2}
+                                style={{ marginRight: 8, marginBottom: 4 }}
+                            />
+                            <p className="hero-sub" style={{ margin: 0 }}>
+                                {nextTrip
+                                    ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
+                                    : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
+                            </p>
+                        </div>
+
                         <div className="home-actions">
                             {nextTrip && (
                                 <button className="btn-ghost"
@@ -360,7 +371,9 @@ export default function Home() {
                     </div>
                     {currentPlace || nextPlace ? (
                         <div>{currentPlace && (
-                            <div className="hero-box" style={{marginTop:"20px"}}>
+
+                            <div>
+                                <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
                                 <h3 style={{margin:0, marginBottom:"10px"}}>Actividad actual:</h3>
                                 <button className="place-row"
                                         onClick={() => {
@@ -385,13 +398,20 @@ export default function Home() {
                                         alt="Lugar actual"
                                     />}
                                     <div className="place-info">
-                                        <h2>{currentPlace.location?.title || currentPlace.location?.titulo}</h2>
-                                        <p className="sub-title">
-                                            {fmtDate(currentPlace.date)}
-                                        </p>
-                                        <p className="sub-title">
-                                            {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)}
-                                        </p>
+                                        <div style={{display: "flex", alignItems: "center"}}><MapPin size={25}
+                                                                                                     color="#ff3951"
+                                                                                                     strokeWidth={2.5}
+                                                                                                     style={{marginRight: 12}}/>
+                                            <h2>{currentPlace.location?.titulo}</h2></div>
+                                        <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Calendar
+                                            size={18} color="#8a6b80" strokeWidth={2}
+                                            style={{marginRight: 8, marginBottom: 10}}/> <p
+                                            className="sub-title"> {fmtDate(currentPlace.date)} </p></div>
+                                        <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Clock
+                                            size={18} color="#8a6b80" strokeWidth={2}
+                                            style={{marginRight: 8, marginBottom: 10}}/> <p
+                                            className="sub-title"> {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)} </p>
+                                        </div>
                                         {currentPlace.notes && (<p>
                                             Notas: {currentPlace.notes}
                                         </p>)}
@@ -404,7 +424,8 @@ export default function Home() {
                             </div>
                         )}
                             {nextPlace && (
-                                <div className="hero-box" style={{marginTop:"20px"}}>
+                                <div>
+                                    <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
                                     <h3 style={{margin:"0", marginBottom:"10px"}}>Próxima actividad:</h3>
                                     <button className="place-row"
                                             onClick={() => {
@@ -428,13 +449,20 @@ export default function Home() {
                                             alt="Próximo lugar"
                                         />}
                                         <div className="place-info">
-                                            <h2>{nextPlace.location?.title || nextPlace.location?.titulo}</h2>
-                                            <p>
-                                                {fmtDate(nextPlace.date)}
-                                            </p>
-                                            <p>
-                                                {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)}
-                                            </p>
+                                            <div style={{display: "flex", alignItems: "center"}}><MapPin size={25}
+                                                                                                         color="#ff3951"
+                                                                                                         strokeWidth={2.5}
+                                                                                                         style={{marginRight: 12}}/>
+                                                <h2>{nextPlace.location?.titulo}</h2></div>
+                                            <div style={{display: "flex", alignItems: "center", marginTop: 10}}>
+                                                <Calendar size={18} color="#8a6b80" strokeWidth={2}
+                                                          style={{marginRight: 8, marginBottom: 10}}/>
+                                                <p> {fmtDate(nextPlace.date)} </p></div>
+                                            <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Clock
+                                                size={18} color="#8a6b80" strokeWidth={2}
+                                                style={{marginRight: 8, marginBottom: 10}}/>
+                                                <p> {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)} </p>
+                                            </div>
                                             {nextPlace.notes && (<p>
                                                 Notas: {nextPlace.notes}
                                             </p>)}
@@ -448,7 +476,7 @@ export default function Home() {
                         <div className="muted">No tienes mas actividades en este viaje. Agrega uno nuevo </div>) : (
                         <div>
 
-                            <section className="hero-box" style={{marginTop:"30px", paddingTop:0}}>
+                            <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
                                 <h3 style={{marginBottom: 10}}>Tus viajes</h3>
                                 {trips.length === 0 ? (
                                     <div className="muted">No tienes viajes. Empieza creando uno 😉</div>
@@ -476,7 +504,6 @@ export default function Home() {
                                         )}
                                     </div>
                                 )}
-                            </section>
                         </div>)}</div>)}</div>
                 </div>
 
@@ -486,7 +513,7 @@ export default function Home() {
                                 <Map
                                     {...viewState}
                                     onMove={(evt) => setViewState(evt.viewState)}
-                                    style={{flex: 1, marginTop: 20, background: "#ddd", height: "500px"}}
+                                    style={{flex: 1, marginTop: 20, background: "#ddd", height: "110%"}}
                                     mapStyle="mapbox://styles/mapbox/streets-v11"
                                     mapboxAccessToken={MAPBOX_TOKEN}
                                 >

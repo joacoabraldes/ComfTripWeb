@@ -262,6 +262,10 @@ font-size: 18px; margin-top: 20px}
     margin-top: 20px;
     box-shadow: 0 4px 14px rgba(12,13,14,0.04);
 }
+.place-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+}
 
 .place-content {
     display: flex;

@@ -258,7 +258,7 @@ export default function Trips() {
                             onChange={(e) => setProvinceFilter(e.target.value)}
                             disabled={!countryFilter}
                         >
-                            <option value="">Todas las provincias</option>
+                            <option value="">Todas las ciudades</option>
                             {availableProvinces.map((p) => (
                                 <option key={p} value={p}>{p}</option>
                             ))}

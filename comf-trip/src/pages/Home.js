@@ -7,7 +7,6 @@ import Header from "../components/Header";
 import { apiGet } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 import OptimizedImage from "../components/OptimizedImage";
-import {Calendar, MapPin, Clock } from "lucide-react";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function Home() {
@@ -262,18 +261,6 @@ export default function Home() {
         })();
     }, [currentTrip]);
 
-    const isSelectedOnMap = (location) => {
-        if (!location) return false;
-
-        const lat = Number(location.latitude ?? location.latitud);
-        const lng = Number(location.longitude ?? location.longitud);
-
-        // tolerancia para coordenadas (0.0005 ≈ 50m)
-        const sameLat = Math.abs(lat - viewState.latitude) < 0.0005;
-        const sameLng = Math.abs(lng - viewState.longitude) < 0.0005;
-
-        return sameLat && sameLng && viewState.zoom >= 15;
-    };
 
     const timeBetween=()=>{
         if(!hasNextToday) return "";
@@ -335,14 +322,12 @@ export default function Home() {
         : popular;
 
     if(loadingTrips || loadingCurrent || loadingPopular){
-        return (<div>
-            <Header/>
-        <div style={{
+        return (<div style={{
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             height: "100vh"
-        }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando viajes…</div></div></div>)
+        }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando viajes…</div></div>)
     }
 
     return (
@@ -356,14 +341,11 @@ export default function Home() {
                         <h1 style={{margin: 0}}>
                             {currentTrip ? `Estas en ${currentTrip.destination}` : (nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?")}
                         </h1>
-                        <div style={{ display: "flex", alignItems: "center", marginTop: 20 }}>
-                        <Calendar size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8,  marginBottom:4}} />
-                        <p className="hero-sub" style={{ margin: 0 }}>
+                        <p className="hero-sub" style={{marginBottom: 0}}>
                             {nextTrip
                                 ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
                                 : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
                         </p>
-                    </div>
                         <div className="home-actions">
                             {nextTrip && (
                                 <button className="btn-ghost"
@@ -376,33 +358,40 @@ export default function Home() {
                             )}
                         </div>
                     </div>
-
                     {currentPlace || nextPlace ? (
                         <div>{currentPlace && (
-                            <div>
-                                <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
+                            <div className="hero-box" style={{marginTop:"20px"}}>
                                 <h3 style={{margin:0, marginBottom:"10px"}}>Actividad actual:</h3>
-                                <div className="place-row" style={{paddingLeft:!currentPlace.location?.imagenes ? "20px":"0"}}>
-                                    <div className="place-content">
+                                <button className="place-row"
+                                        onClick={() => {
+                                            if (currentPlace && currentPlace.location) {
+                                                const lat = Number(currentPlace.location.latitude);
+                                                const lng = Number(currentPlace.location.longitude);
+                                                if (!isNaN(lat) && !isNaN(lng)) {
+                                                    setViewState({
+                                                        latitude: lat,
+                                                        longitude: lng,
+                                                        zoom: 16,
+                                                    });
+                                                } else {
+                                                    console.warn("⚠️ Coordenadas inválidas en nextPlace:", currentPlace.location);
+                                                }
+                                            }
+                                        }}>
                                     {currentPlace.location?.imagenes &&
                                     <img
                                         src={safeParseImages(currentPlace.location?.imagenes)[0]}
                                         className="place-img"
                                         alt="Lugar actual"
                                     />}
-                                    <div className="place-info"><div style={{ display: "flex", alignItems: "center" }}>
-                                        <MapPin size={25} color="#ff3951" strokeWidth={2.5} style={{ marginRight: 12}} />
-                                        <h2>{currentPlace.location?.titulo}</h2></div>
-                                        <div style={{ display: "flex", alignItems: "center", marginTop: 10 }}>
-                                            <Calendar size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8,  marginBottom:10}} />
+                                    <div className="place-info">
+                                        <h2>{currentPlace.location?.titulo}</h2>
                                         <p className="sub-title">
                                             {fmtDate(currentPlace.date)}
-                                        </p></div>
-                                            <div style={{ display: "flex", alignItems: "center", marginTop: 10 }}>
-                                                <Clock size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8 , marginBottom:10}} />
-                                                <p className="sub-title">
+                                        </p>
+                                        <p className="sub-title">
                                             {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)}
-                                            </p></div>
+                                        </p>
                                         {currentPlace.notes && (<p>
                                             Notas: {currentPlace.notes}
                                         </p>)}
@@ -410,76 +399,46 @@ export default function Home() {
                                             {hasNextToday ? timeBetween() : "Esta es la última actividad del día"}
                                         </p>
                                     </div>
-                                    <div onClick={() => {
-                                        if (currentPlace && currentPlace.location) {
-                                            const lat = Number(currentPlace.location.latitude);
-                                            const lng = Number(currentPlace.location.longitude);
-                                            if (!isNaN(lat) && !isNaN(lng)) {
-                                                setViewState({
-                                                    latitude: lat,
-                                                    longitude: lng,
-                                                    zoom: 16,
-                                                });
-                                            } else {
-                                                console.warn("⚠️ Coordenadas inválidas en nextPlace:", currentPlace.location);
-                                            }
-                                        }
-                                    }}
-                                        className="place-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: isSelectedOnMap(currentPlace.location) ? '#ff3951' : '#fff', border: '1px solid #eee' }}>
-                                        <svg width="25" height="25" viewBox="0 0 24 24" fill={isSelectedOnMap(currentPlace.location) ? '#fff' : '#ff3951'}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path></svg>
-                                    </div></div>
-                                </div>
+                                </button>
 
                             </div>
                         )}
                             {nextPlace && (
-                                <div>
-                                    <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
+                                <div className="hero-box" style={{marginTop:"20px"}}>
                                     <h3 style={{margin:"0", marginBottom:"10px"}}>Próxima actividad:</h3>
-                                    <button className="place-row" style={{paddingLeft:!nextPlace.location?.imagenes ? "20px":""}}>
-                                        <div className="place-content">
-                                            {nextPlace.location?.imagenes &&
+                                    <button className="place-row"
+                                            onClick={() => {
+                                                if (nextPlace && nextPlace.location) {
+                                                    const lat = Number(nextPlace.location.latitude ?? nextPlace.location.latitud);
+                                                    const lng = Number(nextPlace.location.longitude ?? nextPlace.location.longitud);
+                                                    if (!isNaN(lat) && !isNaN(lng)) {
+                                                        setViewState({
+                                                            latitude: lat,
+                                                            longitude: lng,
+                                                            zoom: 16,
+                                                        });
+                                                    } else {
+                                                        console.warn("⚠️ Coordenadas inválidas en nextPlace:", nextPlace.location);
+                                                    }
+                                                }
+                                            }}>{nextPlace.location?.imagenes &&
                                         <img
                                             src={safeParseImages(nextPlace.location?.imagenes)[0]}
                                             className="place-img"
                                             alt="Próximo lugar"
                                         />}
                                         <div className="place-info">
-                                            <div style={{ display: "flex", alignItems: "center" }}>
-                                            <MapPin size={25} color="#ff3951" strokeWidth={2.5} style={{ marginRight: 12}} />
-                                                <h2>{nextPlace.location?.titulo}</h2></div>
-                                            <div style={{ display: "flex", alignItems: "center", marginTop: 10 }}>
-                                                <Calendar size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8,  marginBottom:10}} />
+                                            <h2>{nextPlace.location?.titulo}</h2>
                                             <p>
                                                 {fmtDate(nextPlace.date)}
-                                            </p></div>
-                                            <div style={{ display: "flex", alignItems: "center", marginTop: 10 }}>
-                                                <Clock size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8 , marginBottom:10}} />
+                                            </p>
                                             <p>
                                                 {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)}
-                                            </p></div>
+                                            </p>
                                             {nextPlace.notes && (<p>
                                                 Notas: {nextPlace.notes}
                                             </p>)}
                                         </div>
-                                        <div className="place-icon" style={{  display: 'flex', alignItems: 'center', justifyContent: 'center', background: isSelectedOnMap(nextPlace.location) ? '#ff3951' : '#fff', border: '1px solid #eee' }}
-                                             onClick={() => {
-                                                 if (nextPlace && nextPlace.location) {
-                                                     const lat = Number(nextPlace.location.latitude ?? nextPlace.location.latitud);
-                                                     const lng = Number(nextPlace.location.longitude ?? nextPlace.location.longitud);
-                                                     if (!isNaN(lat) && !isNaN(lng)) {
-                                                         setViewState({
-                                                             latitude: lat,
-                                                             longitude: lng,
-                                                             zoom: 16,
-                                                         });
-                                                     } else {
-                                                         console.warn("⚠️ Coordenadas inválidas en nextPlace:", nextPlace.location);
-                                                     }
-                                                 }
-                                             }}>
-                                            <svg width="25" height="25" viewBox="0 0 24 24" fill={isSelectedOnMap(nextPlace.location) ? '#fff' : '#ff3951'}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path></svg>
-                                        </div></div>
                                     </button>
                                 </div>
                             )}
@@ -489,8 +448,7 @@ export default function Home() {
                         <div className="muted">No tienes mas actividades en este viaje. Agrega uno nuevo </div>) : (
                         <div>
 
-                            <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
-
+                            <section className="hero-box" style={{marginTop:"30px", paddingTop:0}}>
                                 <h3 style={{marginBottom: 10}}>Tus viajes</h3>
                                 {trips.length === 0 ? (
                                     <div className="muted">No tienes viajes. Empieza creando uno 😉</div>
@@ -518,6 +476,7 @@ export default function Home() {
                                         )}
                                     </div>
                                 )}
+                            </section>
                         </div>)}</div>)}</div>
                 </div>
 
@@ -527,7 +486,7 @@ export default function Home() {
                                 <Map
                                     {...viewState}
                                     onMove={(evt) => setViewState(evt.viewState)}
-                                    style={{flex: 1, marginTop: 20, background: "#ddd", height: "110%"}}
+                                    style={{flex: 1, marginTop: 20, background: "#ddd", height: "500px"}}
                                     mapStyle="mapbox://styles/mapbox/streets-v11"
                                     mapboxAccessToken={MAPBOX_TOKEN}
                                 >

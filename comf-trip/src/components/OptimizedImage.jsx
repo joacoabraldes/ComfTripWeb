@@ -69,7 +69,7 @@ export default function OptimizedImage({
           alt={alt}
           decoding="async"
           loading={loadingAttr}
-          fetchpriority={priority ? "high" : undefined}
+          fetchPriority={priority ? "high" : undefined}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
           srcSet={srcSet}

@@ -118,7 +118,11 @@ export default function Explore() {
   // ui & state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // category selection: we keep slug for UI active state, but use id for backend queries
   const [selectedCategorySlug, setSelectedCategorySlug] = useState("todo");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedCategoryTitle, setSelectedCategoryTitle] = useState("Todo");
 
   // compact filters with selects
   const [selectedDuration, setSelectedDuration] = useState("");
@@ -157,21 +161,22 @@ export default function Explore() {
     return () => (mounted = false);
   }, []);
 
-  // when category changes, fetch filtered locations
+  // when category changes, fetch filtered locations — use the CATEGORY ID (not slug)
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        if (selectedCategorySlug === "todo") {
+        if (selectedCategorySlug === "todo" || !selectedCategoryId) {
           const locs = await apiGet("/locations?limit=200");
           if (!mounted) return;
           const sorted = sortByRelevanceDesc(Array.isArray(locs) ? locs : []);
           setLocationsFiltered(sorted.slice(0, 50));
         } else {
+          // use the id for the backend filter (interest=id)
           const locs = await apiGet(
-            `/locations?interest=${encodeURIComponent(selectedCategorySlug)}&limit=200`
+            `/locations?interest=${encodeURIComponent(String(selectedCategoryId))}&limit=200`
           );
           if (!mounted) return;
           const sorted = sortByRelevanceDesc(Array.isArray(locs) ? locs : []);
@@ -185,7 +190,7 @@ export default function Explore() {
       }
     })();
     return () => (mounted = false);
-  }, [selectedCategorySlug]);
+  }, [selectedCategorySlug, selectedCategoryId]);
 
   /**
    * Map backend location objects to the shape used by the UI.
@@ -235,8 +240,21 @@ export default function Explore() {
   const popularExperiences = useMemo(() => mapToExperiences(popularLocations), [popularLocations]);
   const filteredExperiences = useMemo(() => mapToExperiences(locationsFiltered), [locationsFiltered]);
 
-  const onCategoryClick = (slug) => {
+  // onCategoryClick now accepts either the "todo" string or the category object
+  const onCategoryClick = (category) => {
+    if (category === "todo") {
+      setSelectedCategorySlug("todo");
+      setSelectedCategoryId(null);
+      setSelectedCategoryTitle("Todo");
+      return;
+    }
+    // category is the object from categories array
+    const slug = category?.slug ?? String(category);
+    const id = category?.id ?? null;
+    const title = category?.title ?? category?.name ?? slug;
     setSelectedCategorySlug(slug);
+    setSelectedCategoryId(id);
+    setSelectedCategoryTitle(title);
   };
 
   const handleExperienceClick = (experience) => {
@@ -267,6 +285,8 @@ export default function Explore() {
 
   const clearFilters = () => {
     setSelectedCategorySlug("todo");
+    setSelectedCategoryId(null);
+    setSelectedCategoryTitle("Todo");
     setSelectedDuration("");
     setSelectedBudget("");
     setSelectedSeason("");
@@ -328,9 +348,9 @@ export default function Explore() {
                 const icon = categoryIcons[cat.slug] || "📍";
                 return (
                   <div
-                    key={cat.slug}
+                    key={cat.slug ?? cat.id}
                     className={`category-card ${selectedCategorySlug === cat.slug ? "active" : ""}`}
-                    onClick={() => onCategoryClick(cat.slug)}
+                    onClick={() => onCategoryClick(cat)}
                   >
                     <div className="category-icon">{icon}</div>
                     <div className="category-name">{cat.title}</div>
@@ -427,7 +447,7 @@ export default function Explore() {
           {/* filtered results first */}
           <div className="experiences-section">
             <div className="section-header">
-              <h2>{selectedCategorySlug === "todo" ? "Resultados" : `Resultados — ${selectedCategorySlug}`}</h2>
+              <h2>{selectedCategorySlug === "todo" ? "Resultados" : `Resultados — ${selectedCategoryTitle}`}</h2>
               <div className="small-muted">{filteredExperiences.length} resultados</div>
             </div>
 

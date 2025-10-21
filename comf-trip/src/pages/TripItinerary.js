@@ -75,45 +75,49 @@ export default function TripItinerary() {
   const [backendFlightDetails, setBackendFlightDetails] = useState(null);
 
   // helper: map a flight-offer / raw offer into the react-select option shape used in this file
-  const mapOfferToSelectOption = (offer, idx = 0) => {
-    if (!offer) return null;
-    const itinerary = Array.isArray(offer.itineraries) && offer.itineraries[0];
-    const segments =
-      itinerary && Array.isArray(itinerary.segments) ? itinerary.segments : [];
-    const firstSeg = segments[0] || {};
-    const lastSeg = segments[segments.length - 1] || firstSeg || {};
-    const dep = firstSeg?.departure?.at || firstSeg?.departure?.iataCode || "";
-    const arr = lastSeg?.arrival?.at || lastSeg?.arrival?.iataCode || "";
-    const times =
-      dep && arr
-        ? `${(String(dep).split("T")[1] || dep).slice(0, 5)} → ${(
+// helper: map a flight-offer / raw offer into the react-select option shape used in this file
+const mapOfferToSelectOption = (offer, idx = 0) => {
+  if (!offer) return null;
+  const itinerary = Array.isArray(offer.itineraries) && offer.itineraries[0];
+  const segments =
+    itinerary && Array.isArray(itinerary.segments) ? itinerary.segments : [];
+  const firstSeg = segments[0] || {};
+  const lastSeg = segments[segments.length - 1] || firstSeg || {};
+  const dep = firstSeg?.departure?.at || firstSeg?.departure?.iataCode || "";
+  const arr = lastSeg?.arrival?.at || lastSeg?.arrival?.iataCode || "";
+  const times =
+    dep && arr
+      ? `${(String(dep).split("T")[1] || dep).slice(0, 5)} → ${(
           String(arr).split("T")[1] || arr
         ).slice(0, 5)}`
-        : "";
-    const carrier = firstSeg?.carrierCode || firstSeg?.carrier || "";
-    const number = firstSeg?.number || offer.flight?.number || "";
-    const flightCode = (carrier || "") + (number ? String(number) : "");
-    const airline =
-      firstSeg?.operating?.carrierName ||
-      firstSeg?.carrierName ||
-      offer?.raw?.carrierName ||
-      "";
-    const duration =
-      itinerary && itinerary.duration
-        ? itinerary.duration
-        : firstSeg?.duration || "";
-    const price = offer?.price?.total
-      ? `${offer.price.total} ${offer.price.currency || ""}`
-      : offer?.meta?.price || "";
+      : "";
+  const carrier = firstSeg?.carrierCode || firstSeg?.carrier || "";
+  const number = firstSeg?.number || offer.flight?.number || "";
+  const flightCode = (carrier || "") + (number ? String(number) : "");
+  const airline =
+    firstSeg?.operating?.carrierName ||
+    firstSeg?.carrierName ||
+    offer?.raw?.carrierName ||
+    "";
+  const duration =
+    itinerary && itinerary.duration ? itinerary.duration : firstSeg?.duration || "";
+  const price = offer?.price?.total
+    ? `${offer.price.total} ${offer.price.currency || ""}`
+    : offer?.meta?.price || "";
 
-    return {
-      value: offer?.id || offer?.raw?.id || `offer_${idx}`,
-      label: `${flightCode ? flightCode + " · " : ""}${airline || offer.label || ""
-        }${price ? ` · ${price}` : ""}`,
-      meta: { times, flightCode, airline, duration, price },
-      raw: offer,
-    };
+  // prefer flightCode as the canonical value when available (e.g. "KL1512")
+  const canonicalId = flightCode || offer?.id || offer?.raw?.id || `offer_${idx}`;
+
+  return {
+    value: canonicalId,
+    label: `${flightCode ? flightCode + "" : ""}${
+      airline || offer.label || ""
+    }${price ? ` · ${price}` : ""}`,
+    meta: { times, flightCode, airline, duration, price },
+    raw: offer,
   };
+};
+
 
   // ---- locations picker (only for the trip's city) ----
   const [locationsOptions, setLocationsOptions] = useState([]);
@@ -287,58 +291,48 @@ export default function TripItinerary() {
           }
         }
 
-        // existing backend flight association (if any)
-        const possibleFlightId =
-          tripRes.flight_id ||
-          tripRes.flight?.flight_id ||
-          tripRes.selected_flight?.id ||
-          tripRes.selected_flight?.flight_id ||
-          null;
+try {
+  // ask backend which flights are associated with this trip for the authenticated user
+  const flightsList = await apiGet(
+    `/flights?trip_id=${encodeURIComponent(tripId)}`
+  ).catch(() => null);
 
-        if (possibleFlightId) {
-          try {
-            const bf = await apiGet(
-              `/flights/${encodeURIComponent(String(possibleFlightId))}`
-            ).catch(() => null);
-            const backend = bf || {
-              flight_id: possibleFlightId,
-              created_at: null,
-            };
-            setBackendFlight(backend);
+  const first = flightsList && Array.isArray(flightsList.flights) && flightsList.flights.length
+    ? flightsList.flights[0]
+    : null;
 
-            // Try to enrich with flightsApi (call with flight id). Safe-check existence of function.
-            try {
-              if (typeof flightsApi.getOfferById === "function") {
-                const rawOffer = await flightsApi.getOfferById(
-                  String(possibleFlightId)
-                );
-                if (rawOffer) {
-                  const mapped = mapOfferToSelectOption(rawOffer);
-                  setBackendFlightDetails(mapped);
-                  // Also set the selected option so UI shows the enriched offer
-                  setSelectedFlightOption(mapped);
-                } else {
-                  setBackendFlightDetails(null);
-                }
-              } else {
-                // If flightsApi.getOfferById not available, clear enriched details (we still have backendFlight)
-                setBackendFlightDetails(null);
-              }
-            } catch (err) {
-              console.warn(
-                "Could not enrich backend flight via flightsApi.getOfferById",
-                err
-              );
-              setBackendFlightDetails(null);
-            }
-          } catch (e) {
-            setBackendFlight({ flight_id: possibleFlightId, created_at: null });
-            setBackendFlightDetails(null);
-          }
+  if (first) {
+    // backend flight record from your API: { flight_id, user_id, trip_id, created_at }
+    setBackendFlight(first);
+
+    // enrich using flightsApi (external/third-party data) if available
+    if (typeof flightsApi.getOfferById === "function") {
+      try {
+        const rawOffer = await flightsApi.getOfferById(String(first.flight_id));
+        if (rawOffer) {
+          const mapped = mapOfferToSelectOption(rawOffer);
+          setBackendFlightDetails(mapped);
+          setSelectedFlightOption(mapped);
         } else {
-          setBackendFlight(null);
           setBackendFlightDetails(null);
         }
+      } catch (err) {
+        console.warn("flightsApi.getOfferById failed", err);
+        setBackendFlightDetails(null);
+      }
+    } else {
+      setBackendFlightDetails(null);
+    }
+  } else {
+    setBackendFlight(null);
+    setBackendFlightDetails(null);
+  }
+} catch (err) {
+  console.warn("Error checking flights for trip:", err);
+  setBackendFlight(null);
+  setBackendFlightDetails(null);
+}
+
 
         // attempt to pre-fill destination airports (parse trip.destination "City, Country" if present)
         try {
@@ -717,61 +711,179 @@ export default function TripItinerary() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originAirportValue, destinationAirportValue, tripStartIso]);
 
-  // persist selected flight (POST /flights, fallback to PUT/associate)
-  const handleSaveSelectedFlight = async () => {
-    const flightId =
-      selectedFlightOption?.value || selectedFlightOption?.raw?.id;
-    if (!flightId) {
-      setFlightMessage("Seleccioná un vuelo primero.");
-      return;
-    }
-    setFlightMessage(null);
-    setLoadingFlight(true);
-    try {
-      await apiPost("/flights", {
-        flight_id: String(flightId),
-        trip_id: tripId,
-      });
-      setFlightMessage("Vuelo guardado y asociado al viaje.");
-      const fresh = await apiGet(`/trips/${tripId}`);
-      setTrip(fresh);
-      const bf = await apiGet(
-        `/flights/${encodeURIComponent(String(flightId))}`
-      ).catch(() => ({ flight_id: flightId }));
-      setBackendFlight(bf || { flight_id: flightId });
-    } catch (err) {
-      const status =
-        err &&
-        (err.status ||
-          (err.body && err.body.status) ||
-          (err.response && err.response.status));
-      if (
-        status === 409 ||
-        (err && String(err.message || "").includes("409"))
-      ) {
+// persist selected flight (POST /flights, fallback to PUT/associate)
+const handleSaveSelectedFlight = async () => {
+  const selected = selectedFlightOption;
+  const flightIdRaw = selected?.value || selected?.raw?.id || "";
+  if (!selected) {
+    setFlightMessage("Seleccioná un vuelo primero.");
+    return;
+  }
+  setFlightMessage(null);
+  setLoadingFlight(true);
+
+  // derive carrier/number from meta.flightCode if present
+  const flightCode = selected?.meta?.flightCode || ""; // e.g. "KL1512"
+  let carrier = "";
+  let number = "";
+  const m = String(flightCode || "").trim().match(/^([A-Za-z]{2,3})(\d{1,4})([A-Za-z]?)$/);
+  if (m) {
+    carrier = m[1].toUpperCase();
+    number = m[2];
+  } else {
+    // fallback: try to parse from raw offer if available
+    carrier = selected?.raw?.carrierCode || selected?.raw?.flight?.carrier || "";
+    number = selected?.raw?.flight?.number || selected?.raw?.flightNumber || "";
+  }
+
+  // scheduled date: prefer tripStartIso (you already compute it above)
+  const scheduledDepartureDate = tripStartIso || new Date().toISOString().slice(0, 10);
+
+  // canonical flight_id format: "CARRIER|NUMBER|YYYY-MM-DD"
+  // this makes it easy for getOfferById to call /schedule/flights
+  const canonicalFlightId = carrier && number ? `${carrier}|${number}|${scheduledDepartureDate}` : String(flightIdRaw);
+
+  // price and raw offer (store them client-side to show price immediately; backend should persist if possible)
+  const price = selected?.meta?.price || null;
+  const rawOffer = selected?.raw || null;
+
+  try {
+    // create (or request backend associate)
+    await apiPost("/flights", {
+      flight_id: String(canonicalFlightId),
+      trip_id: tripId,
+      // optional helpful fields your backend can store/use
+      carrier_code: carrier || undefined,
+      flight_number: number || undefined,
+      scheduled_departure_date: scheduledDepartureDate,
+      price: price,
+      raw_offer: rawOffer,
+    });
+
+    // refresh trip and backend flight record associated to this trip
+    const freshTrip = await apiGet(`/trips/${tripId}`).catch(() => null);
+    if (freshTrip) setTrip(freshTrip);
+
+    // canonical: ask backend which flight is associated to this trip
+    const flightsList = await apiGet(
+      `/flights?trip_id=${encodeURIComponent(tripId)}`
+    ).catch(() => null);
+
+    const first = flightsList && Array.isArray(flightsList.flights) && flightsList.flights.length
+      ? flightsList.flights[0]
+      : null;
+
+    if (first) {
+      setBackendFlight(first);
+
+      // enrich via flightsApi (now supports schedule lookup when flight_id is "C|N|YYYY-MM-DD")
+      if (typeof flightsApi.getOfferById === "function") {
         try {
-          await apiPut(`/flights/${encodeURIComponent(String(flightId))}`, {
-            trip_id: tripId,
-          });
-          setFlightMessage("Vuelo existente asociado al viaje.");
-          const fresh = await apiGet(`/trips/${tripId}`);
-          setTrip(fresh);
-          const bf = await apiGet(
-            `/flights/${encodeURIComponent(String(flightId))}`
-          ).catch(() => ({ flight_id: flightId }));
-          setBackendFlight(bf || { flight_id: flightId });
-        } catch (uerr) {
-          console.warn("associate put failed", uerr);
-          setFlightMessage("No se pudo asociar el vuelo existente.");
+          const rawOfferFromApi = await flightsApi.getOfferById(String(first.flight_id));
+          if (rawOfferFromApi) {
+            const mapped = mapOfferToSelectOption(rawOfferFromApi);
+            setBackendFlightDetails(mapped);
+            setSelectedFlightOption(mapped);
+          } else {
+            // fallback: if backend returned raw_offer/price in the record, use that to show price immediately
+            if (first.raw_offer) {
+              const mapped = mapOfferToSelectOption(first.raw_offer);
+              setBackendFlightDetails(mapped || { label: `${first.carrier_code || ""}${first.flight_number ? " " + first.flight_number : ""}`, meta: { price: first.price || "" }, raw: first.raw_offer });
+              setSelectedFlightOption(mapped);
+            } else {
+              setBackendFlightDetails(null);
+            }
+          }
+        } catch (err) {
+          console.warn("Could not enrich backend flight via flightsApi.getOfferById", err);
+          // use backend-stored raw_offer if available
+          if (first.raw_offer) {
+            const mapped = mapOfferToSelectOption(first.raw_offer);
+            setBackendFlightDetails(mapped);
+            setSelectedFlightOption(mapped);
+          } else {
+            setBackendFlightDetails(null);
+          }
         }
       } else {
-        console.error("save flight error", err);
-        setFlightMessage("Error guardando vuelo. Revisa la consola.");
+        setBackendFlightDetails(null);
       }
-    } finally {
-      setLoadingFlight(false);
+    } else {
+      // fallback minimal state if backend did not return flights for this trip
+      setBackendFlight({ flight_id: String(canonicalFlightId), created_at: null, raw_offer: rawOffer, price });
+      setBackendFlightDetails(null);
     }
-  };
+
+    setFlightMessage("Vuelo guardado y asociado al viaje.");
+  } catch (err) {
+    const status =
+      err &&
+      (err.status ||
+        (err.body && err.body.status) ||
+        (err.response && err.response.status));
+    if (status === 409 || (err && String(err.message || "").includes("409"))) {
+      // If already exists, attempt to associate via PUT then re-query (keep same logic you had)
+      try {
+        await apiPut(`/flights/${encodeURIComponent(String(canonicalFlightId))}`, {
+          trip_id: tripId,
+        });
+
+        const freshTrip = await apiGet(`/trips/${tripId}`).catch(() => null);
+        if (freshTrip) setTrip(freshTrip);
+
+        const flightsList = await apiGet(
+          `/flights?trip_id=${encodeURIComponent(tripId)}`
+        ).catch(() => null);
+
+        const first = flightsList && Array.isArray(flightsList.flights) && flightsList.flights.length
+          ? flightsList.flights[0]
+          : null;
+
+        if (first) {
+          setBackendFlight(first);
+          if (typeof flightsApi.getOfferById === "function") {
+            try {
+              const rawOfferFromApi = await flightsApi.getOfferById(String(first.flight_id));
+              if (rawOfferFromApi) {
+                const mapped = mapOfferToSelectOption(rawOfferFromApi);
+                setBackendFlightDetails(mapped);
+                setSelectedFlightOption(mapped);
+              } else {
+                if (first.raw_offer) {
+                  const mapped = mapOfferToSelectOption(first.raw_offer);
+                  setBackendFlightDetails(mapped);
+                  setSelectedFlightOption(mapped);
+                } else {
+                  setBackendFlightDetails(null);
+                }
+              }
+            } catch (err2) {
+              console.warn("Could not enrich backend flight after PUT", err2);
+              setBackendFlightDetails(null);
+            }
+          } else {
+            setBackendFlightDetails(null);
+          }
+        } else {
+          setBackendFlight({ flight_id: String(canonicalFlightId), created_at: null });
+          setBackendFlightDetails(null);
+        }
+
+        setFlightMessage("Vuelo existente asociado al viaje.");
+      } catch (uerr) {
+        console.warn("associate put failed", uerr);
+        setFlightMessage("No se pudo asociar el vuelo existente.");
+      }
+    } else {
+      console.error("save flight error", err);
+      setFlightMessage("Error guardando vuelo. Revisa la consola.");
+    }
+  } finally {
+    setLoadingFlight(false);
+    window.setTimeout(() => setFlightMessage(null), 3500);
+  }
+};
+
 
   const handleAddLocationToItinerary = async () => {
     if (!selectedLocationOption) {
@@ -1250,10 +1362,6 @@ export default function TripItinerary() {
           }}
         >
           <div>
-            <div style={{ fontWeight: 700 }}>
-              {backendFlightDetails?.meta?.flightCode ||
-                backendFlight.flight_id}
-            </div>
 
             {/* show airline & label */}
             {backendFlightDetails?.label ? (
@@ -1266,7 +1374,7 @@ export default function TripItinerary() {
               {backendFlightDetails?.meta?.times
                 ? backendFlightDetails.meta.times +
                 (backendFlightDetails?.meta?.price
-                  ? ` · ${backendFlightDetails.meta.price}`
+                  ? `${backendFlightDetails.meta.price}`
                   : "")
                 : backendFlight.created_at
                   ? fmtDate(backendFlight.created_at)
@@ -1279,8 +1387,7 @@ export default function TripItinerary() {
               </div>
             ) : null}
           </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
+{/* <div style={{ display: "flex", gap: 8 }}>
             <button
               className="btn-secondary"
               onClick={async () => {
@@ -1339,7 +1446,8 @@ export default function TripItinerary() {
             <button className="btn-secondary" onClick={handleRemoveFlight}>
               Quitar vuelo
             </button>
-          </div>
+          </div>*/}
+         
         </div>
       ) : (
         <div>
@@ -1518,7 +1626,7 @@ export default function TripItinerary() {
                     >
                       <div style={{ fontWeight: 700 }}>
                         {m.flightCode
-                          ? `${m.flightCode} · ${option.label.replace(
+                          ? `${m.flightCode} ${option.label.replace(
                             /^[^·]+·\s*/,
                             ""
                           )}`

@@ -533,58 +533,130 @@ export async function searchFlights({
  */
 export async function getOfferById(flightId) {
   if (!flightId) return null;
-  const fid = String(flightId);
+  const fid = String(flightId).trim();
 
-  // 1) Try backend/proxy endpoint first (recommended)
+  // Helpers
+  const todayIso = () => new Date().toISOString().split('T')[0];
+  const safeDateFromMatch = (m) => (m && m[0]) ? m[0] : null;
+
+  // 1) try to detect a date token yyyy-mm-dd anywhere in the id
+  const dateMatch = fid.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  let scheduledDepartureDate = safeDateFromMatch(dateMatch);
+
+  // 2) try to parse carrier + flightNumber from common formats:
+  //    - "TP487"
+  //    - "TP487_2023-08-01"
+  //    - "TP|487|2023-08-01"
+  //    - "TP-487" or "TP 487"
+  let carrier = null;
+  let flightNumber = null;
+
+  // attempt: leading letters then digits (e.g. TP487)
+  let m = fid.match(/^([A-Za-z]{2,3})(\d{1,4})/);
+  if (!m) {
+    // attempt other separators (TP|487, TP-487, "TP 487")
+    m = fid.match(/([A-Za-z]{2,3})\D+?(\d{1,4})/);
+  }
+  if (m) {
+    carrier = (m[1] || "").toUpperCase();
+    flightNumber = String(m[2] || "");
+  } else {
+    // as last resort, if fid is like "487" alone (unlikely) return null
+    return null;
+  }
+
+  // If no parsed date, try tokens split by '|' or '_' etc to find a yyyy-mm-dd token
+  if (!scheduledDepartureDate) {
+    const tokens = fid.split(/[\|_\s\-]+/).map(t => t.trim()).filter(Boolean);
+    for (const t of tokens) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+        scheduledDepartureDate = t;
+        break;
+      }
+    }
+  }
+
+  // fallback to today if still no date (Amadeus requires scheduledDepartureDate)
+  if (!scheduledDepartureDate) scheduledDepartureDate = todayIso();
+
+  // Build schedule endpoint URL (call Amadeus directly — do not use internalGet/proxy here)
+  const path = `/v2/schedule/flights?carrierCode=${encodeURIComponent(carrier)}&flightNumber=${encodeURIComponent(flightNumber)}&scheduledDepartureDate=${encodeURIComponent(scheduledDepartureDate)}`;
+  const url = `${AMADEUS_BASE}${path}`;
+
   try {
-    // If PROXY_BASE is set we want to prefer calling our backend route via proxy
-    if (USE_PROXY) {
-      const url = buildProxyUrl(`/flights/${encodeURIComponent(fid)}/offer`);
-      try {
-        const res = await safeFetchJson(url, { method: 'GET', headers: { Accept: 'application/json' } });
-        // backend may return { data: offer } or the offer directly - normalize
-        return res && (res.data || res);
-      } catch (err) {
-        // fall through to other attempts
-        console.warn(`[flightsApiAmadeus] Proxy GET /flights/${fid}/offer failed:`, err);
-      }
-    } else {
-      // Even if no explicit PROXY_BASE, try requesting a same-origin backend route:
-      // This helps when frontend and backend are served from same origin.
-      try {
-        const resp = await fetch(`/flights/${encodeURIComponent(fid)}/offer`, { method: 'GET', headers: { Accept: 'application/json' } });
-        if (resp.ok) {
-          const parsed = await resp.json().catch(() => null);
-          if (parsed) return parsed.data || parsed;
-        }
-      } catch (e) {
-        // ignore and continue to Amadeus fallback
-      }
+    // Get token and call Amadeus directly (ensures we are calling Amadeus only)
+    const token = await getAccessTokenFrontend();
+    const raw = await safeFetchJson(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    }).catch(() => null);
+
+    if (!raw) return null;
+
+    // Amadeus returns { meta:..., data: [ DatedFlight, ... ] }
+    const df = (raw.data && Array.isArray(raw.data) && raw.data.length) ? raw.data[0] : (Array.isArray(raw) && raw.length ? raw[0] : raw);
+    if (!df) return null;
+
+    // Build a map of flightPoints (iataCode -> flightPoint) for quick lookup of timings
+    const fpMap = {};
+    if (Array.isArray(df.flightPoints)) {
+      df.flightPoints.forEach(fp => {
+        if (fp && fp.iataCode) fpMap[String(fp.iataCode).toUpperCase()] = fp;
+      });
     }
+
+    // Convert schedule segments into itineraries[0].segments[] with departure.at / arrival.at etc.
+    const segments = (Array.isArray(df.segments) ? df.segments : []).map(seg => {
+      const board = seg.boardPointIataCode || seg.boardPoint || null;
+      const off = seg.offPointIataCode || seg.offPoint || null;
+      const depFP = board ? fpMap[String(board).toUpperCase()] : null;
+      const arrFP = off ? fpMap[String(off).toUpperCase()] : null;
+
+      // Prefer STD/STA qualifier timings, otherwise pick first timing value
+      const depTime = depFP?.departure?.timings?.find(t => String(t.qualifier || '').toUpperCase() === 'STD')?.value
+        || depFP?.departure?.timings?.[0]?.value
+        || null;
+      const arrTime = arrFP?.arrival?.timings?.find(t => String(t.qualifier || '').toUpperCase() === 'STA')?.value
+        || arrFP?.arrival?.timings?.[0]?.value
+        || null;
+
+      // operating flight if present
+      const operating = seg.partnership?.operatingFlight || seg.operating || null;
+      const carrierCode = operating?.carrierCode || df.flightDesignator?.carrierCode || null;
+      const flightNumberOper = operating?.flightNumber || df.flightDesignator?.flightNumber || null;
+
+      return {
+        carrierCode,
+        number: flightNumberOper,
+        departure: { iataCode: board || (depFP && depFP.iataCode) || null, at: depTime },
+        arrival: { iataCode: off || (arrFP && arrFP.iataCode) || null, at: arrTime },
+        duration: seg.scheduledSegmentDuration || seg.scheduledLegDuration || null,
+        raw: seg
+      };
+    });
+
+    const itineraries = [{ segments }];
+
+    // Create an offer-like object so existing front-end mapping can consume it (shows times, airports)
+    const offerLike = {
+      id: `${carrier}${flightNumber}_${scheduledDepartureDate}`,
+      itineraries,
+      segments, // convenience
+      raw: df,
+      meta: {
+        flightCode: `${carrier}${flightNumber}`,
+        scheduledDepartureDate
+      }
+    };
+
+    return offerLike;
   } catch (err) {
-    console.warn('[flightsApiAmadeus] backend/proxy attempt failed', err);
+    console.warn('[flightsApi] getOfferById schedule call failed', err);
+    return null;
   }
-
-  // 2) Fallback: Try Amadeus endpoints (best-effort). Many sandbox/deployments *can't* fetch by id,
-  // but some setups expose /v1 or /v2 GET endpoints or this call may succeed for certain ids.
-  const amadeusPathsToTry = [
-    `/v2/shopping/flight-offers/${encodeURIComponent(fid)}`,
-    `/v1/shopping/flight-offers/${encodeURIComponent(fid)}`
-  ];
-
-  for (const p of amadeusPathsToTry) {
-    try {
-      const raw = await internalGet(p).catch(() => null);
-      if (raw) return raw.data || raw;
-    } catch (err) {
-      // try next
-      console.warn(`[flightsApiAmadeus] Amadeus GET ${p} failed:`, err);
-    }
-  }
-
-  // 3) If nothing worked, return null (caller can fallback)
-  return null;
 }
+
+
 
 
 export default {

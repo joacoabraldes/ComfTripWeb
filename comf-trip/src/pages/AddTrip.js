@@ -657,13 +657,11 @@ export default function AddTrip() {
 
           const times =
             dep && arr
-              ? `${dep.split("T")[1]?.slice(0, 5) || ""} → ${
-                  arr.split("T")[1]?.slice(0, 5) || ""
-                }`
+              ? `${dep.split("T")[1]?.slice(0, 5) || ""} → ${arr.split("T")[1]?.slice(0, 5) || ""
+              }`
               : "";
-          const label = `${price}${times ? " · " + times : ""}${
-            flightCodeStr ? " · " + flightCodeStr : ""
-          }${airlineDisplay ? " · " + airlineDisplay : ""}`;
+          const label = `${price}${times ? " · " + times : ""}${flightCodeStr ? " · " + flightCodeStr : ""
+            }${airlineDisplay ? " · " + airlineDisplay : ""}`;
 
           return {
             id: offer?.id || `offer_${i}`,
@@ -785,16 +783,59 @@ export default function AddTrip() {
         createdTripId = t.trip.id;
 
         try {
-          const selectedFlightId =
-            dest.selectedFlight?.id || dest.selectedFlight?.raw?.id || null;
-          if (selectedFlightId) {
-            setStatusMessage(`Guardando vuelo ${selectedFlightId}...`);
+          // Build a canonical flight identifier (prefer carrier+number + date).
+          // Example canonical formats: "KL1512|2023-08-01" (preferred) or "KL1512" if no date.
+          const sel = dest.selectedFlight;
+          let canonicalFlightId = null;
+
+          if (sel) {
+            const datePart = dest.startDate
+              ? dest.startDate.toISOString().split("T")[0]
+              : "";
+
+            // 1) Prefer explicitly provided meta.flightCode (e.g. "KL1512")
+            const metaCode = sel?.meta?.flightCode;
+            if (metaCode && String(metaCode).trim()) {
+              const clean = String(metaCode).replace(/\s+/g, "").toUpperCase();
+              canonicalFlightId = datePart ? `${clean}|${datePart}` : clean;
+            } else if (sel?.raw) {
+              // 2) Try to derive from the raw offer shape: first itinerary -> first segment
+              const raw = sel.raw;
+              const itinerary = Array.isArray(raw.itineraries) && raw.itineraries[0];
+              const firstSeg = itinerary && Array.isArray(itinerary.segments) ? itinerary.segments[0] : null;
+
+              const carrier =
+                firstSeg?.carrierCode ||
+                firstSeg?.operating?.carrierCode ||
+                raw?.flightDesignator?.carrierCode ||
+                "";
+              const number =
+                firstSeg?.number ||
+                firstSeg?.flightNumber ||
+                raw?.flightDesignator?.flightNumber ||
+                "";
+
+              if (carrier && number) {
+                const clean = `${String(carrier).toUpperCase()}${String(number)}`;
+                canonicalFlightId = datePart ? `${clean}|${datePart}` : clean;
+              } else if (sel?.id) {
+                // 3) fallback: keep existing id if we can't parse a carrier/number
+                canonicalFlightId = sel.id;
+              } else if (sel?.raw?.id) {
+                canonicalFlightId = sel.raw.id;
+              }
+            }
+          }
+
+          if (canonicalFlightId) {
+            setStatusMessage(`Guardando vuelo ${canonicalFlightId}...`);
             await apiPost("/flights", {
-              flight_id: selectedFlightId,
+              flight_id: canonicalFlightId,
               trip_id: createdTripId,
             });
-            setStatusMessage(`Vuelo ${selectedFlightId} guardado.`);
+            setStatusMessage(`Vuelo ${canonicalFlightId} guardado.`);
           }
+
         } catch (err) {
           console.error("Error guardando vuelo:", err);
         }
@@ -895,8 +936,7 @@ export default function AddTrip() {
           </div>
           <div style={{ color: "#666", fontSize: 12 }}>
             {(m.stops || m.duration) &&
-              `${m.stops ? `${m.stops} stop${m.stops > 1 ? "s" : ""}` : ""}${
-                m.stops && m.duration ? " · " : ""
+              `${m.stops ? `${m.stops} stop${m.stops > 1 ? "s" : ""}` : ""}${m.stops && m.duration ? " · " : ""
               }${m.duration || ""}`}
           </div>
         </div>
@@ -978,20 +1018,19 @@ export default function AddTrip() {
                       const start =
                         currentDestination?.startDate &&
                         currentDestination.startDate.getTime() ===
-                          currentDate.getTime();
+                        currentDate.getTime();
                       const end =
                         currentDestination?.endDate &&
                         currentDestination.endDate.getTime() ===
-                          currentDate.getTime();
+                        currentDate.getTime();
                       const inRange = isDateInRange(day.date);
 
                       return (
                         <button
                           key={day.date}
                           type="button"
-                          className={`day ${
-                            inRange || start || end ? "selected-day" : ""
-                          }`}
+                          className={`day ${inRange || start || end ? "selected-day" : ""
+                            }`}
                           onClick={() => !isPast && handleDateSelect(day.date)}
                           disabled={isPast}
                           style={{

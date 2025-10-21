@@ -520,9 +520,77 @@ export async function searchFlights({
   }
 }
 
+/**
+ * Try to fetch a single flight "offer" by its id.
+ *
+ * Strategy:
+ * 1) If a proxy/ backend is configured (USE_PROXY or PROXY_BASE), call the backend:
+ *    GET ${PROXY_BASE}/flights/:flight_id/offer  (proxy should forward to server)
+ * 2) Else attempt to call Amadeus directly. Amadeus doesn't always expose a stable
+ *    GET-by-id for v2 flight-offers, so this is a best-effort fallback.
+ *
+ * Returns the raw offer object (same shape as items returned by searchFlights()) or null if not found.
+ */
+export async function getOfferById(flightId) {
+  if (!flightId) return null;
+  const fid = String(flightId);
+
+  // 1) Try backend/proxy endpoint first (recommended)
+  try {
+    // If PROXY_BASE is set we want to prefer calling our backend route via proxy
+    if (USE_PROXY) {
+      const url = buildProxyUrl(`/flights/${encodeURIComponent(fid)}/offer`);
+      try {
+        const res = await safeFetchJson(url, { method: 'GET', headers: { Accept: 'application/json' } });
+        // backend may return { data: offer } or the offer directly - normalize
+        return res && (res.data || res);
+      } catch (err) {
+        // fall through to other attempts
+        console.warn(`[flightsApiAmadeus] Proxy GET /flights/${fid}/offer failed:`, err);
+      }
+    } else {
+      // Even if no explicit PROXY_BASE, try requesting a same-origin backend route:
+      // This helps when frontend and backend are served from same origin.
+      try {
+        const resp = await fetch(`/flights/${encodeURIComponent(fid)}/offer`, { method: 'GET', headers: { Accept: 'application/json' } });
+        if (resp.ok) {
+          const parsed = await resp.json().catch(() => null);
+          if (parsed) return parsed.data || parsed;
+        }
+      } catch (e) {
+        // ignore and continue to Amadeus fallback
+      }
+    }
+  } catch (err) {
+    console.warn('[flightsApiAmadeus] backend/proxy attempt failed', err);
+  }
+
+  // 2) Fallback: Try Amadeus endpoints (best-effort). Many sandbox/deployments *can't* fetch by id,
+  // but some setups expose /v1 or /v2 GET endpoints or this call may succeed for certain ids.
+  const amadeusPathsToTry = [
+    `/v2/shopping/flight-offers/${encodeURIComponent(fid)}`,
+    `/v1/shopping/flight-offers/${encodeURIComponent(fid)}`
+  ];
+
+  for (const p of amadeusPathsToTry) {
+    try {
+      const raw = await internalGet(p).catch(() => null);
+      if (raw) return raw.data || raw;
+    } catch (err) {
+      // try next
+      console.warn(`[flightsApiAmadeus] Amadeus GET ${p} failed:`, err);
+    }
+  }
+
+  // 3) If nothing worked, return null (caller can fallback)
+  return null;
+}
+
+
 export default {
   searchAirportsByCity,
   getAirportOptionsForSelect,
   getAirportsByCountry,
-  searchFlights
+  searchFlights,
+  getOfferById
 };

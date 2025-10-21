@@ -217,12 +217,12 @@ export default function Community() {
     return (
       <div>
         <Header />
-        <main className="community-main">
-          <div className="community-container">
-            <h2>Comunidad</h2>
-            <div className="spinner">Cargando…</div>
-          </div>
-        </main>
+            <div style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh"
+            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando comunidad…</div></div>
       </div>
     );
   }

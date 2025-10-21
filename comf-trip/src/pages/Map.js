@@ -236,6 +236,16 @@ export default function MapPage() {
     const hue = Math.abs(h) % 360;
     return `hsl(${hue} 70% 45%)`;
   };
+  if (loading){
+      return (<div>
+          <Header/><div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh"
+      }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando mapa…</div></div>
+      </div>)
+  }
 
   return (
     <div className="map-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>

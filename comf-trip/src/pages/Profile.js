@@ -95,7 +95,12 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <div className="profile-root" style={{fontSize:25}}>Cargando perfil…</div>;
+    return <div><Header/><div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh"
+    }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando perfil…</div></div></div>
   }
 
   return (

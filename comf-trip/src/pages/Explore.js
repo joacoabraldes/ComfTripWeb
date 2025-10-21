@@ -300,12 +300,12 @@ export default function Explore() {
     return (
       <div className="explorar-page">
         <Header />
-        <main className="explorar-main">
-          <div className="explorar-container">
-            <h1 className="explorar-title">Explorar por categorías</h1>
-            <div>Cargando…</div>
-          </div>
-        </main>
+          <div style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh"
+          }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando…</div></div>
       </div>
     );
   }

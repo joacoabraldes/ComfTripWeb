@@ -1,54 +1,87 @@
 /* src/styles/header.css */
 :root {
-    --header-height: 60px;
+    --header-height: 80px;
     --gutter: 24px;
 }
 
 .app-header {
     position: fixed;
     top: 0;
-    padding-top: 30px;
-    left: var(--gutter);
-    right: var(--gutter);
-    height: var(--header-height);
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
     z-index: 100;
-    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    background: white;
+
+
 }
 
-.icon-btn {
-    width: 50px;
-    height: 50px;
+.app-header-left {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    flex: 1;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+}
 
-    background: transparent;
-    border: none;
-    display: inline-flex;
+.app-header-logo {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+}
+
+.app-header-title {
+    font-weight: 600;
+    font-size: 18px;
+    color: #e4455f;
+}
+/* derecha */
+.app-header-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+.app-header-links {
+    display: flex;
     align-items: center;
     justify-content: center;
+}
+.app-header-center {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+}
+.nav-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
     cursor: pointer;
-    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    transition: color 0.2s, background 0.2s;
+    padding: 8px 16px;
+    height:80px;
+    width: 180px;
 }
 
-.icon-left svg {
-    width: 25px;
-    height: 25px;
 
+.nav-btn:hover {
+    color: #e4455f;
 }
 
-.icon-right {
-    border-radius: 6px;
-    background: white;
+.nav-btn.active {
+    color: white;
+    background: #e4455f;
 }
 
-.icon-right svg {
-    width: 25px;
-    height: 25px;
-}
-
-.icon-btn:hover {
-    background-color: #f2f2f2;
-    border-radius: 6px;
-    transition: background 0.2s ease-in-out;
+.nav-btn.active.trips {
+    background: #ff647d;
 }

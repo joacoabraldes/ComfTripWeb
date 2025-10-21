@@ -25,6 +25,7 @@
     box-sizing: border-box;
     width: 100%;
     margin: auto;
+    margin-top: 30px;
     align-items: start;
 }
 .trip-it-left { display: flex;
@@ -101,13 +102,8 @@
     justify-content: space-between;
     align-items: center;
     text-align: left;
-    cursor: pointer;
-    transition: box-shadow .12s ease, transform .06s ease;
     padding: 20px;
-}
-.place-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 14px rgba(12,13,14,0.04);
 }
 
 .place-title { font-weight: 600; }
@@ -268,11 +264,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* === small visual tweaks to help separation of items === */
-.place-item { transition: box-shadow .12s ease, transform .06s ease; }
-.place-item:hover { transform: translateY(-2px); }
 
-
-/* === utility (avoid duplicates) === */
 
 
 /* keep map-wrapper styling consistent with layout */

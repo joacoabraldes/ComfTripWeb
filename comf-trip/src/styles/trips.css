@@ -9,8 +9,9 @@
 
 /* Grid principal */
 .trips-main {
-    margin-left: 200px;
-    margin-right: 200px;
+    margin-left: 300px;
+    margin-right: 300px;
+    margin-top: 10px;
   gap: 24px;
   height: calc(100vh - 140px); /* toda la pantalla menos header + espacio botón */
   padding: 100px 20px 0 20px;

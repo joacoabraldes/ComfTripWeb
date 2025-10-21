@@ -4,6 +4,7 @@ import "../styles/trips.css";
 import Header from "../components/Header";
 import "../styles/header.css";
 import { apiGet, apiDelete, apiPost } from "./api";
+import { MapPin, Calendar,  ArrowDownWideNarrow, ArrowUpWideNarrow } from "lucide-react";
 
 export default function Trips() {
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,10 @@ export default function Trips() {
     const [countryFilter, setCountryFilter] = useState("");
     const [provinceFilter, setProvinceFilter] = useState("");
     const [creatorFilter, setCreatorFilter] = useState("");
+
+    const [sortBy, setSortBy] = useState("trip_date"); // 'trip_date' o 'created_at'
+    const [sortOrder, setSortOrder] = useState("desc"); // 'asc' o 'desc'
+
 
 // opciones dinámicas
     const [availableCountries, setAvailableCountries] = useState([]);
@@ -123,6 +128,7 @@ export default function Trips() {
         }
     }, [countryFilter, trips]);
 
+
     const filteredTrips = trips.filter(t => {
         const start = normalizeDate(t.start_date);
         const end = normalizeDate(t.end_date);
@@ -144,6 +150,21 @@ export default function Trips() {
 
         return true;
     });
+
+    const sortedTrips = [...filteredTrips].sort((a, b) => {
+        let aValue, bValue;
+
+        if (sortBy === "trip_date") {
+            aValue = normalizeDate(a.start_date);
+            bValue = normalizeDate(b.start_date);
+        } else {
+            aValue = normalizeDate(a.created_at);
+            bValue = normalizeDate(b.created_at);
+        }
+
+        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+    });
+
 
 
     // funciones para compartir viajes
@@ -189,11 +210,14 @@ export default function Trips() {
     return (
       <div className="trips-root">
         <Header />
-        <main className="trips-main">
-              <h3 className="trips-list-title">Tus viajes</h3>
-            <div className="trips-message" style={{border:"none"}}>Cargando viajes…</div>
 
-        </main>
+            <div style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh"
+            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando viajes…</div></div>
+          
       </div>
     );
   }
@@ -214,42 +238,79 @@ export default function Trips() {
             <>
               <h3 className="trips-list-title">Tus viajes</h3>
                 <div className="trips-filters">
-                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-                        <option value="">Todos los viajes</option>
-                        <option value="current">Viajes actuales</option>
-                        <option value="upcoming">Próximos viajes</option>
-                        <option value="past">Viajes anteriores</option>
-                    </select>
+                    <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center", flex: 1 }}>
+                        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                            <option value="">Todos los viajes</option>
+                            <option value="current">Viajes actuales</option>
+                            <option value="upcoming">Próximos viajes</option>
+                            <option value="past">Viajes anteriores</option>
+                        </select>
 
-                    <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)}>
-                        <option value="">Todos los países</option>
-                        {availableCountries.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                        ))}
-                    </select>
+                        <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)}>
+                            <option value="">Todos los países</option>
+                            {availableCountries.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
 
-                    <select
-                        value={provinceFilter}
-                        onChange={(e) => setProvinceFilter(e.target.value)}
-                        disabled={!countryFilter}
-                    >
-                        <option value="">Todas las provincias</option>
-                        {availableProvinces.map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                        ))}
-                    </select>
+                        <select
+                            value={provinceFilter}
+                            onChange={(e) => setProvinceFilter(e.target.value)}
+                            disabled={!countryFilter}
+                        >
+                            <option value="">Todas las provincias</option>
+                            {availableProvinces.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                            ))}
+                        </select>
 
-                    <select value={creatorFilter} onChange={(e) => setCreatorFilter(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="me">Creados por mí</option>
-                        <option value="others">Creados por otros</option>
-                    </select>
+                        <select value={creatorFilter} onChange={(e) => setCreatorFilter(e.target.value)}>
+                            <option value="">Todos</option>
+                            <option value="me">Creados por mí</option>
+                            <option value="others">Creados por otros</option>
+                        </select>
+                    </div>
+
+                    {/* NUEVOS CONTROLES A LA DERECHA */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "auto" }}>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #ddd" }}
+                        >
+                            <option value="trip_date">Ordenar por: Fecha de viaje</option>
+                            <option value="created_at">Ordenar por: Fecha de creación</option>
+                        </select>
+
+                        <button
+                            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                            style={{
+                                border: "1px solid #ddd",
+                                borderRadius: "8px",
+                                background: "#fff",
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                            title={sortOrder === "asc" ? "Ascendente" : "Descendente"}
+                        >
+                            {sortOrder === "asc" ? (
+                                <ArrowUpWideNarrow size={22} color="#333" />
+                            ) : (
+                                <ArrowDownWideNarrow size={22} color="#333" />
+                            )}
+                        </button>
+
+                    </div>
                 </div>
+
                 <div style={{background:"#ff3951", height:2, marginBottom:20, marginTop:20}}></div>
 
 
                 <div className="trips-list" role="list">
-                {filteredTrips.map((t) => {
+                {sortedTrips.map((t) => {
                   const isOwner = currentUserId ? Number(t.user_id) === Number(currentUserId) : null;
                   return (
                     <div
@@ -261,8 +322,8 @@ export default function Trips() {
                         className="trip-item-main"
                         onClick={() => navigate(`/trip_itinerary/${t.id}`)}
                       >
-                        <div className="trip-destination">
-                          {t.destination ?? "Destino desconocido"}
+                        <div className="trip-destination"><MapPin size={28} color="#ff3951" strokeWidth={2.5} style={{ marginRight: 12, marginBottom:-3 }} />
+                            {t.destination ?? "Destino desconocido"}
                           {t.share ? (
                             <span className="badge badge-primary" style={{ marginLeft: 8 }}>
                               {t.share.public ? "Enlace público" : "Compartido"}
@@ -275,10 +336,12 @@ export default function Trips() {
                           ) : null}
                         </div>
 
-                        <div className="trip-dates">
-                          {fmtDate(t.start_date)} — {fmtDate(t.end_date)}
-                        </div>
-                        <div className="trip-created">Creado: {fmtDate(t.created_at)}</div>
+                          <div className="trip-dates" style={{paddingBottom:10}}>
+                              <Calendar size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8, marginBottom:-3 }} />
+                              {fmtDate(t.start_date)} — {fmtDate(t.end_date)}
+                          </div>
+
+                          <div className="trip-created">Creado: {fmtDate(t.created_at)}</div>
                       </div>
 
                       <div className="trip-menu-wrapper">

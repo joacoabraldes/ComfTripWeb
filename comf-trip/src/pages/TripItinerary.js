@@ -2127,40 +2127,6 @@ const handleSaveSelectedFlight = async () => {
                               onMouseLeave={(e) =>
                                 (e.currentTarget.style.boxShadow = "none")
                               }
-                              onClick={() => {
-                                // when user clicks a place, center map immediately and start lazy-loading image
-                                if (selectedLocationOnMap?.place?.id === p.id) {
-                                  setSelectedLocationOnMap(null);
-                                  setClickOnMap(false);
-                                } else {
-                                  const imageUrl =
-                                    (loc.imagenes && loc.imagenes[0]) ||
-                                    (loc.images && loc.images[0]) ||
-                                    (p.images && p.images[0]) ||
-                                    null;
-                                  setSelectedLocationOnMap({
-                                    latitude: lat,
-                                    longitude: lng,
-                                    place: p,
-                                    titulo: loc.titulo ?? p.title,
-                                    image: null, // not loaded yet
-                                    imageUrl: imageUrl,
-                                    loadImage: !!imageUrl, // only load if we have an url
-                                    imageLoading: !!imageUrl,
-                                  });
-                                  if (
-                                    Number.isFinite(lat) &&
-                                    Number.isFinite(lng)
-                                  ) {
-                                    setViewState((v) => ({
-                                      ...v,
-                                      latitude: lat,
-                                      longitude: lng,
-                                      zoom: 14,
-                                    }));
-                                  }
-                                }
-                              }}
                             >
                               <div
                                 style={{
@@ -2232,22 +2198,63 @@ const handleSaveSelectedFlight = async () => {
                                 }}
                               >
                                 <div
+                                    onClick={() => {
+                                        // when user clicks a place, center map immediately and start lazy-loading image
+                                        if (selectedLocationOnMap?.place?.id === p.id) {
+                                            setSelectedLocationOnMap(null);
+                                            setClickOnMap(false);
+                                        } else {
+                                            const imageUrl =
+                                                (loc.imagenes && loc.imagenes[0]) ||
+                                                (loc.images && loc.images[0]) ||
+                                                (p.images && p.images[0]) ||
+                                                null;
+                                            setSelectedLocationOnMap({
+                                                latitude: lat,
+                                                longitude: lng,
+                                                place: p,
+                                                titulo: loc.titulo ?? p.title,
+                                                image: null, // not loaded yet
+                                                imageUrl: imageUrl,
+                                                loadImage: !!imageUrl, // only load if we have an url
+                                                imageLoading: !!imageUrl,
+                                            });
+                                            if (
+                                                Number.isFinite(lat) &&
+                                                Number.isFinite(lng)
+                                            ) {
+                                                setViewState((v) => ({
+                                                    ...v,
+                                                    latitude: lat,
+                                                    longitude: lng,
+                                                    zoom: 14,
+                                                }));
+                                            }
+                                        }
+                                    }}
                                   style={{
-                                    width: 38,
-                                    height: 38,
-                                    borderRadius: 8,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    background: "#fff",
+                                      width: 38,
+                                      height: 38,
+                                      borderRadius: 8,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      background: selectedLocationOnMap && selectedLocationOnMap.place?.id === p.id
+                                          ? "#ff3951"
+                                          : "#fff"
+                                      ,
                                     border: "1px solid #eee",
+                                      cursor: "pointer",
                                   }}
+                                    className="place-icon"
                                 >
                                   <svg
                                     width="18"
                                     height="18"
                                     viewBox="0 0 24 24"
-                                    fill="#888"
+                                    fill= {selectedLocationOnMap && selectedLocationOnMap.place?.id === p.id
+                                    ? "#fff"
+                                    : "#ff3951"}
                                   >
                                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
                                   </svg>

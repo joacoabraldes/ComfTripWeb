@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"; //s
 
 export default function Hamburger({ width = 38, height = 25, color = "#1D1B20" }) {
   const barWidth = 26;

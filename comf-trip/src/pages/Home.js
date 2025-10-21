@@ -299,8 +299,8 @@ export default function Home() {
                 place: p,
                 latitude: lat,
                 longitude: lng,
-                title: loc.titulo,
-                images:loc.imagenes
+                title: loc.title || loc.titulo,
+                images: loc.images || loc.imagenes
             };
         })
         .filter(m => m.latitude != null && m.longitude != null) : null);
@@ -378,14 +378,14 @@ export default function Home() {
                                                 }
                                             }
                                         }}>
-                                    {currentPlace.location?.imagenes &&
+                                    {(currentPlace.location?.images || currentPlace.location?.imagenes) &&
                                     <img
-                                        src={safeParseImages(currentPlace.location?.imagenes)[0]}
+                                        src={safeParseImages(currentPlace.location?.images || currentPlace.location?.imagenes)[0]}
                                         className="place-img"
                                         alt="Lugar actual"
                                     />}
                                     <div className="place-info">
-                                        <h2>{currentPlace.location?.titulo}</h2>
+                                        <h2>{currentPlace.location?.title || currentPlace.location?.titulo}</h2>
                                         <p className="sub-title">
                                             {fmtDate(currentPlace.date)}
                                         </p>
@@ -421,14 +421,14 @@ export default function Home() {
                                                         console.warn("⚠️ Coordenadas inválidas en nextPlace:", nextPlace.location);
                                                     }
                                                 }
-                                            }}>{nextPlace.location?.imagenes &&
+                                            }}>{(nextPlace.location?.images || nextPlace.location?.imagenes) &&
                                         <img
-                                            src={safeParseImages(nextPlace.location?.imagenes)[0]}
+                                            src={safeParseImages(nextPlace.location?.images || nextPlace.location?.imagenes)[0]}
                                             className="place-img"
                                             alt="Próximo lugar"
                                         />}
                                         <div className="place-info">
-                                            <h2>{nextPlace.location?.titulo}</h2>
+                                            <h2>{nextPlace.location?.title || nextPlace.location?.titulo}</h2>
                                             <p>
                                                 {fmtDate(nextPlace.date)}
                                             </p>
@@ -566,12 +566,12 @@ export default function Home() {
                                                     setSelectedLocationOnMap({
                                                         latitude: m.latitude,
                                                         longitude: m.longitude,
-                                                        titulo: m.titulo,
+                                                        titulo: m.title || m.titulo,
                                                         interes: m.fk_interest,
                                                         date: "",
                                                         startHour: "",
                                                         endHour: "",
-                                                        image: safeParseImages(m.imagenes)[0]
+                                                        image: safeParseImages(m.images || m.imagenes)[0]
                                                     })
                                                 }
                                                 onMouseLeave={() => setSelectedLocationOnMap(null)}
@@ -711,15 +711,7 @@ export default function Home() {
                                         <div className="carousel-item empty">No hay lugares para mostrar</div>
                                     ) : (
                                         popular.map((loc) => {
-                                            const imgs = (() => {
-                                                try {
-                                                    if (!loc.imagenes) return [];
-                                                    if (Array.isArray(loc.imagenes)) return loc.imagenes;
-                                                    return JSON.parse(loc.imagenes);
-                                                } catch (e) {
-                                                    return typeof loc.imagenes === "string" ? loc.imagenes.split(",") : [];
-                                                }
-                                            })();
+                                            const imgs = safeParseImages(loc.images || loc.imagenes);
                                             const img = imgs && imgs.length ? imgs[0] : null;
                                             return (
                                                 <div className="carousel-item" key={loc.id}
@@ -735,8 +727,8 @@ export default function Home() {
                                                             />)}
                                                     </div>
                                                     <div className="carousel-body">
-                                                        <div className="carousel-title">{loc.titulo}</div>
-                                                        <div className="carousel-sub">{loc.fk_interest}</div>
+                                                        <div className="carousel-title">{loc.title || loc.titulo}</div>
+                                                        <div className="carousel-sub">{loc.interest || loc.fk_interest}</div>
                                                     </div>
                                                 </div>
                                             );

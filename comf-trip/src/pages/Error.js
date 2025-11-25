@@ -2,22 +2,25 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/auth.css"; // optional if you want consistent styles
+import { useTranslation } from "../i18n";
 
 const Error = () => {
+  const { t } = useTranslation();
+  
   return (
     <div style={container}>
       <div style={box}>
-        <h1 style={{ margin: 0 }}>Sin permiso</h1>
+        <h1 style={{ margin: 0 }}>{t('error.title')}</h1>
         <p style={{ color: "#555", marginTop: 12 }}>
-          No tienes permiso para ver esta página. Por favor inicia sesión o regístrate.
+          {t('error.message')}
         </p>
 
         <div style={{ marginTop: 20, display: "flex", gap: 12, justifyContent: "center" }}>
           <Link to="/login" style={primaryBtn}>
-            Iniciar sesión
+            {t('error.login')}
           </Link>
           <Link to="/register" style={outlineBtn}>
-            Registrarse
+            {t('error.register')}
           </Link>
         </div>
       </div>

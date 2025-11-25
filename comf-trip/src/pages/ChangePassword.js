@@ -5,6 +5,7 @@ import { apiPut } from "./api";
 import "../styles/changePassword.css";
 import Header from "../components/Header";
 import "../styles/header.css";
+import { useTranslation } from "../i18n";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function ChangePassword() {
     confirmPassword: ""
   });
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -25,18 +27,18 @@ export default function ChangePassword() {
 
     const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
     if (!stored || !stored.id) {
-      alert("Usuario no identificado. Por favor inicia sesión.");
+      alert(t('changePassword.userNotIdentified'));
       navigate("/login");
       return;
     }
 
     if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
-      alert("Complete todos los campos.");
+      alert(t('changePassword.fillAllFields'));
       return;
     }
 
     if (form.newPassword !== form.confirmPassword) {
-      alert("La nueva contraseña y su confirmación no coinciden.");
+      alert(t('changePassword.passwordsDontMatch'));
       return;
     }
 
@@ -50,11 +52,11 @@ export default function ChangePassword() {
 
       // success
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      alert("Contraseña cambiada correctamente.");
+      alert(t('changePassword.success'));
       navigate("/profile");
     } catch (err) {
       // err may be object or string — normalize message
-      let message = "Error cambiando la contraseña";
+      let message = t('changePassword.error');
       if (err && typeof err === "object") {
         // If your backend returns { message: "..." } or { error: "..." }
         message = err.message || err.error || JSON.stringify(err);
@@ -67,7 +69,7 @@ export default function ChangePassword() {
           message.toLowerCase().includes("no autorizado") ||
           message.toLowerCase().includes("401") ||
           message.toLowerCase().includes("403")) {
-        alert("Sesión inválida. Por favor inicia sesión nuevamente.");
+        alert(t('changePassword.invalidSession'));
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         navigate("/login");
@@ -87,47 +89,47 @@ export default function ChangePassword() {
       <main className="change-container">
         <button className="back-btn" onClick={() => navigate(-1)} aria-label="volver">←</button>
 
-        <h1 className="change-title">Cambiar contraseña</h1>
+        <h1 className="change-title">{t('changePassword.title')}</h1>
 
         <form className="change-form" onSubmit={handleSubmit}>
 
           <label className="change-field">
-            <div className="change-field-label">Contraseña actual</div>
+            <div className="change-field-label">{t('changePassword.currentPassword')}</div>
             <input
               type="password"
               name="currentPassword"
               className={"input"}
               value={form.currentPassword}
               onChange={handleChange}
-              placeholder="Ingrese la contraseña actual"
+              placeholder={t('changePassword.currentPassword')}
               required
               disabled={loading}
             />
           </label>
 
           <label className="change-field">
-            <div className="change-field-label">Nueva contraseña</div>
+            <div className="change-field-label">{t('changePassword.newPassword')}</div>
             <input
               type="password"
               name="newPassword"
               value={form.newPassword}
               className={"input"}
               onChange={handleChange}
-              placeholder="Ingrese la nueva contraseña"
+              placeholder={t('changePassword.newPassword')}
               required
               disabled={loading}
             />
           </label>
 
           <label className="change-field">
-            <div className="change-field-label">Confirmar nueva contraseña</div>
+            <div className="change-field-label">{t('changePassword.confirmPassword')}</div>
             <input
               type="password"
               name="confirmPassword"
               value={form.confirmPassword}
               className={"input"}
               onChange={handleChange}
-              placeholder="Confirme su nueva contraseña"
+              placeholder={t('changePassword.confirmPassword')}
               required
               disabled={loading}
             />
@@ -135,7 +137,7 @@ export default function ChangePassword() {
 
           <div className="form-actions">
             <button type="submit" className="edit-btn-primary" disabled={loading}>
-              {loading ? "Guardando…" : "Confirmar"}
+              {loading ? t('changePassword.changing') : t('changePassword.change')}
             </button>
           </div>
         </form>

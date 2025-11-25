@@ -4,6 +4,8 @@ import Header from '../components/Header';
 import '../styles/community.css';
 import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../i18n';
+import { formatDateRange } from '../utils/dateUtils';
 
 export default function Community() {
   const [loading, setLoading] = useState(true);
@@ -12,6 +14,7 @@ export default function Community() {
   const [outgoing, setOutgoing] = useState([]);
   const [emailOrId, setEmailOrId] = useState('');
   const [sending, setSending] = useState(false);
+  const { t } = useTranslation();
 
   // share modal state
   const [showShareModal, setShowShareModal] = useState(false);
@@ -45,8 +48,8 @@ export default function Community() {
       setOutgoing(cleanedOutgoing || []);
     } catch (err) {
       console.error('Error cargando comunidad:', err);
-      const msg = (err && err.message) ? err.message : 'No se pudo cargar la comunidad';
-      alert(`No se pudo cargar la comunidad\n\n${msg}`);
+      const msg = (err && err.message) ? err.message : t('community.loadError');
+      alert(`${t('community.loadError')}\n\n${msg}`);
       setFriends([]);
       setIncoming([]);
       setOutgoing([]);
@@ -60,7 +63,7 @@ export default function Community() {
   }, []);
 
   async function sendRequest() {
-    if (!emailOrId) return alert('Ingresa un email o id de usuario');
+    if (!emailOrId) return alert(t('community.enterEmailOrId'));
     setSending(true);
     try {
       const body = {};
@@ -68,12 +71,12 @@ export default function Community() {
       else body.addressee_id = Number(emailOrId);
 
       await apiPost('/friends', body);
-      alert('Solicitud enviada');
+      alert(t('community.requestSent'));
       setEmailOrId('');
       await loadAll();
     } catch (err) {
       console.error('Error enviando solicitud:', err);
-      const msg = (err && err.message) ? err.message : 'No se pudo enviar la solicitud';
+      const msg = (err && err.message) ? err.message : t('community.requestError');
       alert(msg);
     } finally {
       setSending(false);
@@ -86,7 +89,7 @@ export default function Community() {
       await loadAll();
     } catch (err) {
       console.error('Error aceptando:', err);
-      alert('No se pudo aceptar la solicitud');
+      alert(t('community.acceptError'));
     }
   }
 
@@ -96,18 +99,18 @@ export default function Community() {
       await loadAll();
     } catch (err) {
       console.error('Error rechazando:', err);
-      alert('No se pudo rechazar la solicitud');
+      alert(t('community.rejectError'));
     }
   }
 
   async function removeFriend(userId) {
-    if (!window.confirm('¿Eliminar amigo?')) return;
+    if (!window.confirm(t('community.removeConfirm'))) return;
     try {
       await apiDelete(`/friends/${userId}`);
       await loadAll();
     } catch (err) {
       console.error('Error eliminando amigo:', err);
-      alert('No se pudo eliminar');
+      alert(t('community.removeError'));
     }
   }
 
@@ -155,18 +158,18 @@ export default function Community() {
         // if we can't detect current user, only include trips where no share.owner mismatch
         // but safer to refuse sharing if we can't prove ownership
         setAvailableTrips([]);
-        alert('No se pudo determinar tu usuario. Intenta recargar la página o iniciar sesión nuevamente.');
+        alert(t('community.cannotDetermineUser'));
         return;
       }
 
       const ownedTrips = tripsArr.filter(t => Number(t?.user_id) === Number(currentUserId));
       if (ownedTrips.length === 0) {
-        alert('No se encontraron viajes propios para compartir. Solo puedes compartir viajes que posees.');
+        alert(t('community.noOwnTrips'));
       }
       setAvailableTrips(ownedTrips);
     } catch (err) {
       console.error('Error fetching trips for sharing:', err);
-      alert('No se pudieron cargar tus viajes para compartir.');
+      alert(t('community.noTripsToShare'));
       setAvailableTrips([]);
     }
   }
@@ -181,8 +184,8 @@ export default function Community() {
   }
 
   async function submitShare() {
-    if (!shareTargetFriend) return alert('No friend selected');
-    if (!selectedTripIds.size) return alert('Selecciona al menos un viaje para compartir');
+    if (!shareTargetFriend) return alert(t('community.share'));
+    if (!selectedTripIds.size) return alert(t('community.selectAtLeastOne'));
 
     setSharing(true);
     const successes = [];
@@ -195,17 +198,17 @@ export default function Community() {
       } catch (err) {
         console.error(`Share failed for trip ${tripId}:`, err);
         // try to extract meaningful message
-        const message = (err && err.message) ? err.message : (err && err.data && err.data.message) ? err.data.message : 'Error';
+        const message = (err && err.message) ? err.message : (err && err.data && err.data.message) ? err.data.message : t('common.error');
         failures.push({ tripId, message });
       }
     }
 
     setSharing(false);
     let msg = '';
-    if (successes.length) msg += `Compartido correctamente ${successes.length} viaje(s).\n`;
-    if (failures.length) msg += `Errores en ${failures.length} viaje(s):\n` + failures.map(f => ` - ${f.tripId}: ${f.message}`).join('\n');
+    if (successes.length) msg += t('community.shareSuccess', { count: successes.length }) + '\n';
+    if (failures.length) msg += t('community.shareErrors', { count: failures.length }) + '\n' + failures.map(f => ` - ${f.tripId}: ${f.message}`).join('\n');
 
-    alert(msg || 'Operación completada');
+    alert(msg || t('community.operationCompleted'));
     setShowShareModal(false);
     setShareTargetFriend(null);
     setSelectedTripIds(new Set());
@@ -222,7 +225,7 @@ export default function Community() {
                 justifyContent: "center",
                 alignItems: "center",
                 height: "100vh"
-            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando comunidad…</div></div>
+            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('community.loading')}</div></div>
       </div>
     );
   }
@@ -232,24 +235,24 @@ export default function Community() {
       <Header />
       <main className="community-main">
         <div className="community-container">
-          <h2>Comunidad</h2>
+          <h2>{t('community.title')}</h2>
 
           <section className="card send-request">
-            <h3>Enviar solicitud</h3>
+            <h3>{t('community.sendRequest')}</h3>
             <div className="send-row">
               <input
-                placeholder="Email o id de usuario"
+                placeholder={t('community.placeholder')}
                 value={emailOrId}
                 onChange={(e) => setEmailOrId(e.target.value)}
               />
-              <button className="btn" onClick={sendRequest} disabled={sending}>Enviar</button>
+              <button className="btn" onClick={sendRequest} disabled={sending}>{t('community.send')}</button>
             </div>
-            <p className="hint">Envía por email o por id de usuario.</p>
+            <p className="hint">{t('community.hint')}</p>
           </section>
 
           <section className="card">
-            <h3>Solicitudes entrantes</h3>
-            {incoming.length === 0 ? <div className="muted">No hay solicitudes entrantes</div> : (
+            <h3>{t('community.incomingRequests')}</h3>
+            {incoming.length === 0 ? <div className="muted">{t('community.noIncoming')}</div> : (
               <div className="list">
                 {incoming.map(r => (
                   <div key={r.id} className="list-item">
@@ -258,10 +261,10 @@ export default function Community() {
                       <div className="subtitle">{r.requester_email}</div>
                     </div>
                     <div className="actions">
-                      <button className="icon-btn" title="Aceptar" onClick={() => acceptRequest(r.id)} aria-label="Aceptar solicitud">
+                      <button className="icon-btn" title={t('community.accept')} onClick={() => acceptRequest(r.id)} aria-label={t('community.accept')}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#1abc9c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
-                      <button className="icon-btn muted" title="Rechazar" onClick={() => rejectRequest(r.id)} aria-label="Rechazar solicitud">
+                      <button className="icon-btn muted" title={t('community.reject')} onClick={() => rejectRequest(r.id)} aria-label={t('community.reject')}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#e74c3c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                     </div>
@@ -272,8 +275,8 @@ export default function Community() {
           </section>
 
           <section className="card">
-            <h3>Amigos</h3>
-            {friends.length === 0 ? <div className="muted">No tienes amigos aún</div> : (
+            <h3>{t('community.friends')}</h3>
+            {friends.length === 0 ? <div className="muted">{t('community.noFriends')}</div> : (
               <div className="list">
                 {friends.map(f => (
                   <div key={f.id} className="list-item">
@@ -285,15 +288,15 @@ export default function Community() {
                       </div>
                     </div>
                     <div className="actions">
-                      <button className="icon-btn" title="Ver perfil" onClick={() => navigate(`/friend/${f.id}`)} aria-label="Ver perfil">
+                      <button className="icon-btn" title={t('community.viewProfile')} onClick={() => navigate(`/friend/${f.id}`)} aria-label={t('community.viewProfile')}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM2 22a10 10 0 0120 0" stroke="#34495e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
 
-                      <button className="icon-btn" title="Compartir viajes" onClick={() => openShareModal(f)} aria-label="Compartir viajes">
+                      <button className="icon-btn" title={t('community.shareTrips')} onClick={() => openShareModal(f)} aria-label={t('community.shareTrips')}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="#2b8cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 3v13M8 7l4-4 4 4" stroke="#2b8cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
 
-                      <button className="icon-btn muted" title="Eliminar amigo" onClick={() => removeFriend(f.id)} aria-label="Eliminar amigo">
+                      <button className="icon-btn muted" title={t('community.removeFriend')} onClick={() => removeFriend(f.id)} aria-label={t('community.removeFriend')}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6v12a2 2 0 002 2h4a2 2 0 002-2V6M10 6V4a2 2 0 012-2h0a2 2 0 012 2v2" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                     </div>
@@ -304,15 +307,15 @@ export default function Community() {
           </section>
 
           <section className="card">
-            <h3>Solicitudes enviadas (pendientes)</h3>
-            {outgoing.length === 0 ? <div className="muted">No hay solicitudes pendientes enviadas</div> : (
+            <h3>{t('community.outgoingRequests')}</h3>
+            {outgoing.length === 0 ? <div className="muted">{t('community.noOutgoing')}</div> : (
               <div className="list">
                 {outgoing.map(o => (
                   <div key={o.id} className="list-item">
                     <div className="info">
                       <div className="title">{o.addressee_name || o.addressee_email || `Usuario ${o.addressee_id}`}</div>
                       <div className="subtitle">{o.addressee_email}</div>
-                      <div className="tiny">Estado: {o.status}</div>
+                      <div className="tiny">{t('community.status')} {o.status}</div>
                     </div>
                   </div>
                 ))}
@@ -327,12 +330,12 @@ export default function Community() {
         <div className="modal-overlay" onClick={() => { if (!sharing) setShowShareModal(false); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => { if (!sharing) setShowShareModal(false); }}>×</button>
-            <h3>Compartir viajes con {shareTargetFriend.name || shareTargetFriend.email || `Usuario ${shareTargetFriend.id}`}</h3>
-            <p className="hint">Selecciona los viajes que quieras compartir (puedes seleccionar varios).</p>
+            <h3>{t('community.shareTitle', { name: shareTargetFriend.name || shareTargetFriend.email || `Usuario ${shareTargetFriend.id}` })}</h3>
+            <p className="hint">{t('community.shareSubtitle')}</p>
 
             <div style={{ marginTop: 14, maxHeight: '50vh', overflow: 'auto' }}>
               {availableTrips.length === 0 ? (
-                <div className="muted">No se encontraron viajes propios para compartir.</div>
+                <div className="muted">{t('community.noOwnTrips')}</div>
               ) : (
                 <div className="list">
                   {availableTrips.map(trip => {
@@ -344,8 +347,7 @@ export default function Community() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                               <div>
                                 <div className="title">{trip.destination || `Viaje #${trip.id}`}</div>
-                                <div className="subtitle">{trip.start_date ? `${trip.start_date?.slice(0,10)} — ${trip.end_date?.slice(0,10)}` : 'Fechas no especificadas'}</div>
-                                <div className="tiny">Owner id: {String(trip.user_id)}</div>
+                                <div className="subtitle">{trip.start_date ? formatDateRange(trip.start_date, trip.end_date) : t('trips.unknownDestination')}</div>
                               </div>
                               <div>
                                 <input
@@ -366,9 +368,9 @@ export default function Community() {
             </div>
 
             <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="btn ghost" onClick={() => { if (!sharing) setShowShareModal(false); }} disabled={sharing}>Cancelar</button>
+              <button className="btn ghost" onClick={() => { if (!sharing) setShowShareModal(false); }} disabled={sharing}>{t('community.cancel')}</button>
               <button className="btn" onClick={submitShare} disabled={sharing || selectedTripIds.size === 0}>
-                {sharing ? 'Compartiendo…' : `Compartir ${selectedTripIds.size ? `(${selectedTripIds.size})` : ''}`}
+                {sharing ? t('community.sharing') : `${t('community.share')} ${selectedTripIds.size ? `(${selectedTripIds.size})` : ''}`}
               </button>
             </div>
           </div>

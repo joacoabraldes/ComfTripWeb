@@ -6,6 +6,7 @@ import countryList from "react-select-country-list";
 import { apiPost } from "./api";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
+import { useTranslation } from "../i18n";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -20,6 +21,7 @@ export default function Register() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   // opciones de países
   const options = useMemo(() => countryList().getData(), []);
 
@@ -34,7 +36,7 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.agree) return setMessage("Por favor acepta los términos y condiciones.");
+    if (!form.agree) return setMessage(t('auth.register.agreeTermsError'));
     setLoading(true);
     setMessage("");
 
@@ -62,7 +64,7 @@ export default function Register() {
     } catch (err) {
       // backend may return { message } or { error } or plain string
       const errMsg = err?.message || err?.error || (typeof err === "string" ? err : null);
-      setMessage(errMsg || "Error al registrar");
+      setMessage(errMsg || t('auth.register.error'));
     } finally {
       setLoading(false);
     }
@@ -73,46 +75,46 @@ export default function Register() {
       <div className="auth-container">
         {/* LEFT: form */}
         <div className="auth-left">
-          <h1 className="auth-title">Registrarse</h1>
-          <p className="auth-sub">Crea tu cuenta para empezar a disfrutar de nuestros servicios.</p>
+          <h1 className="auth-title">{t('auth.register.title')}</h1>
+          <p className="auth-sub">{t('auth.register.subtitle')}</p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <label className="auth-field">
-              <span className="auth-field-label">Nombre</span>
-              <input className="input" name="name" value={form.name} onChange={handleChange} placeholder="Nombre" required disabled={loading}/>
+              <span className="auth-field-label">{t('auth.register.name')}</span>
+              <input className="input" name="name" value={form.name} onChange={handleChange} placeholder={t('auth.register.name')} required disabled={loading}/>
             </label>
 
             <label className="auth-field">
-              <span className="auth-field-label">Email</span>
-              <input className="input" name="email" type="email" value={form.email} onChange={handleChange} placeholder="Email" required disabled={loading}/>
+              <span className="auth-field-label">{t('auth.register.email')}</span>
+              <input className="input" name="email" type="email" value={form.email} onChange={handleChange} placeholder={t('auth.register.email')} required disabled={loading}/>
             </label>
 
             <label className="auth-field">
-              <span className="auth-field-label">Teléfono</span>
-              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder="Teléfono" disabled={loading} />
+              <span className="auth-field-label">{t('auth.register.phone')}</span>
+              <input className="input" name="phone" value={form.phone} onChange={handleChange} placeholder={t('auth.register.phone')} disabled={loading} />
             </label>
 
             <label className="auth-field">
-              <span className="auth-field-label">Contraseña</span>
-              <input className="input" name="password" type="password" value={form.password} onChange={handleChange} placeholder="Contraseña" required  disabled={loading}/>
+              <span className="auth-field-label">{t('auth.register.password')}</span>
+              <input className="input" name="password" type="password" value={form.password} onChange={handleChange} placeholder={t('auth.register.password')} required  disabled={loading}/>
             </label>
 
             <div className="grid-2">
               <label className="auth-field">
-                <span className="auth-field-label">Nacionalidad</span>
+                <span className="auth-field-label">{t('auth.register.nationality')}</span>
                 <Select
                     className="dropdown-select"
                     classNamePrefix="react-select"
                     options={options}
                     value={options.find(opt => opt.label === form.nationality) || null}
                     onChange={handleCountryChange}
-                    placeholder="Selecciona tu nacionalidad"
+                    placeholder={t('auth.register.nationality')}
                     isDisabled={loading}
                 />
               </label>
 
               <label className="auth-field">
-                <span className="auth-field-label">Fecha de nacimiento</span>
+                <span className="auth-field-label">{t('auth.register.birthdate')}</span>
                 <input className="input" name="birthdate" type="date" value={form.birthdate} onChange={handleChange} disabled={loading} />
               </label>
             </div>
@@ -120,18 +122,18 @@ export default function Register() {
             <label className="agree">
               <input id="agree" name="agree" type="checkbox" checked={form.agree} onChange={handleChange} disabled={loading}/>
               <span style={{fontSize:15}}>
-                By checking the box you agree to our <button type="button" className="linkish" onClick={() => alert('Términos')}>Terms</button> and <button type="button" className="linkish" onClick={() => alert('Conditions')}>Conditions</button>.
+                {t('auth.register.agreeTerms')}
               </span>
             </label>
 
             <button type="submit" disabled={loading} className="auth-btn-primary">
-              {loading ? "Registrando…" : "Registrarme"}
+              {loading ? t('auth.register.submitting') : t('auth.register.submit')}
             </button>
 
             {message && <div className="message">{message}</div>}
               <div className="footer-cta">
-                  <span>Already a member?</span>
-                  <button className="linkish" onClick={() => navigate("/login")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>Log In</button>
+                  <span>{t('auth.register.alreadyMember')}</span>
+                  <button className="linkish" onClick={() => navigate("/login")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>{t('auth.register.logIn')}</button>
               </div>
           </form>
         </div>

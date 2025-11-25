@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
 import { useAuth } from "../auth/AuthProvider";
+import { useTranslation } from "../i18n";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" }); // 'email' here is the identifier (username or email)
   const nav = useNavigate();
   const { login} = useAuth();
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -38,30 +40,30 @@ export default function Login() {
       <div className="auth-container">
         {/* LEFT: login form */}
         <div className="auth-left">
-          <h1 className="auth-title">Iniciar Sesion</h1>
+          <h1 className="auth-title">{t('auth.login.title')}</h1>
 
           <form className="auth-form" onSubmit={submit}>
             <label className="auth-field">
-              <span className="auth-field-label">Nombre de usuario o Email</span>
+              <span className="auth-field-label">{t('auth.login.usernameOrEmail')}</span>
               <input
                 className="input"
                 name="email" // kept the same name to minimize other changes; this is the identifier
-                placeholder="Nombre de usuario o Email"
+                placeholder={t('auth.login.usernameOrEmail')}
                 onChange={handle}
                 type="text"         // <-- changed from "email" to "text"
                 autoComplete="username"
-                aria-label="Nombre de usuario o Email"
+                aria-label={t('auth.login.usernameOrEmail')}
                 required
                 disabled={loading}
               />
             </label>
 
             <label className="auth-field">
-              <span className="auth-field-label">Contraseña</span>
+              <span className="auth-field-label">{t('auth.login.password')}</span>
               <input
                 className="input"
                 name="password"
-                placeholder="Contraseña"
+                placeholder={t('auth.login.password')}
                 type="password"
                 onChange={handle}
                 autoComplete="current-password"
@@ -70,14 +72,14 @@ export default function Login() {
               />
             </label>
 
-            <button className="forgot">¿Olvidaste tu contraseña?</button>
+            <button className="forgot">{t('auth.login.forgotPassword')}</button>
 
             <button type="submit" className="auth-btn-primary login" disabled={loading}>
-              {loading ? "Entrando..." : "Iniciar"}
+              {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
             <div className="footer-cta">
-              <span>Not registered?</span>
-              <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>Register</button>
+              <span>{t('auth.login.notRegistered')}</span>
+              <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>{t('auth.login.register')}</button>
             </div>
           </form>
         </div>

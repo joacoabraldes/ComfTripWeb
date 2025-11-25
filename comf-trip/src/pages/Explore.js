@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import "../styles/explore.css";
 import { apiGet } from "./api";
 import OptimizedImage from "../components/OptimizedImage";
+import { useTranslation } from "../i18n";
 
 /**
  * Normalize many image shapes into an array of URL strings
@@ -81,6 +82,7 @@ const defaultModalSizes = "(max-width: 900px) 100vw, 900px";
 
 export default function Explore() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // server-driven
   const [categories, setCategories] = useState([]); // from /api/interests
@@ -169,14 +171,14 @@ export default function Explore() {
           // locationsLoading false but show message in-grid
           setPopularLocations([]);
           setLocationsFiltered([]);
-          setError("No se pudieron cargar las localidades.");
+          setError(t('explore.loadLocationsError'));
         } finally {
           if (mounted) setLocationsLoading(false);
         }
       } catch (catErr) {
         console.error("Categories fetch error:", catErr);
         if (!mounted) return;
-        setError("No se pudieron cargar las categorías.");
+        setError(t('explore.loadCategoriesError'));
         // allow page render but categories list will be empty
         setInitialLoading(false);
         setLocationsLoading(false);
@@ -210,7 +212,7 @@ export default function Explore() {
         console.error("Error fetching filtered locations:", err);
         if (!mounted) return;
         setLocationsFiltered([]);
-        setError("No se pudieron cargar las localidades filtradas.");
+        setError(t('explore.loadFilteredError'));
       } finally {
         if (mounted) setLocationsLoading(false);
       }
@@ -225,7 +227,7 @@ export default function Explore() {
     if (category === "todo") {
       setSelectedCategorySlug("todo");
       setSelectedCategoryId(null);
-      setSelectedCategoryTitle("Todo");
+      setSelectedCategoryTitle(t('explore.all'));
       return;
     }
     const slug = category?.slug ?? String(category);
@@ -256,7 +258,7 @@ export default function Explore() {
       }).catch(console.error);
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Enlace copiado al portapapeles");
+      alert(t('explore.linkCopied'));
     }
   };
 
@@ -305,7 +307,7 @@ export default function Explore() {
               justifyContent: "center",
               alignItems: "center",
               height: "100vh"
-          }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando…</div></div>
+          }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('common.loading')}</div></div>
       </div>
     );
   }
@@ -316,7 +318,7 @@ export default function Explore() {
       <Header />
       <main className="explorar-main">
         <div className="explorar-container">
-          <h1 className="explorar-title">Explorar por categorías</h1>
+          <h1 className="explorar-title">{t('explore.title')}</h1>
 
           {/* categories */}
           <div className="categories-section">
@@ -326,7 +328,7 @@ export default function Explore() {
                 onClick={() => onCategoryClick("todo")}
               >
                 <div className="category-icon">🌍</div>
-                <div className="category-name">Todo</div>
+                <div className="category-name">{t('explore.all')}</div>
               </div>
 
               {categories.map((cat) => {

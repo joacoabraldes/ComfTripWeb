@@ -8,11 +8,14 @@ import Header from "../components/Header";
 import { apiGet } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 import OptimizedImage from "../components/OptimizedImage";
+import { useTranslation } from "../i18n";
+import { formatDate, normalizeDate } from "../utils/dateUtils";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [trips, setTrips] = useState([]);
   const [popular, setPopular] = useState([]);
@@ -74,18 +77,9 @@ export default function Home() {
     return () => clearInterval(carouselAutoRef.current);
   }, [carouselLen]);
 
-    const fmtDate = (d) => {
-        if(!d) return "-"
-        const date=d.split("T")[0].split("-");
-        const yy = date[0];
-        const mm =date[1];
-        const dd = date[2];
-        return `${dd}/${mm}/${yy}`;
-    };
-
-    const fmtHour=(t)=>{
-        if(!t) return "-";
-        const time=t.split(":");
+    const fmtHour=(timeStr)=>{
+        if(!timeStr) return "-";
+        const time=timeStr.split(":");
         const hour=time[0];
         const min=time[1];
         return `${hour}:${min}`
@@ -275,10 +269,17 @@ export default function Home() {
             const M=minutesBetween%60;
             const H=(minutesBetween-M)/60;
             if(!H && !M){
-                return "La proxima actividad comenzara apenas termime la actual"
+                return t('home.nextActivityStarts');
             }
-            return `Al terminar la actividad quedara${H===1 || (H===0 && M===1)? "":"n"} ${H ? `${H} hora${H===1? "":"s"}` : ""}
-            ${H&&M ? " y ":" "}${M ? `${M} minuto${M===1? "":"s"}` : ""} para la proxima actividad`
+            const hoursStr = H ? `${H} ${H === 1 ? t('home.hour') : t('home.hours')}` : '';
+            const minutesStr = M ? `${M} ${M === 1 ? t('home.minute') : t('home.minutes')}` : '';
+            const plural = (H === 1 || (H === 0 && M === 1)) ? '' : 'n';
+            return t('home.timeUntilNext', { 
+              plural, 
+              hours: hoursStr, 
+              minutes: minutesStr,
+              and: H && M ? t('home.and') : ' '
+            });
         }
         const today=new Date();
         if(!nextPlace.start_hour) return "";
@@ -287,9 +288,15 @@ export default function Home() {
         const minutesBetween =(sh * 60 + sm)-(today.getHours() * 60 + today.getMinutes());
         const M=minutesBetween%60;
         const H=(minutesBetween-M)/60;
-        return `Queda${H===1 || (H===0 && M===1)? "":"n"} ${H ? `${H} hora${H===1? "":"s"}` : ""}${H&&M ? " y ":" "}
-        ${M ? `${M} minuto${M===1? "":"s"}` : ""} para la proxima actividad`
-
+        const hoursStr = H ? `${H} ${H === 1 ? t('home.hour') : t('home.hours')}` : '';
+        const minutesStr = M ? `${M} ${M === 1 ? t('home.minute') : t('home.minutes')}` : '';
+        const plural = (H === 1 || (H === 0 && M === 1)) ? '' : 'n';
+        return t('home.timeUntilNextNoCurrent', { 
+          plural, 
+          hours: hoursStr, 
+          minutes: minutesStr,
+          and: H && M ? t('home.and') : ' '
+        });
     }
 
     const markers = (currentTrip ? (currentTrip.places)
@@ -329,7 +336,7 @@ export default function Home() {
             justifyContent: "center",
             alignItems: "center",
             height: "100vh"
-        }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando viajes…</div></div>)
+        }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('home.loading')}</div></div>)
     }
 
     return (
@@ -341,7 +348,7 @@ export default function Home() {
                     <div>
 
                         <h1 style={{margin: 0}}>
-                            {currentTrip ? `Estas en ${currentTrip.destination}` : (nextTrip ? `Próximo viaje: ${nextTrip.destination}` : "Lista para tu próxima aventura?")}
+                            {currentTrip ? t('home.currentTrip', { destination: currentTrip.destination }) : (nextTrip ? t('home.nextTrip', { destination: nextTrip.destination }) : t('home.readyForAdventure'))}
                         </h1>
                         <div style={{ display: "flex", alignItems: "center", marginTop: 20 }}>
                             <Calendar
@@ -352,8 +359,8 @@ export default function Home() {
                             />
                             <p className="hero-sub" style={{ margin: 0 }}>
                                 {nextTrip
-                                    ? `${fmtDate(nextTrip.start_date)} — ${fmtDate(nextTrip.end_date)}`
-                                    : "Crea un viaje y te ayudamos a planear el itinerario automáticamente."}
+                                    ? `${formatDate(nextTrip.start_date)} — ${formatDate(nextTrip.end_date)}`
+                                    : t('home.createTripHelp')}
                             </p>
                         </div>
 
@@ -361,7 +368,7 @@ export default function Home() {
                             {nextTrip && (
                                 <button className="btn-ghost"
                                         onClick={() => navigate(`/trip_itinerary/${nextTrip.id}`)}>
-                                    Ver itinerario
+                                    {t('home.viewItinerary')}
                                     <div>
                                         ▶
                                     </div>
@@ -374,7 +381,7 @@ export default function Home() {
 
                             <div>
                                 <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
-                                <h3 style={{margin:0, marginBottom:"10px"}}>Actividad actual:</h3>
+                                <h3 style={{margin:0, marginBottom:"10px"}}>{t('home.currentActivity')}</h3>
                                 <button className="place-row"
                                         onClick={() => {
                                             if (currentPlace && currentPlace.location) {
@@ -395,7 +402,7 @@ export default function Home() {
                                     <img
                                         src={safeParseImages(currentPlace.location?.images || currentPlace.location?.imagenes)[0]}
                                         className="place-img"
-                                        alt="Lugar actual"
+                                        alt={t('home.currentPlace')}
                                     />}
                                     <div className="place-info">
                                         <div style={{display: "flex", alignItems: "center"}}><MapPin size={25}
@@ -406,17 +413,17 @@ export default function Home() {
                                         <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Calendar
                                             size={18} color="#8a6b80" strokeWidth={2}
                                             style={{marginRight: 8, marginBottom: 10}}/> <p
-                                            className="sub-title"> {fmtDate(currentPlace.date)} </p></div>
+                                            className="sub-title"> {formatDate(currentPlace.date)} </p></div>
                                         <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Clock
                                             size={18} color="#8a6b80" strokeWidth={2}
                                             style={{marginRight: 8, marginBottom: 10}}/> <p
                                             className="sub-title"> {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)} </p>
                                         </div>
                                         {currentPlace.notes && (<p>
-                                            Notas: {currentPlace.notes}
+                                            {t('home.notes')} {currentPlace.notes}
                                         </p>)}
                                         <p className="sub-title">
-                                            {hasNextToday ? timeBetween() : "Esta es la última actividad del día"}
+                                            {hasNextToday ? timeBetween() : t('home.lastActivityOfDay')}
                                         </p>
                                     </div>
                                 </button>
@@ -426,7 +433,7 @@ export default function Home() {
                             {nextPlace && (
                                 <div>
                                     <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
-                                    <h3 style={{margin:"0", marginBottom:"10px"}}>Próxima actividad:</h3>
+                                    <h3 style={{margin:"0", marginBottom:"10px"}}>{t('home.nextActivity')}</h3>
                                     <button className="place-row"
                                             onClick={() => {
                                                 if (nextPlace && nextPlace.location) {
@@ -446,7 +453,7 @@ export default function Home() {
                                         <img
                                             src={safeParseImages(nextPlace.location?.images || nextPlace.location?.imagenes)[0]}
                                             className="place-img"
-                                            alt="Próximo lugar"
+                                            alt={t('home.nextPlace')}
                                         />}
                                         <div className="place-info">
                                             <div style={{display: "flex", alignItems: "center"}}><MapPin size={25}
@@ -457,14 +464,14 @@ export default function Home() {
                                             <div style={{display: "flex", alignItems: "center", marginTop: 10}}>
                                                 <Calendar size={18} color="#8a6b80" strokeWidth={2}
                                                           style={{marginRight: 8, marginBottom: 10}}/>
-                                                <p> {fmtDate(nextPlace.date)} </p></div>
+                                                <p> {formatDate(nextPlace.date)} </p></div>
                                             <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Clock
                                                 size={18} color="#8a6b80" strokeWidth={2}
                                                 style={{marginRight: 8, marginBottom: 10}}/>
                                                 <p> {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)} </p>
                                             </div>
                                             {nextPlace.notes && (<p>
-                                                Notas: {nextPlace.notes}
+                                                {t('home.notes')} {nextPlace.notes}
                                             </p>)}
                                         </div>
                                     </button>
@@ -491,7 +498,7 @@ export default function Home() {
                                                 <div className="trip-card-left">
                                                     <div className="trip-destination">{t.destination}</div>
                                                     <div
-                                                        className="trip-dates">{fmtDate(t.start_date)} — {fmtDate(t.end_date)}</div>
+                                                        className="trip-dates">{formatDate(t.start_date)} — {formatDate(t.end_date)}</div>
                                                 </div>
                                                 <div className="trip-card-right">
                                                     ▶
@@ -499,8 +506,7 @@ export default function Home() {
                                             </button>
                                         ))}
                                         {trips.length > 4 && (
-                                            <button className="see-all" onClick={() => navigate("/trips")}>Ver
-                                                todos</button>
+                                            <button className="see-all" onClick={() => navigate("/trips")}>{t('common.view')} todos</button>
                                         )}
                                     </div>
                                 )}
@@ -641,7 +647,7 @@ export default function Home() {
                                                 <img
                                                     src={selectedLocationOnMap.image}
                                                     className="img-popUp"
-                                                    alt="Lugar actual"
+                                                    alt={t('home.currentPlace')}
                                                 />}
                                                 <div className="place-info">
                                                     <h3>{selectedLocationOnMap.titulo}</h3>
@@ -649,7 +655,7 @@ export default function Home() {
                                                         {selectedLocationOnMap.interes}
                                                     </p>)}
                                                     {selectedLocationOnMap.date && (<p>
-                                                        {fmtDate(selectedLocationOnMap.date)}
+                                                        {formatDate(selectedLocationOnMap.date)}
                                                     </p>)}
                                                     {selectedLocationOnMap.startHour && (
                                                         <p>
@@ -675,7 +681,7 @@ export default function Home() {
                                                         <circle cx="12" cy="9" r="2.5" fill="#fff"/>
                                                     </svg>
                                                 </td>
-                                                <td>Actividad actual</td>
+                                                <td>{t('home.currentActivityLegend')}</td>
                                             </tr>
                                             <tr>
                                                 <td>
@@ -690,7 +696,7 @@ export default function Home() {
                                                         <circle cx="12" cy="9" r="2.5" fill="#fff"/>
                                                     </svg>
                                                 </td>
-                                                <td>Próxima actividad</td>
+                                                <td>{t('home.nextActivityLegend')}</td>
                                             </tr>
                                             <tr>
                                                 <td>
@@ -705,7 +711,7 @@ export default function Home() {
                                                         <circle cx="12" cy="9" r="2.5" fill="#fff"/>
                                                     </svg>
                                                 </td>
-                                                <td>Otros lugares del viaje</td>
+                                                <td>{t('home.otherPlaces')}</td>
                                             </tr>
                                             <tr>
                                                 <td>
@@ -720,7 +726,7 @@ export default function Home() {
                                                         <circle cx="12" cy="9" r="2.5" fill="#fff"/>
                                                     </svg>
                                                 </td>
-                                                <td>Lugares populares</td>
+                                                <td>{t('home.popularLocationsLegend')}</td>
                                             </tr>
                                             </tbody>
                                         </table>
@@ -729,13 +735,13 @@ export default function Home() {
                                 </Map>
                             </div>)
                         : (<div>
-                            <h3 style={{marginTop: 0}}>Lugares recomendados</h3>
+                            <h3 style={{marginTop: 0}}>{t('home.recommendedPlaces')}</h3>
 
                             <div className="carousel">
                                 <div className="carousel-inner" style={{transform: `translateX(-${index * 100}%)`}}>
 
                                     {popular.length === 0 ? (
-                                        <div className="carousel-item empty">No hay lugares para mostrar</div>
+                                        <div className="carousel-item empty">{t('home.noPlacesToShow')}</div>
                                     ) : (
                                         popular.map((loc) => {
                                             const imgs = safeParseImages(loc.images || loc.imagenes);
@@ -744,7 +750,7 @@ export default function Home() {
                                                 <div className="carousel-item" key={loc.id}
                                                      onClick={() => navigate(`/locations/${loc.id}`)}>
                                                     <div className="carousel-image">
-                                                        {!img ? (<div className="no-img">No image</div>) : (
+                                                        {!img ? (<div className="no-img">{t('home.noImage')}</div>) : (
                                                             <OptimizedImage
                                                                 src={img}
                                                                 alt={img}
@@ -784,7 +790,7 @@ export default function Home() {
                 </div>
                 {!currentTrip && <div className="trips-cta">
                     <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
-                        Nuevo Viaje &nbsp; &gt;
+                        {t('trips.newTrip')} &nbsp; &gt;
                     </button>
                 </div>}
             </main>

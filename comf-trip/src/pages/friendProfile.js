@@ -4,6 +4,8 @@ import Header from '../components/Header';
 import '../styles/friendProfile.css';
 import { apiGet } from './api';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from '../i18n';
+import { formatDateRange } from '../utils/dateUtils';
 
 export default function FriendProfile() {
   // NOTE: route in App.jsx is "/friend/:friendId"
@@ -13,6 +15,7 @@ export default function FriendProfile() {
   const [friend, setFriend] = useState(null);
   const [visibleTrips, setVisibleTrips] = useState([]);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
 
   async function load() {
     setLoading(true);
@@ -44,7 +47,7 @@ export default function FriendProfile() {
       setVisibleTrips(friendTrips);
     } catch (err) {
       console.error('Error loading friend profile:', err);
-      setError('No se pudo cargar el perfil del usuario.');
+      setError(t('friendProfile.loadError'));
       setFriend(null);
       setVisibleTrips([]);
     } finally {
@@ -63,7 +66,7 @@ export default function FriendProfile() {
         <Header />
         <main className="friend-main">
           <div className="friend-container">
-            <div className="muted">Cargando perfil…</div>
+            <div className="muted">{t('friendProfile.loading')}</div>
           </div>
         </main>
       </div>
@@ -77,7 +80,7 @@ export default function FriendProfile() {
         <main className="friend-main">
           <div className="friend-container">
             <div className="error">{error}</div>
-            <button className="btn small" onClick={() => navigate(-1)}>Volver</button>
+            <button className="btn small" onClick={() => navigate(-1)}>{t('friendProfile.back')}</button>
           </div>
         </main>
       </div>
@@ -90,8 +93,8 @@ export default function FriendProfile() {
         <Header />
         <main className="friend-main">
           <div className="friend-container">
-            <div className="muted">Usuario no encontrado</div>
-            <button className="btn small" onClick={() => navigate(-1)}>Volver</button>
+            <div className="muted">{t('friendProfile.notFound')}</div>
+            <button className="btn small" onClick={() => navigate(-1)}>{t('friendProfile.back')}</button>
           </div>
         </main>
       </div>
@@ -109,28 +112,28 @@ export default function FriendProfile() {
               <div className="friend-meta">
                 <h2>{friend.name}</h2>
                 <div className="subtitle">{friend.username ? `@${friend.username}` : friend.email}</div>
-                {friend.nationality ? <div className="tiny">Nacionalidad: {friend.nationality}</div> : null}
+                {friend.nationality ? <div className="tiny">{t('profile.nationality')}: {friend.nationality}</div> : null}
                 {friend.created_at ? <div className="tiny">Miembro desde: {String(friend.created_at).slice(0,10)}</div> : null}
               </div>
             </div>
 
             <div className="friend-body">
-              <h3>Viajes visibles</h3>
+              <h3>{t('friendProfile.trips')}</h3>
               {visibleTrips.length === 0 ? (
-                <div className="muted">No hay viajes visibles de este usuario.</div>
+                <div className="muted">{t('friendProfile.noTrips')}</div>
               ) : (
                 <div className="friend-trips">
                   {visibleTrips.map(t => (
                     <div key={t.id} className="trip-card">
-                      <div className="trip-title">{t.destination || 'Destino desconocido'}</div>
-                      <div className="trip-dates">{t.start_date ? `${t.start_date?.slice(0,10)} — ${t.end_date?.slice(0,10)}` : 'Fechas no especificadas'}</div>
+                      <div className="trip-title">{t.destination || t('friendProfile.unknownDestination')}</div>
+                      <div className="trip-dates">{t.start_date ? formatDateRange(t.start_date, t.end_date) : t('friendProfile.datesNotSpecified')}</div>
                       {t.share ? (
                         <div className={`badge ${t.share.public ? 'badge-primary' : 'badge-secondary'}`}>
-                          {t.share.public ? 'Enlace público' : 'Compartido'}{t.share.mode ? ` (${t.share.mode})` : ''}
+                          {t.share.public ? t('friendProfile.publicLink') : t('friendProfile.shared')}{t.share.mode ? ` (${t.share.mode})` : ''}
                         </div>
                       ) : null}
                       <div style={{ marginTop: 8 }}>
-                        <button className="btn small" onClick={() => navigate(`/trip_itinerary/${t.id}`)}>Ver viaje</button>
+                        <button className="btn small" onClick={() => navigate(`/trip_itinerary/${t.id}`)}>{t('common.view')}</button>
                       </div>
                     </div>
                   ))}
@@ -139,7 +142,7 @@ export default function FriendProfile() {
             </div>
 
             <div style={{ marginTop: 18 }}>
-              <button className="btn ghost small" onClick={() => navigate(-1)}>Volver</button>
+              <button className="btn ghost small" onClick={() => navigate(-1)}>{t('friendProfile.back')}</button>
             </div>
           </div>
         </div>

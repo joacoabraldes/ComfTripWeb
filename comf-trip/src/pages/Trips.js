@@ -5,6 +5,8 @@ import Header from "../components/Header";
 import "../styles/header.css";
 import { apiGet, apiDelete, apiPost } from "./api";
 import { MapPin, Calendar,  ArrowDownWideNarrow, ArrowUpWideNarrow } from "lucide-react";
+import { useTranslation } from "../i18n";
+import { formatDate, formatDateRange, normalizeDate, isTripCurrent } from "../utils/dateUtils";
 
 export default function Trips() {
   const [loading, setLoading] = useState(true);
@@ -12,6 +14,7 @@ export default function Trips() {
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // estados para compartir viajes
   const [showShareModal, setShowShareModal] = useState(false);
@@ -51,23 +54,6 @@ export default function Trips() {
 
   const currentUserId = getCurrentUserId();
 
-  const normalizeDate = (d) => {
-    if (!d) return new Date();
-    const date = d.split("T")[0].split("-");
-    const yy = Number(date[0]);
-    const mm = Number(date[1]) - 1;
-    const dd = Number(date[2]);
-    return new Date(yy, mm, dd);
-  };
-
-  const fmtDate = (d) => {
-    if (!d) return "-";
-    const date = d.split("T")[0].split("-");
-    const yy = date[0];
-    const mm = date[1];
-    const dd = date[2];
-    return `${dd}/${mm}/${yy}`;
-  };
 
   useEffect(() => {
     let mounted = true;
@@ -75,19 +61,12 @@ export default function Trips() {
       setLoading(true);
       try {
         const res = await apiGet("/trips");
-        const isCurrentTrip = (trip) => {
-          if (!trip.start_date || !trip.end_date) return false;
-          const today = new Date();
-          const start = normalizeDate(trip.start_date);
-          const end = normalizeDate(trip.end_date);
-          return today >= start && today <= end;
-        };
 
         if (!mounted) return;
         if (Array.isArray(res)) {
           const sorted = [...res].sort((a, b) => {
-            const aNow = isCurrentTrip(a);
-            const bNow = isCurrentTrip(b);
+            const aNow = isTripCurrent(a.start_date, a.end_date);
+            const bNow = isTripCurrent(b.start_date, b.end_date);
             if (aNow && !bNow) return -1;
             if (!aNow && bNow) return 1;
             return normalizeDate(b.start_date) - normalizeDate(a.start_date);
@@ -99,7 +78,7 @@ export default function Trips() {
         }
       } catch (err) {
         console.error("Error cargando viajes:", err);
-        alert("No se pudo cargar los viajes");
+        alert(t('trips.loadError'));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -135,7 +114,7 @@ export default function Trips() {
         const today = new Date();
 
         // Tipo de viaje
-        if (typeFilter === "current" && !(today >= start && today <= end)) return false;
+        if (typeFilter === "current" && !isTripCurrent(t.start_date, t.end_date)) return false;
         if (typeFilter === "upcoming" && !(today < start)) return false;
         if (typeFilter === "past" && !(today > end)) return false;
 
@@ -175,7 +154,7 @@ export default function Trips() {
       setFriends(friendsArr);
     } catch (err) {
       console.error('Error cargando amigos:', err);
-      alert('No se pudieron cargar tus amigos.');
+      alert(t('trips.share.errorLoadingFriends'));
     }
   }
 
@@ -187,7 +166,7 @@ export default function Trips() {
   }
 
   async function submitShare() {
-    if (!tripToShare || !selectedFriend) return alert('Selecciona un amigo para compartir');
+    if (!tripToShare || !selectedFriend) return alert(t('trips.share.selectFriend'));
     setSharing(true);
     try {
       await apiPost(`/trips/${tripToShare.id}/share`, {
@@ -195,12 +174,12 @@ export default function Trips() {
         public: false,
         shared_with_user_id: selectedFriend.id,
       });
-      alert(`Viaje compartido con ${selectedFriend.name || selectedFriend.email}`);
+      alert(t('trips.share.success', { friendName: selectedFriend.name || selectedFriend.email }));
       setShowShareModal(false);
       setTripToShare(null);
     } catch (err) {
       console.error('Error compartiendo viaje:', err);
-      alert('No se pudo compartir el viaje.');
+      alert(t('trips.share.error'));
     } finally {
       setSharing(false);
     }
@@ -216,7 +195,7 @@ export default function Trips() {
                 justifyContent: "center",
                 alignItems: "center",
                 height: "100vh"
-            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando viajes…</div></div>
+            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('trips.loading')}</div></div>
           
       </div>
     );
@@ -230,24 +209,24 @@ export default function Trips() {
 
           {trips.length === 0 ? (
             <div className="trips-message" style={{border:"none"}}>
-              No tienes ningún viaje activo actualmente
+              {t('trips.empty')}
               <br />
-              ¡Planea tu siguiente viaje!
+              {t('trips.emptySubtitle')}
             </div>
           ) : (
             <>
-              <h3 className="trips-list-title">Tus viajes</h3>
+              <h3 className="trips-list-title">{t('trips.title')}</h3>
                 <div className="trips-filters">
                     <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center", flex: 1 }}>
                         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-                            <option value="">Todos los viajes</option>
-                            <option value="current">Viajes actuales</option>
-                            <option value="upcoming">Próximos viajes</option>
-                            <option value="past">Viajes anteriores</option>
+                            <option value="">{t('trips.filters.all')}</option>
+                            <option value="current">{t('trips.filters.current')}</option>
+                            <option value="upcoming">{t('trips.filters.upcoming')}</option>
+                            <option value="past">{t('trips.filters.past')}</option>
                         </select>
 
                         <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)}>
-                            <option value="">Todos los países</option>
+                            <option value="">{t('trips.filters.allCountries')}</option>
                             {availableCountries.map((c) => (
                                 <option key={c} value={c}>{c}</option>
                             ))}
@@ -258,16 +237,16 @@ export default function Trips() {
                             onChange={(e) => setProvinceFilter(e.target.value)}
                             disabled={!countryFilter}
                         >
-                            <option value="">Todas las ciudades</option>
+                            <option value="">{t('trips.filters.allCities')}</option>
                             {availableProvinces.map((p) => (
                                 <option key={p} value={p}>{p}</option>
                             ))}
                         </select>
 
                         <select value={creatorFilter} onChange={(e) => setCreatorFilter(e.target.value)}>
-                            <option value="">Todos</option>
-                            <option value="me">Creados por mí</option>
-                            <option value="others">Creados por otros</option>
+                            <option value="">{t('trips.filters.allCreators')}</option>
+                            <option value="me">{t('trips.filters.createdByMe')}</option>
+                            <option value="others">{t('trips.filters.createdByOthers')}</option>
                         </select>
                     </div>
 
@@ -278,8 +257,8 @@ export default function Trips() {
                             onChange={(e) => setSortBy(e.target.value)}
                             style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #ddd" }}
                         >
-                            <option value="trip_date">Ordenar por: Fecha de viaje</option>
-                            <option value="created_at">Ordenar por: Fecha de creación</option>
+                            <option value="trip_date">{t('trips.filters.sortByTripDate')}</option>
+                            <option value="created_at">{t('trips.filters.sortByCreated')}</option>
                         </select>
 
                         <button
@@ -294,7 +273,7 @@ export default function Trips() {
                                 alignItems: "center",
                                 justifyContent: "center",
                             }}
-                            title={sortOrder === "asc" ? "Ascendente" : "Descendente"}
+                            title={sortOrder === "asc" ? t('trips.filters.ascending') : t('trips.filters.descending')}
                         >
                             {sortOrder === "asc" ? (
                                 <ArrowUpWideNarrow size={22} color="#333" />
@@ -323,25 +302,25 @@ export default function Trips() {
                         onClick={() => navigate(`/trip_itinerary/${t.id}`)}
                       >
                         <div className="trip-destination"><MapPin size={28} color="#ff3951" strokeWidth={2.5} style={{ marginRight: 12, marginBottom:-3 }} />
-                            {t.destination ?? "Destino desconocido"}
+                            {t.destination ?? t('trips.unknownDestination')}
                           {t.share ? (
                             <span className="badge badge-primary" style={{ marginLeft: 8 }}>
-                              {t.share.public ? "Enlace público" : "Compartido"}
+                              {t.share.public ? t('trips.badges.publicLink') : t('trips.badges.shared')}
                               {t.share.mode ? ` (${t.share.mode})` : ""}
                             </span>
                           ) : isOwner ? (
                             <span className="badge badge-secondary" style={{ marginLeft: 8 }}>
-                              Creado por ti
+                              {t('trips.badges.createdByYou')}
                             </span>
                           ) : null}
                         </div>
 
                           <div className="trip-dates" style={{paddingBottom:10}}>
                               <Calendar size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8, marginBottom:-3 }} />
-                              {fmtDate(t.start_date)} — {fmtDate(t.end_date)}
+                              {formatDateRange(t.start_date, t.end_date)}
                           </div>
 
-                          <div className="trip-created">Creado: {fmtDate(t.created_at)}</div>
+                          <div className="trip-created">{t('trips.created')} {formatDate(t.created_at)}</div>
                       </div>
 
                       <div className="trip-menu-wrapper">
@@ -369,14 +348,14 @@ export default function Trips() {
                             <button
                               className="trip-menu-btn"
                               onClick={async () => {
-                                if (window.confirm(`¿Seguro que deseas eliminar el viaje a ${t.destination}?`)) {
+                                if (window.confirm(t('trips.delete.confirm', { destination: t.destination }))) {
                                   try {
                                     await apiDelete(`/trips/${t.id}`);
                                     setTrips((prev) => prev.filter((trip) => trip.id !== t.id));
                                     setMenuOpen(null);
                                   } catch (err) {
                                     console.error("Error eliminando viaje:", err);
-                                    alert("No se pudo eliminar el viaje.");
+                                    alert(t('trips.delete.error'));
                                   }
                                 }
                               }}
@@ -394,7 +373,7 @@ export default function Trips() {
 
         <div className="trips-cta">
           <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
-            Nuevo Viaje &nbsp; &gt;
+            {t('trips.newTrip')} &nbsp; &gt;
           </button>
         </div>
 
@@ -403,11 +382,11 @@ export default function Trips() {
           <div className="modal-overlay" onClick={() => !sharing && setShowShareModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <button className="modal-close" onClick={() => !sharing && setShowShareModal(false)}>×</button>
-              <h3>Compartir "{tripToShare.destination}"</h3>
-              <p className="hint">Selecciona un amigo para compartir este viaje:</p>
+              <h3>{t('trips.share.title', { destination: tripToShare.destination })}</h3>
+              <p className="hint">{t('trips.share.subtitle')}</p>
 
               {friends.length === 0 ? (
-                <div className="muted">No tienes amigos con los que compartir.</div>
+                <div className="muted">{t('trips.share.noFriends')}</div>
               ) : (
                 <div className="list">
                   {friends.map(f => (
@@ -426,9 +405,9 @@ export default function Trips() {
               )}
 
               <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button className="btn ghost" onClick={() => !sharing && setShowShareModal(false)}>Cancelar</button>
+                <button className="btn ghost" onClick={() => !sharing && setShowShareModal(false)}>{t('common.cancel')}</button>
                 <button className="btn" onClick={submitShare} disabled={!selectedFriend || sharing}>
-                  {sharing ? 'Compartiendo…' : 'Compartir'}
+                  {sharing ? t('trips.share.sharing') : t('trips.share.share')}
                 </button>
               </div>
             </div>

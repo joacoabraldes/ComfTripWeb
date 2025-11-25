@@ -25,14 +25,16 @@ import FriendProfile from "./pages/friendProfile";
 
 
 import { AuthProvider } from "./auth/AuthProvider";
+import { LanguageProvider } from "./i18n";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AddPlace from "./pages/AddPlace";
 import EditPlace from "./pages/EditPlace";
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/register" replace />} />
 
@@ -126,7 +128,8 @@ function App() {
           <Route path="*" element={<Navigate to="/error" replace />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

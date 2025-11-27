@@ -289,24 +289,24 @@ export default function Trips() {
 
 
                 <div className="trips-list" role="list">
-                {sortedTrips.map((t) => {
-                  const isOwner = currentUserId ? Number(t.user_id) === Number(currentUserId) : null;
+                {sortedTrips.map((trip) => {
+                  const isOwner = currentUserId ? Number(trip.user_id) === Number(currentUserId) : null;
                   return (
                     <div
-                      key={t.id}
-                      className={`trips-list-item ${selectedTrip && selectedTrip.id === t.id ? "active" : ""}`}
+                      key={trip.id}
+                      className={`trips-list-item ${selectedTrip && selectedTrip.id === trip.id ? "active" : ""}`}
                       role="listitem"
                     >
                       <div
                         className="trip-item-main"
-                        onClick={() => navigate(`/trip_itinerary/${t.id}`)}
+                        onClick={() => navigate(`/trip_itinerary/${trip.id}`)}
                       >
                         <div className="trip-destination"><MapPin size={28} color="#ff3951" strokeWidth={2.5} style={{ marginRight: 12, marginBottom:-3 }} />
-                            {t.destination ?? t('trips.unknownDestination')}
-                          {t.share ? (
+                            {trip.destination ?? t('trips.unknownDestination')}
+                          {trip.share ? (
                             <span className="badge badge-primary" style={{ marginLeft: 8 }}>
-                              {t.share.public ? t('trips.badges.publicLink') : t('trips.badges.shared')}
-                              {t.share.mode ? ` (${t.share.mode})` : ""}
+                              {trip.share.public ? t('trips.badges.publicLink') : t('trips.badges.shared')}
+                              {trip.share.mode ? ` (${trip.share.mode})` : ""}
                             </span>
                           ) : isOwner ? (
                             <span className="badge badge-secondary" style={{ marginLeft: 8 }}>
@@ -317,23 +317,23 @@ export default function Trips() {
 
                           <div className="trip-dates" style={{paddingBottom:10}}>
                               <Calendar size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8, marginBottom:-3 }} />
-                              {formatDateRange(t.start_date, t.end_date)}
+                              {formatDateRange(trip.start_date, trip.end_date)}
                           </div>
 
-                          <div className="trip-created">{t('trips.created')} {formatDate(t.created_at)}</div>
+                          <div className="trip-created">{t('trips.created')} {formatDate(trip.created_at)}</div>
                       </div>
 
                       <div className="trip-menu-wrapper">
                         <button
                           className="trip-menu-btn"
-                          onClick={() => setMenuOpen(menuOpen === t.id ? null : t.id)}
+                          onClick={() => setMenuOpen(menuOpen === trip.id ? null : trip.id)}
                         >
                           ⋮
                         </button>
 
-                        {menuOpen === t.id && (
+                        {menuOpen === trip.id && (
                           <div className="trip-menu">
-                            <button className="trip-menu-btn" onClick={() => openShareModal(t)}>
+                            <button className="trip-menu-btn" onClick={() => openShareModal(trip)}>
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 12V19C4 19.55 4.45 20 5 20H19C19.55 20 20 19.55 20 19V12"
                                       stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -343,15 +343,15 @@ export default function Trips() {
                             </button>
 
                             <button className="trip-menu-btn"
-                              onClick={() => {navigate(`/edit-trip/${t.id}`); setMenuOpen(null);}}>✎</button>
+                              onClick={() => {navigate(`/edit-trip/${trip.id}`); setMenuOpen(null);}}>✎</button>
 
                             <button
                               className="trip-menu-btn"
                               onClick={async () => {
-                                if (window.confirm(t('trips.delete.confirm', { destination: t.destination }))) {
+                                if (window.confirm(t('trips.delete.confirm', { destination: trip.destination }))) {
                                   try {
-                                    await apiDelete(`/trips/${t.id}`);
-                                    setTrips((prev) => prev.filter((trip) => trip.id !== t.id));
+                                    await apiDelete(`/trips/${trip.id}`);
+                                    setTrips((prev) => prev.filter((tripItem) => tripItem.id !== trip.id));
                                     setMenuOpen(null);
                                   } catch (err) {
                                     console.error("Error eliminando viaje:", err);

@@ -409,7 +409,7 @@ export default function AddPlace() {
         <div className="trip-it-root" style={{background: "#fbfbfb"}}>
             <Header/>
 
-            <main className="trip-it-main" style={{paddingTop:50}}>
+            <main className="trip-it-main">
                 <section className="trip-it-left" >
 
                     <h2 className="trip-it-title">{trip.destination}</h2>
@@ -458,8 +458,8 @@ export default function AddPlace() {
                         <div className="trip-it-card">
                         <label>Fecha</label>
 
-                        <div style={ {borderRadius: "12px", padding:"20px", border: "1px solid #e6e6e6"}}>
-                        <div className="calendar-header" style={{paddingBottom:"15px"}}>
+                        <div style={ {borderRadius: "0.75rem", padding:"1.25rem", border: "0.0625rem solid #e6e6e6"}}>
+                        <div className="calendar-header" style={{paddingBottom:"0.9375rem"}}>
                             <span className="month-year">{monthNames[currentMonth]} {currentYear}</span>
                             <div className="arrows">
                                 <button type="button" className="arrow" onClick={handlePrevMonth}>‹</button>
@@ -498,13 +498,13 @@ export default function AddPlace() {
                         </div>
                         </div>
 
-                        <label style={{paddingTop:"20px"}}>Hora inicio</label>
+                        <label style={{paddingTop:"1.25rem"}}>Hora inicio</label>
                         <TimePicker
                             value={startHour}
                             onChange={setStartHour}
                             occupiedSlots={occupiedSlots}
                             disabled={!date}/>
-                        <label style={{paddingTop:"20px"}}>Hora fin</label>
+                        <label style={{paddingTop:"1.25rem"}}>Hora fin</label>
                         <TimePicker
                             value={endHour}
                             onChange={setEndHour}
@@ -535,7 +535,7 @@ export default function AddPlace() {
                             <Map
                                 {...viewState}
                                 onMove={(evt) => setViewState(evt.viewState)}
-                                style={{ width: "100%", height: "100%", borderRadius: "10px" }}
+                                style={{ width: "100%", height: "100%", borderRadius: "0.625rem" }}
                                 mapStyle="mapbox://styles/mapbox/streets-v11"
                                 mapboxAccessToken={MAPBOX_TOKEN}
                             >
@@ -582,7 +582,7 @@ export default function AddPlace() {
                                                     width="24"
                                                     height="24"
                                                     viewBox="0 0 24 24"
-                                                    style={{ transform: "translate(-12px,-24px)" }}
+                                                    style={{ transform: "translate(-0.75rem,-1.5rem)" }}
                                                     xmlns="http://www.w3.org/2000/svg"
                                                 >
                                                     <path
@@ -629,15 +629,15 @@ export default function AddPlace() {
                                     alt="Lugar actual"
                                 />
                                 <div className="place-it-info">
-                                    <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{locationInfo.titulo}</h3>
-                                    <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}>( {locationInfo.fk_interest} )</p></div></div>
-                            <p style= {{fontSize:"20px",marginTop:"5px",  marginBottom:"5px"}}><strong>Descripcion: </strong>
+                                    <h3 style={{fontSize:"3.125rem",marginTop:"0.3125rem",  marginBottom:"0.3125rem"}}>{locationInfo.titulo}</h3>
+                                    <p style= {{fontSize:"1.25rem",marginTop:"0.3125rem",  marginBottom:"0.3125rem"}}>( {locationInfo.fk_interest} )</p></div></div>
+                            <p style= {{fontSize:"1.25rem",marginTop:"0.3125rem",  marginBottom:"0.3125rem"}}><strong>Descripcion: </strong>
                                 {locationInfo.descripcion ? locationInfo.descripcion : ""}</p>
                             <div style={{ flex: 1, marginTop: 20 }}>
                                 <Map
                                     {...viewState}
                                     onMove={(evt) => setViewState(evt.viewState)}
-                                    style={{ width: "100%", height: "100%", borderRadius: "10px" }}
+                                    style={{ width: "100%", height: "100%", borderRadius: "0.625rem" }}
                                     mapStyle="mapbox://styles/mapbox/streets-v11"
                                     mapboxAccessToken={MAPBOX_TOKEN}
                                 >
@@ -681,7 +681,7 @@ export default function AddPlace() {
                                                         width="24"
                                                         height="24"
                                                         viewBox="0 0 24 24"
-                                                        style={{ transform: "translate(-12px,-24px)" }}
+                                                        style={{ transform: "translate(-0.75rem,-1.5rem)" }}
                                                         xmlns="http://www.w3.org/2000/svg"
                                                     >
                                                         <path

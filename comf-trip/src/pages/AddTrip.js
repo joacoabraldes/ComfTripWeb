@@ -889,8 +889,10 @@ export default function AddTrip() {
 
   if (loading) {
     return (
-      <div className="trip-it-root">
+      <div className="add-trip-root">
+        <Header />
         <main
+          className="add-trip-container"
           style={{
             display: "flex",
             justifyContent: "center",
@@ -898,7 +900,7 @@ export default function AddTrip() {
             height: "80vh",
           }}
         >
-          <div style={{ fontSize: 25 }}>Cargando…</div>
+          <div style={{ fontSize: "1.5625rem" }}>Cargando…</div>
         </main>
       </div>
     );
@@ -946,6 +948,7 @@ export default function AddTrip() {
 
   return (
     <div className="add-trip-root">
+      <Header />
       <div className="add-trip-container">
         <div className="add-trip-left">
           <form className="form" onSubmit={handleSubmit}>
@@ -1034,13 +1037,13 @@ export default function AddTrip() {
                           onClick={() => !isPast && handleDateSelect(day.date)}
                           disabled={isPast}
                           style={{
-                            borderTopLeftRadius: end || inRange ? "0" : "90px",
+                            borderTopLeftRadius: end || inRange ? "0" : "5.625rem",
                             borderBottomLeftRadius:
-                              end || inRange ? "0" : "90px",
+                              end || inRange ? "0" : "5.625rem",
                             borderTopRightRadius:
-                              start || inRange ? "0" : "90px",
+                              start || inRange ? "0" : "5.625rem",
                             borderBottomRightRadius:
-                              start || inRange ? "0" : "90px",
+                              start || inRange ? "0" : "5.625rem",
                           }}
                         >
                           {day.date}

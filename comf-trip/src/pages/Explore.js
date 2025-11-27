@@ -307,7 +307,7 @@ export default function Explore() {
               justifyContent: "center",
               alignItems: "center",
               height: "100vh"
-          }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('common.loading')}</div></div>
+          }}><div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('common.loading')}</div></div>
       </div>
     );
   }

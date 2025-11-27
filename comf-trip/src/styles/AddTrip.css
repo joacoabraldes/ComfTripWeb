@@ -13,13 +13,14 @@
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
+  padding-top: var(--header-height, 5rem);
 }
 
 /* Container: left form + right hero */
 .add-trip-container {
   display: flex;
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - var(--header-height, 5rem));
   background-color: white;
   overflow: hidden;
 }
@@ -28,8 +29,8 @@
 .add-trip-left {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-    margin: 30px;
+  padding: 1.25rem;
+    margin: 1.875rem;
   width: 80%;
   overflow-y: auto;   /* scroll only here */
 }
@@ -41,47 +42,47 @@
   justify-content: center;
   align-items: center;
 {/*background-color: #ffe5e8;*/}
-  padding: 24px;
+  padding: 1.5rem;
 }
 
 /* hero sizing */
 .hero-art {
-  width: 260px;
-  height: 260px;
+  width: 16.25rem;
+  height: 16.25rem;
   display: block;
 }
 
 /* brand */
 .brand {
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #ff3951;
   text-align: center;
-  margin-top: 18px;
+  margin-top: 1.125rem;
 }
 
 /* Titles */
 .add-trip-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
   text-align: center;
 }
 
 .add-trip-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #666;
-  margin: 8px 0 16px;
+  margin: 0.5rem 0 1rem;
   text-align: center;
 }
 
 /* Form container */
 .form {
   display: flex;
-  padding: 4px 0 40px 0;
+  padding: 0.25rem 0 2.5rem 0;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.125rem;
   height: 100%;
 }
 
@@ -93,13 +94,13 @@
 
 /* Textarea */
 .textarea {
-  min-height: 120px;
+  min-height: 7.5rem;
   resize: vertical;
-  padding: 12px;
-  border: 1px solid #e8d1d1;
+  padding: 0.75rem;
+  border: 0.0625rem solid #e8d1d1;
   background: #fcf7f7;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   outline: none;
   box-sizing: border-box;
   width: 100%;
@@ -111,9 +112,9 @@
 
 /* Card helper around sections */
 .card {
-  margin-bottom: 16px;
-  padding: 12px;
-  border-radius: 8px;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
   background: #fbfbfb;
   box-sizing: border-box;
 }
@@ -128,27 +129,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 }
 
 .month-year {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: #333;
 }
 
 .arrows {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .arrow {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 1.25rem;
   color: #ff3951;
   cursor: pointer;
-  padding: 6px;
+  padding: 0.375rem;
 }
 
 .arrow:hover {
@@ -156,18 +157,18 @@
 }
 
 .calendar {
-  margin-top: 10px;
+  margin-top: 0.625rem;
 }
 
 .week-days {
   display: flex;
   justify-content: space-around;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .week-day {
   color: #999;
-  font-size: 12px;
+  font-size: 0.75rem;
   width: 14.28%;
   text-align: center;
 }
@@ -179,16 +180,16 @@
 
 .empty-day {
   width: 14.28%;
-  height: 42px;
+  height: 2.625rem;
 }
 
 .day {
   width: 14.28%;
-  height: 42px;
+  height: 2.625rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 15px;
+  font-size: 0.9375rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -196,7 +197,7 @@
 
 .day:hover {
   background-color: #f3f3f3;
-  border-radius: 90px;
+  border-radius: 5.625rem;
 }
 .day:hover:disabled{
     cursor: initial;
@@ -207,20 +208,20 @@
 .selected-day {
   background-color: #ffe5e8;
   color: #ff3951;
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .former-day {
   background-color: #ff3951;
   color: white;
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .date-range {
   text-align: center;
-  margin-top: 12px;
+  margin-top: 0.75rem;
   color: #666;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* Buttons */
@@ -228,12 +229,12 @@
   background-color: #ff3951;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 18px;
+  border-radius: 0.625rem;
+  font-size: 1.125rem;
   cursor: pointer;
   text-align: center;
     font-weight: 600;
-    height: 50px;
+    height: 3.125rem;
     width: 100%;
 }
 
@@ -249,12 +250,12 @@
 
 .btn-secondary {
   background: none;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font-size: 16px;
+  border: 0.0625rem solid #ddd;
+  border-radius: 0.625rem;
+  font-size: 1rem;
   color: #666;
   cursor: pointer;
-    height: 50px;
+    height: 3.125rem;
     font-weight: 600;
     width: 40%;
 }
@@ -263,9 +264,9 @@
 .flights-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 0.75rem;
   align-items: end;
-  margin-top: 8px;
+  margin-top: 0.5rem;
 }
 
 /* A field that must span both columns */
@@ -274,7 +275,7 @@
 }
 
 /* small screens -> single column */
-@media (max-width: 720px) {
+@media (max-width: 45rem) {
   .add-trip-container {
     flex-direction: column;
     height: auto;
@@ -284,7 +285,7 @@
 
   .add-trip-right {
     width: 100%;
-    padding: 20px;
+    padding: 1.25rem;
   }
 
   .flights-grid {
@@ -292,7 +293,7 @@
   }
 
   .add-trip-left {
-    padding: 16px;
+    padding: 1rem;
     height: auto;
     max-height: none;
   }
@@ -302,15 +303,15 @@
 .card label,
 .card .field label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 0.375rem;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #333;
 }
 
 /* small helper spacing */
 .form > .card:last-child {
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 /* keep consistent box-sizing */

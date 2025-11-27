@@ -102,7 +102,7 @@ export default function ProfilePage() {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh"
-    }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('profile.loading')}</div></div></div>
+    }}><div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('profile.loading')}</div></div></div>
   }
 
   return (
@@ -146,20 +146,20 @@ export default function ProfilePage() {
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
                   style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '16px',
-                    marginTop: '8px',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.5rem',
+                    border: '0.0625rem solid #ddd',
+                    fontSize: '1rem',
+                    marginTop: '0.5rem',
                     cursor: 'pointer',
                     backgroundColor: '#fff',
-                    maxWidth: '200px',
+                    maxWidth: '12.5rem',
                   }}
                 >
                   <option value="es">{t('profile.spanish')}</option>
                   <option value="en">{t('profile.english')}</option>
                 </select>
-                <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{t('profile.languageDescription')}</p>
+                <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>{t('profile.languageDescription')}</p>
               </div>
             </div>
           </div>

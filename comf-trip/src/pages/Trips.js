@@ -195,7 +195,7 @@ export default function Trips() {
                 justifyContent: "center",
                 alignItems: "center",
                 height: "100vh"
-            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('trips.loading')}</div></div>
+            }}><div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('trips.loading')}</div></div>
           
       </div>
     );
@@ -217,7 +217,7 @@ export default function Trips() {
             <>
               <h3 className="trips-list-title">{t('trips.title')}</h3>
                 <div className="trips-filters">
-                    <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center", flex: 1 }}>
+                    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center", flex: 1 }}>
                         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
                             <option value="">{t('trips.filters.all')}</option>
                             <option value="current">{t('trips.filters.current')}</option>
@@ -251,11 +251,11 @@ export default function Trips() {
                     </div>
 
                     {/* NUEVOS CONTROLES A LA DERECHA */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "auto" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginLeft: "auto" }}>
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #ddd" }}
+                            style={{ padding: "0.5rem 0.75rem", borderRadius: "0.5rem", border: "0.0625rem solid #ddd" }}
                         >
                             <option value="trip_date">{t('trips.filters.sortByTripDate')}</option>
                             <option value="created_at">{t('trips.filters.sortByCreated')}</option>

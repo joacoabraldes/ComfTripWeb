@@ -220,13 +220,14 @@ export default function EditPlace() {
 
     if (loading) return(
     <div className="trip-it-root">
+                <Header />
                 <main className="trip-it-main" style={{
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
                     height: "80vh"
                 }}>
-                    <div style={{fontSize:25}}> Cargando… </div>
+                    <div style={{fontSize:"1.5625rem"}}> Cargando… </div>
                 </main>
             </div>
         );
@@ -253,7 +254,7 @@ export default function EditPlace() {
     return (
         <div className="trip-it-root">
             <Header />
-            <main className="trip-it-main" style={{paddingTop:50}}>
+            <main className="trip-it-main">
                 <section className="trip-it-left">
                     <h2 className="trip-it-title">{trip.destination}</h2>
                     <div className="trip-it-dates">

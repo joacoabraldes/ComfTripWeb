@@ -223,14 +223,15 @@ export default function EditTrip() {
 
     if (loadingOpen) {
         return (
-            <div className="trip-it-root">
-                <main className="trip-it-main" style={{
+            <div className="add-trip-root">
+                <Header />
+                <main className="add-trip-container" style={{
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
                     height: "80vh" // ocupa casi toda la pantalla
                 }}>
-                    <div style={{fontSize:25}}> Cargando… </div>
+                    <div style={{fontSize:"1.5625rem"}}> Cargando… </div>
                 </main>
             </div>
         );

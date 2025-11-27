@@ -58,7 +58,7 @@ export default function OptimizedImage({
         width: "100%",
         position: "relative",
         overflow: "hidden",
-        borderRadius: 12,
+        borderRadius: "0.75rem",
         background: "#f3f3f3",
       }}
     >

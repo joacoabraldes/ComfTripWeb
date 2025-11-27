@@ -237,13 +237,13 @@ export default function MapPage() {
     return `hsl(${hue} 70% 45%)`;
   };
   if (loading){
-      return (<div>
-          <Header/><div style={{
+      return (<div className="map-root">
+          <Header/>
+          <main className="map-main" style={{
           display: "flex",
           justifyContent: "center",
-          alignItems: "center",
-          height: "100vh"
-      }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>Cargando mapa…</div></div>
+          alignItems: "center"
+      }}><div className="muted" style={{fontSize:"1.5625rem"}}>Cargando mapa…</div></main>
       </div>)
   }
 
@@ -337,7 +337,7 @@ export default function MapPage() {
             mapStyle="mapbox://styles/mapbox/streets-v11"
             mapboxAccessToken={MAPBOX_TOKEN}
           >
-            <div style={{ position: "absolute", right: 10, top: 10, zIndex: 1 }}>
+            <div style={{ position: "absolute", right: "0.625rem", top: "0.625rem", zIndex: 1 }}>
               <NavigationControl showCompass showZoom />
             </div>
 
@@ -357,7 +357,7 @@ export default function MapPage() {
                     width="24"
                     height="24"
                     viewBox="0 0 24 24"
-                    style={{ transform: "translate(-12px,-24px)", cursor: "pointer" }}
+                    style={{ transform: "translate(-0.75rem,-1.5rem)", cursor: "pointer" }}
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={colorForCategory(loc.fk_interest)} />
@@ -377,8 +377,8 @@ export default function MapPage() {
                 offset={[-5, -43]}
               >
                 <div style={{ maxWidth: 260}}>
-                  <h3 style={{ margin: "0 0 6px 0" }}>{selectedLocation.titulo}</h3>
-                  <div style={{ fontSize: 13, color: "#444", marginBottom: 6 }}>
+                  <h3 style={{ margin: "0 0 0.375rem 0" }}>{selectedLocation.titulo}</h3>
+                  <div style={{ fontSize: "0.8125rem", color: "#444", marginBottom: "0.375rem" }}>
                     {selectedLocation.descripcion?.slice(0, 200)}
                   </div>
                   {selectedLocation.imagenes && selectedLocation.imagenes.length > 0 && (
@@ -430,7 +430,7 @@ export default function MapPage() {
                 width="28"
                 height="28"
                 viewBox="0 0 24 24"
-                style={{ transform: "translate(-14px,-28px)" }}
+                style={{ transform: "translate(-0.875rem,-1.75rem)" }}
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path d="M12 2C8.1 2 5 5.1 5 9c0 5 7 12 7 12s7-7 7-12c0-3.9-3.1-7-7-7z" fill="#ff7a45" />

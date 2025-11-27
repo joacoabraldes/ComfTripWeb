@@ -2,8 +2,8 @@
   min-height: 100vh;
   height: 100vh;
   background: #f9f9f9;
-  padding: 20px;
-  padding-top: var(--header-height, 80px);
+  padding: 1.25rem;
+  padding-top: var(--header-height, 5rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,22 +12,22 @@
 
 .profile-container {
   width: 100%;
-  max-width: 900px;
+  max-width: 56.25rem;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1.5rem;
 }
 
 .profile-card {
   background: #fff;
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-radius: 1rem;
+  padding: 2.5rem;
+  box-shadow: 0 0.25rem 1.25rem rgba(0,0,0,0.08);
 }
 
 .profile-main {
   display: flex;
-  gap: 60px;
+  gap: 3.75rem;
   align-items: flex-start;
 }
 
@@ -35,20 +35,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 250px;
+  min-width: 15.625rem;
 }
 
 .profile-photo {
-  width: 200px;
-  height: 200px;
+  width: 12.5rem;
+  height: 12.5rem;
   border-radius: 50%;
   overflow: hidden;
   background: #ddd;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
-  border: 3px solid #ff3951;
+  margin-bottom: 1.25rem;
+  border: 0.1875rem solid #ff3951;
 }
 
 .profile-photo img {
@@ -58,12 +58,12 @@
 }
 
 .default-photo {
-  font-size: 80px;
+  font-size: 5rem;
   color: #aaa;
 }
 
 .profile-name {
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 600;
   text-align: center;
   color: #333;
@@ -74,41 +74,41 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1.5rem;
 }
 
 .profile-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .profile-field-label {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: #ff3951;
 }
 
 .profile-field-value {
-  font-size: 18px;
+  font-size: 1.125rem;
   color: #333;
 }
 
 .profile-actions {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
   width: 100%;
-  max-width: 900px;
+  max-width: 56.25rem;
 }
 
 .profile-actions button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  font-size: 18px;
-  border-radius: 12px;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  font-size: 1.125rem;
+  border-radius: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
   border: none;
@@ -123,8 +123,8 @@
 
 .btn-edit:hover {
   background-color: #ffd6e0;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 57, 81, 0.2);
+  transform: translateY(-0.125rem);
+  box-shadow: 0 0.25rem 0.75rem rgba(255, 57, 81, 0.2);
 }
 
 .btn-change {
@@ -134,8 +134,8 @@
 
 .btn-change:hover {
   background-color: #ffd6e0;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 57, 81, 0.2);
+  transform: translateY(-0.125rem);
+  box-shadow: 0 0.25rem 0.75rem rgba(255, 57, 81, 0.2);
 }
 
 .btn-logout {
@@ -145,22 +145,22 @@
 
 .btn-logout:hover {
   background-color: #ddd;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-0.125rem);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .profile-root {
-    padding-top: calc(var(--header-height, 80px) + 16px);
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-top: calc(var(--header-height, 5rem) + 1rem);
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .profile-main {
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 1.875rem;
   }
 
   .profile-right {
@@ -170,19 +170,19 @@
   }
 
   .profile-photo {
-    width: 150px;
-    height: 150px;
+    width: 9.375rem;
+    height: 9.375rem;
   }
 
   .default-photo {
-    font-size: 60px;
+    font-size: 3.75rem;
   }
 
   .profile-name {
-    font-size: 24px;
+    font-size: 1.5rem;
   }
 
   .profile-card {
-    padding: 24px;
+    padding: 1.5rem;
   }
 }

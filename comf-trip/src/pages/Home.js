@@ -331,12 +331,20 @@ export default function Home() {
         : popular;
 
     if(loadingTrips || loadingCurrent || loadingPopular){
-        return (<div style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh"
-        }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('home.loading')}</div></div>)
+        return (
+            <div className="home-root">
+                <Header/>
+                <div style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "calc(100vh - var(--header-height, 5rem))",
+                    paddingTop: "var(--header-height, 5rem)"
+                }}>
+                    <div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('home.loading')}</div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -344,7 +352,7 @@ export default function Home() {
             <Header/>
 
             <main className="hero">
-                <div className="hero-left"><div style={{ marginTop: (currentPlace && nextPlace) ? "20px": "", marginBottom:(currentPlace && nextPlace) ? "40px":""}}>
+                <div className="hero-left"><div style={{ marginTop: (currentPlace && nextPlace) ? "1.25rem": "", marginBottom:(currentPlace && nextPlace) ? "2.5rem":""}}>
                     <div>
 
                         <h1 style={{margin: 0}}>
@@ -380,8 +388,8 @@ export default function Home() {
                         <div>{currentPlace && (
 
                             <div>
-                                <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
-                                <h3 style={{margin:0, marginBottom:"10px"}}>{t('home.currentActivity')}</h3>
+                                <div style={{background:"#ff3951", height:"0.125rem", marginBottom:"1.875rem", marginTop:"1.875rem"}}></div>
+                                <h3 style={{margin:0, marginBottom:"0.625rem"}}>{t('home.currentActivity')}</h3>
                                 <button className="place-row"
                                         onClick={() => {
                                             if (currentPlace && currentPlace.location) {
@@ -433,7 +441,7 @@ export default function Home() {
                             {nextPlace && (
                                 <div>
                                     <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
-                                    <h3 style={{margin:"0", marginBottom:"10px"}}>{t('home.nextActivity')}</h3>
+                                    <h3 style={{margin:"0", marginBottom:"0.625rem"}}>{t('home.nextActivity')}</h3>
                                     <button className="place-row"
                                             onClick={() => {
                                                 if (nextPlace && nextPlace.location) {
@@ -574,7 +582,7 @@ export default function Home() {
                                                         width={sizeMarker}
                                                         height={sizeMarker}
                                                         viewBox="0 0 24 24"
-                                                        style={{transform: "translate(-12px,-24px)", cursor: "pointer"}}
+                                                        style={{transform: "translate(-0.75rem,-1.5rem)", cursor: "pointer"}}
                                                         xmlns="http://www.w3.org/2000/svg"
                                                     >
                                                         <path

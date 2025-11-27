@@ -25,7 +25,7 @@ export default function Header() {
             <div className="app-header-center">
                 <nav className="app-header-links">
                 <button
-                    className={`nav-btn ${isActive("/home") ? "active" : ""}`}
+                    className={`nav-btn ${isActive("/home") ? "active trips" : ""}`}
                     onClick={() => go("/home")}
                 >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -79,7 +79,7 @@ export default function Header() {
             </nav></div>
             <nav className="app-header-right">
                 <button
-                    className={`nav-btn ${isActive("/profile") ? "active" : ""}`}
+                    className={`nav-btn ${isActive("/profile") ? "active trips" : ""}`}
                     style={{width:80}}
                     onClick={() => go("/profile")}
                 >

@@ -1335,7 +1335,7 @@ const handleSaveSelectedFlight = async () => {
         marginBottom: 16,
         padding: 16,
         borderRadius: 12,
-        boxShadow: "0 6px 20px rgba(12,13,14,0.06)",
+        boxShadow: "0 0.375rem 1.25rem rgba(12,13,14,0.06)",
       }}
     >
       <div
@@ -1681,7 +1681,7 @@ const handleSaveSelectedFlight = async () => {
         marginBottom: 16,
         padding: 16,
         borderRadius: 12,
-        boxShadow: "0 6px 20px rgba(12,13,14,0.06)",
+        boxShadow: "0 0.375rem 1.25rem rgba(12,13,14,0.06)",
       }}
     >
       <div
@@ -1788,7 +1788,7 @@ const handleSaveSelectedFlight = async () => {
           padding: 16,
           borderRadius: 12,
           background: "#fff",
-          boxShadow: "0 8px 30px rgba(12,13,14,0.06)",
+          boxShadow: "0 0.5rem 1.875rem rgba(12,13,14,0.06)",
           height: "100%",
           display: "flex",
           flexDirection: "column",
@@ -1851,11 +1851,11 @@ const handleSaveSelectedFlight = async () => {
           </div>
         </div>
 
-        <div style={{ marginTop: 16, flex: 1 }}>
-          <h4 style={{ margin: "0 0 8px 0" }}>Notas</h4>
+        <div style={{ marginTop: "1rem", flex: 1 }}>
+          <h4 style={{ margin: "0 0 0.5rem 0" }}>Notas</h4>
           <div style={{ color: "#333", lineHeight: 1.5 }}>{p.notes || "-"}</div>
 
-          <div style={{ marginTop: 18 }}>
+          <div style={{ marginTop: "1.125rem" }}>
             <h4 style={{ margin: "0 0 8px 0" }}>Ubicación</h4>
             <div style={{ color: "#333" }}>
               {loc.titulo || loc.address || "Sin dirección"}
@@ -1933,9 +1933,7 @@ const handleSaveSelectedFlight = async () => {
       <main
         className="trip-it-main"
         style={{
-          padding: "70px 20px 40px 20px",
-          display: "grid",
-          gridTemplateColumns: "1fr 560px",
+          gridTemplateColumns: "1fr 35rem",
         }}
       >
         <section className="trip-it-left">
@@ -2122,7 +2120,7 @@ const handleSaveSelectedFlight = async () => {
                               }}
                               onMouseEnter={(e) =>
                               (e.currentTarget.style.boxShadow =
-                                "0 8px 20px rgba(12,13,14,0.06)")
+                                "0 0.5rem 1.25rem rgba(12,13,14,0.06)")
                               }
                               onMouseLeave={(e) =>
                                 (e.currentTarget.style.boxShadow = "none")
@@ -2282,7 +2280,7 @@ const handleSaveSelectedFlight = async () => {
                                       onClick={(e) => e.stopPropagation()} // prevent document click from immediately closing
                                       style={{
                                         position: "absolute",
-                                        top: "calc(100% + 6px)",
+                                        top: "calc(100% + 0.375rem)",
                                         right: 0,
                                         zIndex: 30,
                                       }}
@@ -2350,7 +2348,7 @@ const handleSaveSelectedFlight = async () => {
               height: "100%",
               borderRadius: 12,
               overflow: "hidden",
-              boxShadow: "0 10px 30px rgba(12,13,14,0.06)",
+              boxShadow: "0 0.625rem 1.875rem rgba(12,13,14,0.06)",
             }}
           >
             <Map
@@ -2413,8 +2411,8 @@ const handleSaveSelectedFlight = async () => {
                         justifyContent: "center",
                         fontWeight: 700,
                         boxShadow: primaryRgb
-                          ? `0 6px 18px rgba(${primaryRgb.r},${primaryRgb.g},${primaryRgb.b},0.18)`
-                          : "0 6px 18px rgba(25,120,200,0.18)",
+                          ? `0 0.375rem 1.125rem rgba(${primaryRgb.r},${primaryRgb.g},${primaryRgb.b},0.18)`
+                          : "0 0.375rem 1.125rem rgba(25,120,200,0.18)",
                       }}
                     >
                       {pt.index}
@@ -2507,7 +2505,7 @@ const handleSaveSelectedFlight = async () => {
                     style={{
                       cursor: "pointer",
                       pointerEvents: "auto",
-                      transform: "translateY(-6px)",
+                      transform: "translateY(-0.375rem)",
                     }}
                   >
                     <svg
@@ -2540,7 +2538,7 @@ const handleSaveSelectedFlight = async () => {
                     <div className="place-popUp">
                       {/* if image is loading show spinner */}
                       {selectedLocationOnMap.imageLoading ? (
-                        <div style={{ width: '50px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: '3.125rem', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <div className="img-spinner" />
                         </div>
                       ) : selectedLocationOnMap.imageUrl && <div className="img-popup-container">

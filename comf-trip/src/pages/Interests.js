@@ -6,6 +6,7 @@ import "../styles/interests.css";
 import Sidebar from "../components/Sidebar";
 import Hamburger from "../components/icons/Hamburger";
 import UserIcon from "../components/icons/UserIcon";
+import { useTranslation } from "../i18n";
 
 // --- image loader: compatible Vite (import.meta.glob) y CRA/webpack (require.context)
 const imagesMap = (() => {
@@ -55,6 +56,7 @@ const PLACEHOLDER =
 
 export default function InterestsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [interests, setInterests] = useState([]);
@@ -70,7 +72,7 @@ export default function InterestsPage() {
         setInterests(Array.isArray(res) ? res : []);
       } catch (err) {
         console.error("Error loading interests:", err);
-        alert("No se pudieron cargar los intereses. Intente nuevamente.");
+        alert(t('interests.loadError'));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -90,7 +92,7 @@ export default function InterestsPage() {
   async function submitInterests() {
     const stored = JSON.parse(localStorage.getItem("user") || "null");
     if (!stored || !stored.id) {
-      alert("No authenticated user. Please log in.");
+      alert(t('interests.userNotAuthenticated'));
       navigate("/login");
       return;
     }
@@ -98,7 +100,7 @@ export default function InterestsPage() {
     const interestIds = Array.from(selected);
 
     if (!interestIds.length) {
-      const ok = window.confirm("No has seleccionado intereses. Deseas continuar?");
+      const ok = window.confirm(t('interests.noInterestsSelected'));
       if (!ok) return;
     }
 
@@ -121,10 +123,10 @@ export default function InterestsPage() {
     <div className="interests-root">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="home-header">
-        <button className="icon-btn icon-left" aria-label="menu" onClick={() => setMenuOpen(v => !v)}>
+        <button className="icon-btn icon-left" aria-label={t('common.menu')} onClick={() => setMenuOpen(v => !v)}>
           <Hamburger />
         </button>
-        <button className="icon-btn icon-right" aria-label="profile" onClick={() => navigate("/profile")}>
+        <button className="icon-btn icon-right" aria-label={t('common.profile')} onClick={() => navigate("/profile")}>
           <UserIcon />
         </button>
       </div>

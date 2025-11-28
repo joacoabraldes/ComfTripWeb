@@ -113,7 +113,7 @@ export default function FriendProfile() {
                 <h2>{friend.name}</h2>
                 <div className="subtitle">{friend.username ? `@${friend.username}` : friend.email}</div>
                 {friend.nationality ? <div className="tiny">{t('profile.nationality')}: {friend.nationality}</div> : null}
-                {friend.created_at ? <div className="tiny">Miembro desde: {String(friend.created_at).slice(0,10)}</div> : null}
+                {friend.created_at ? <div className="tiny">{t('friendProfile.memberSince')}: {String(friend.created_at).slice(0,10)}</div> : null}
               </div>
             </div>
 

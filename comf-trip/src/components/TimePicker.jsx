@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
+import { useTranslation } from "../i18n";
 
 export default function TimePicker({ value, onChange, occupiedSlots, minTime, maxTime, disabled }) {
+    const { t } = useTranslation();
     const [hour, setHour] = useState(value ? value.split(":")[0] : "");
     const [minute, setMinute] = useState(value ? value.split(":")[1] : "");
 
@@ -82,7 +84,7 @@ export default function TimePicker({ value, onChange, occupiedSlots, minTime, ma
             <Select
                 className="dropdown-select"
                 classNamePrefix="react-select"
-                placeholder="HH"
+                placeholder={t('common.hours')}
                 isDisabled={disabled}
                 isSearchable={false}
                 options={hourOptions}
@@ -96,7 +98,7 @@ export default function TimePicker({ value, onChange, occupiedSlots, minTime, ma
             <Select
                 className="dropdown-select"
                 classNamePrefix="react-select"
-                placeholder="MM"
+                placeholder={t('common.minutes')}
                 isDisabled={disabled || !hour}
                 isSearchable={false}
                 options={minuteOptions}

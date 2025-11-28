@@ -1,7 +1,9 @@
 // src/components/LogoSvg.jsx
 import React from "react";
+import { useTranslation } from "../i18n";
 
 export default function LogoSvg({ width = 546, height = 415, className = "" }) {
+  const { t } = useTranslation();
   return (
     <svg
       width={width}
@@ -11,7 +13,7 @@ export default function LogoSvg({ width = 546, height = 415, className = "" }) {
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       role="img"
-      aria-label="ComfTrip logo"
+      aria-label={t('common.logo')}
     >
       <defs>
         <clipPath id="clip0">

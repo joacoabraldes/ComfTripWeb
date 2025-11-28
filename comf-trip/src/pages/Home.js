@@ -488,13 +488,13 @@ export default function Home() {
 
                         </div>
                     ) : (<div> {!nextPlace && currentTrip ? (
-                        <div className="muted">No tienes mas actividades en este viaje. Agrega uno nuevo </div>) : (
+                        <div className="muted">{t('home.noMoreActivities')}</div>) : (
                         <div>
 
                             <div style={{background:"#ff3951", height:2, marginBottom:30, marginTop:30}}></div>
-                                <h3 style={{marginBottom: 10}}>Tus viajes</h3>
+                                <h3 style={{marginBottom: 10}}>{t('home.yourTrips')}</h3>
                                 {trips.length === 0 ? (
-                                    <div className="muted">No tienes viajes. Empieza creando uno 😉</div>
+                                    <div className="muted">{t('home.noTrips')}</div>
                                 ) : (
                                     <div className="trips-preview">
                                         {trips.slice(0, 4).map((t) => (
@@ -514,7 +514,7 @@ export default function Home() {
                                             </button>
                                         ))}
                                         {trips.length > 4 && (
-                                            <button className="see-all" onClick={() => navigate("/trips")}>{t('common.view')} todos</button>
+                                            <button className="see-all" onClick={() => navigate("/trips")}>{t('home.viewAll')}</button>
                                         )}
                                     </div>
                                 )}
@@ -787,7 +787,7 @@ export default function Home() {
                                                     key={i}
                                                     className={`dot ${i === index ? "active" : ""}`}
                                                     onClick={() => setIndex(i)}
-                                                    aria-label={`Go to ${i + 1}`}
+                                                    aria-label={t('common.goTo', { number: i + 1 })}
                                                 />
                                             ))}
                                         </div>

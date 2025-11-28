@@ -87,7 +87,7 @@ export default function ChangePassword() {
       <Header/>
 
       <main className="change-container">
-        <button className="back-btn" onClick={() => navigate(-1)} aria-label="volver">←</button>
+        <button className="back-btn" onClick={() => navigate(-1)} aria-label={t('common.back')}>←</button>
 
         <h1 className="change-title">{t('changePassword.title')}</h1>
 

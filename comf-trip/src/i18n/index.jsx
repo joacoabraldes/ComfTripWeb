@@ -31,6 +31,11 @@ function replaceParams(str, params) {
  * Get translation by key path (e.g., 'trips.title' or 'common.loading')
  */
 function getTranslation(translations, key, params) {
+  if (!translations || typeof translations !== 'object') {
+    console.warn(`Translations object is invalid for key: ${key}`);
+    return key;
+  }
+  
   const keys = key.split('.');
   let value = translations;
   
@@ -39,13 +44,13 @@ function getTranslation(translations, key, params) {
       value = value[k];
     } else {
       // Fallback to key if translation not found
-      console.warn(`Translation key not found: ${key}`);
+      console.warn(`Translation key not found: ${key}`, { translations, keys, currentKey: k, value });
       return key;
     }
   }
   
   if (typeof value !== 'string') {
-    console.warn(`Translation value is not a string for key: ${key}`);
+    console.warn(`Translation value is not a string for key: ${key}`, { value, type: typeof value });
     return key;
   }
   

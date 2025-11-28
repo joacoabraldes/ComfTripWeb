@@ -1,6 +1,8 @@
-import React from "react"; //s
+import React from "react";
+import { useTranslation } from "../../i18n";
 
 export default function Hamburger({ width = 38, height = 25, color = "#1D1B20" }) {
+  const { t } = useTranslation();
   const barWidth = 26;
   const barHeight = 3.5;
   const offsetX = (width - barWidth) / 2;
@@ -13,7 +15,7 @@ export default function Hamburger({ width = 38, height = 25, color = "#1D1B20" }
       viewBox={`0 0 ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="menu"
+      aria-label={t('common.menu')}
       focusable="false"
     >
       <rect x={offsetX} y="2" width={barWidth} height={barHeight} rx={r} fill={color} />

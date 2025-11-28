@@ -15,6 +15,7 @@ import Select from "react-select";
 import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 import flightsApi from "../services/flightsApi";
 import { Country, City } from "country-state-city";
+import { useTranslation } from "../i18n";
 
 const MAPBOX_TOKEN =
   process.env.REACT_APP_MAPBOX_TOKEN ||
@@ -23,6 +24,7 @@ const MAPBOX_TOKEN =
 export default function TripItinerary() {
   const params = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const tripIdRaw = params.tripId ?? params.id ?? params?.tripId;
   const tripId = Number(tripIdRaw);
 
@@ -254,7 +256,7 @@ const mapOfferToSelectOption = (offer, idx = 0) => {
     let mounted = true;
     (async () => {
       if (!Number.isFinite(tripId) || tripId <= 0) {
-        setError("ID de viaje inválido en la URL.");
+        setError(t('tripItinerary.invalidTripId'));
         setLoading(false);
         return;
       }
@@ -353,7 +355,7 @@ try {
         }
       } catch (err) {
         console.error("TripItinerary load error:", err);
-        setError("No se pudo cargar el viaje.");
+        setError(t('tripItinerary.loadTripError'));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -575,7 +577,7 @@ try {
 
       const opts = filtered.map((r) => ({
         value: Number(r.id),
-        label: `${r.title || "Sin título"}${r.city ? ` — ${r.city}` : ""}`,
+        label: `${r.title || t('tripItinerary.noTitle')}${r.city ? ` — ${r.city}` : ""}`,
         meta: r,
       }));
 
@@ -716,7 +718,7 @@ const handleSaveSelectedFlight = async () => {
   const selected = selectedFlightOption;
   const flightIdRaw = selected?.value || selected?.raw?.id || "";
   if (!selected) {
-    setFlightMessage("Seleccioná un vuelo primero.");
+    setFlightMessage(t('tripItinerary.selectFlightFirst'));
     return;
   }
   setFlightMessage(null);
@@ -814,7 +816,7 @@ const handleSaveSelectedFlight = async () => {
       setBackendFlightDetails(null);
     }
 
-    setFlightMessage("Vuelo guardado y asociado al viaje.");
+    setFlightMessage(t('tripItinerary.flightSaved'));
   } catch (err) {
     const status =
       err &&
@@ -869,14 +871,14 @@ const handleSaveSelectedFlight = async () => {
           setBackendFlightDetails(null);
         }
 
-        setFlightMessage("Vuelo existente asociado al viaje.");
+        setFlightMessage(t('tripItinerary.flightSaved'));
       } catch (uerr) {
         console.warn("associate put failed", uerr);
-        setFlightMessage("No se pudo asociar el vuelo existente.");
+        setFlightMessage(t('tripItinerary.flightAssociateError'));
       }
     } else {
       console.error("save flight error", err);
-      setFlightMessage("Error guardando vuelo. Revisa la consola.");
+      setFlightMessage(t('tripItinerary.saveFlightError'));
     }
   } finally {
     setLoadingFlight(false);
@@ -887,7 +889,7 @@ const handleSaveSelectedFlight = async () => {
 
   const handleAddLocationToItinerary = async () => {
     if (!selectedLocationOption) {
-      setAddLocationMessage("Seleccioná un lugar primero.");
+      setAddLocationMessage(t('tripItinerary.selectPlaceFirst'));
       return;
     }
     // Use trip.start_date as the insertion date (YYYY-MM-DD). Fallback to today.
@@ -910,15 +912,13 @@ const handleSaveSelectedFlight = async () => {
       const fresh = await apiGet(`/trips/${tripId}`);
       setTrip(fresh);
       setSelectedLocationOption(null);
-      setAddLocationMessage(
-        "Lugar agregado y reordenado en el día inicial del viaje."
-      );
+      setAddLocationMessage(t('tripItinerary.placeAdded'));
     } catch (err) {
       console.error("handleAddLocationToItinerary", err);
       const msg =
         err && (err.message || (err.body && err.body.message))
           ? err.message || err.body.message
-          : "Error al agregar lugar";
+          : t('tripItinerary.addPlaceError');
       setAddLocationMessage(String(msg));
     } finally {
       setAddingLocation(false);
@@ -929,19 +929,19 @@ const handleSaveSelectedFlight = async () => {
   const handleRemoveFlight = async () => {
     const fid = backendFlight?.flight_id || backendFlight?.flightId;
     if (!fid) return;
-    if (!window.confirm("Quitar la asociación del vuelo con este viaje?"))
+    if (!window.confirm(t('tripItinerary.removeFlightConfirm')))
       return;
     try {
       await apiPut(`/flights/${encodeURIComponent(String(fid))}`, {
         trip_id: null,
       });
-      setFlightMessage("Vuelo desasociado.");
+      setFlightMessage(t('tripItinerary.flightDisassociated'));
       setBackendFlight(null);
       const fresh = await apiGet(`/trips/${tripId}`);
       setTrip(fresh);
     } catch (err) {
       console.error("disassociate error", err);
-      setFlightMessage("Error al desasociar vuelo.");
+      setFlightMessage(t('tripItinerary.disassociateFlightError'));
     }
   };
 
@@ -1010,8 +1010,7 @@ const handleSaveSelectedFlight = async () => {
     ev.stopPropagation(); // keep the menu open handler from closing prematurely
     if (!place || !place.id) return;
     const ok = window.confirm(
-      `¿Seguro que deseas eliminar el punto "${place.title || place.location?.titulo || ""
-      }"?`
+      t('tripItinerary.deletePlaceConfirm', { placeTitle: place.title || place.location?.titulo || "" })
     );
     if (!ok) {
       setMenuOpen(null);
@@ -1025,9 +1024,7 @@ const handleSaveSelectedFlight = async () => {
       setMenuOpen(null);
     } catch (err) {
       console.error("Error eliminando punto:", err);
-      alert(
-        "No se pudo eliminar el punto. Revisa la consola para más detalle."
-      );
+      alert(t('tripItinerary.deletePlaceError'));
     }
   };
 
@@ -1297,7 +1294,7 @@ const handleSaveSelectedFlight = async () => {
             height: "80vh",
           }}
         >
-          <div style={{ fontSize: 25 }}> Cargando itinerario… </div>
+          <div style={{ fontSize: 25 }}> {t('tripItinerary.loading')} </div>
         </main>
       </div>
     );
@@ -1310,7 +1307,7 @@ const handleSaveSelectedFlight = async () => {
         <main className="trip-it-main">
           <div style={{ padding: 24 }}>
             <button className="back-link" onClick={() => navigate("/trips")}>
-              ← Volver a viajes
+              {t('tripItinerary.backToTrips')}
             </button>
             <div style={{ marginTop: 18, color: "#b00020" }}>{error}</div>
           </div>
@@ -1346,7 +1343,7 @@ const handleSaveSelectedFlight = async () => {
           marginBottom: 10,
         }}
       >
-        <h3 style={{ margin: 0, fontSize: 18 }}>Vuelos</h3>
+        <h3 style={{ margin: 0, fontSize: 18 }}>{t('tripItinerary.flights')}</h3>
         <div style={{ color: "#666", fontSize: 13 }}>
           {displayTripDestination}
         </div>
@@ -1425,16 +1422,14 @@ const handleSaveSelectedFlight = async () => {
                         "refresh flightsApi getOfferById failed",
                         err
                       );
-                      setFlightMessage(
-                        "Refrescado (no se pudieron obtener detalles externos)."
-                      );
+                      setFlightMessage(t('tripItinerary.refreshError'));
                     }
                   } else {
-                    setFlightMessage("Refrescado.");
+                    setFlightMessage(t('tripItinerary.refreshed'));
                   }
                 } catch (e) {
                   console.warn(e);
-                  setFlightMessage("Error al refrescar.");
+                  setFlightMessage(t('tripItinerary.refreshError'));
                 } finally {
                   setLoadingFlight(false);
                   window.setTimeout(() => setFlightMessage(null), 3000);
@@ -1461,7 +1456,7 @@ const handleSaveSelectedFlight = async () => {
                   color: "#444",
                 }}
               >
-                País de origen
+                {t('tripItinerary.originCountry')}
               </label>
               <Select
                 options={countryOptions}
@@ -1470,7 +1465,7 @@ const handleSaveSelectedFlight = async () => {
                   null
                 }
                 onChange={(opt) => setOriginCountryIso(opt ? opt.value : null)}
-                placeholder="Seleccioná país de origen"
+                placeholder={t('tripItinerary.selectOriginCountry')}
                 className="dropdown-select"
                 classNamePrefix="react-select"
                 isClearable
@@ -1486,7 +1481,7 @@ const handleSaveSelectedFlight = async () => {
                   color: "#444",
                 }}
               >
-                Ciudad de origen
+                {t('tripItinerary.originCity')}
               </label>
               <Select
                 className="dropdown-select"
@@ -1500,11 +1495,11 @@ const handleSaveSelectedFlight = async () => {
                 }}
                 placeholder={
                   originCountryIso
-                    ? "Escribe mínimo 2 letras para buscar ciudad"
-                    : "Seleccioná país primero"
+                    ? t('tripItinerary.typeMin2Letters')
+                    : t('tripItinerary.selectCountryFirst')
                 }
                 isClearable
-                noOptionsMessage={() => "Escribe para buscar ciudades"}
+                noOptionsMessage={() => t('tripItinerary.typeToSearchCities')}
                 isDisabled={!originCountryIso}
               />
             </div>
@@ -1518,7 +1513,7 @@ const handleSaveSelectedFlight = async () => {
                   color: "#444",
                 }}
               >
-                Aeropuerto de origen
+                {t('tripItinerary.originAirport')}
               </label>
               <Select
                 className="dropdown-select"
@@ -1528,10 +1523,10 @@ const handleSaveSelectedFlight = async () => {
                 onChange={(opt) => setOriginAirportValue(opt)}
                 placeholder={
                   originAirportsLoading
-                    ? "Cargando aeropuertos..."
+                    ? t('tripItinerary.loadingAirports')
                     : originAirportOptions.length === 0
-                      ? "Seleccioná ciudad para cargar aeropuertos"
-                      : "Selecciona aeropuerto de origen"
+                      ? t('tripItinerary.selectCityToLoadAirports')
+                      : t('tripItinerary.selectOriginAirport')
                 }
                 isClearable
                 isDisabled={!!originAirportsLoading}
@@ -1559,7 +1554,7 @@ const handleSaveSelectedFlight = async () => {
                   color: "#444",
                 }}
               >
-                Aeropuerto de destino
+                {t('tripItinerary.destinationAirport')}
               </label>
               <Select
                 className="dropdown-select"
@@ -1569,10 +1564,10 @@ const handleSaveSelectedFlight = async () => {
                 onChange={(opt) => setDestinationAirportValue(opt)}
                 placeholder={
                   destinationAirportsLoading
-                    ? "Cargando aeropuertos..."
+                    ? t('tripItinerary.loadingAirports')
                     : destinationAirportOptions.length === 0
-                      ? "Selecciona aeropuerto de destino"
-                      : "Selecciona aeropuerto de destino"
+                      ? t('tripItinerary.selectDestinationAirportPlaceholder')
+                      : t('tripItinerary.selectDestinationAirport')
                 }
                 isClearable
                 isDisabled={!!destinationAirportsLoading}
@@ -1598,7 +1593,7 @@ const handleSaveSelectedFlight = async () => {
                   color: "#444",
                 }}
               >
-                Vuelos disponibles
+                {t('tripItinerary.availableFlights')}
               </label>
               <Select
                 className="dropdown-select"
@@ -1608,8 +1603,8 @@ const handleSaveSelectedFlight = async () => {
                 onChange={(opt) => setSelectedFlightOption(opt)}
                 placeholder={
                   offersLoading
-                    ? "Buscando vuelos..."
-                    : "Seleccioná un vuelo (si hay)"
+                    ? t('tripItinerary.searchingFlights')
+                    : t('tripItinerary.selectFlightIfAvailable')
                 }
                 isClearable
                 isDisabled={offersLoading || !(flightOffers?.length > 0)}
@@ -1660,7 +1655,7 @@ const handleSaveSelectedFlight = async () => {
               onClick={handleSaveSelectedFlight}
               disabled={loadingFlight || !selectedFlightOption}
             >
-              {loadingFlight ? "Guardando..." : "Guardar vuelo"}
+              {loadingFlight ? t('tripItinerary.saving') : t('tripItinerary.saveFlight')}
             </button>
           </div>
 
@@ -1693,7 +1688,7 @@ const handleSaveSelectedFlight = async () => {
         }}
       >
         <h3 style={{ margin: 0, fontSize: 18 }}>
-          Agregar lugares de la ciudad del viaje
+          {t('tripItinerary.addCityPlaces')}
         </h3>
         <div style={{ color: "#666", fontSize: 13 }}>
           {displayTripDestination}
@@ -1702,7 +1697,7 @@ const handleSaveSelectedFlight = async () => {
 
       <div style={{ marginTop: 6 }}>
         <div style={{ marginBottom: 8, fontSize: 13, color: "#444" }}>
-          Seleccioná lugar (solo lugares de la ciudad del itinerario)
+          {t('tripItinerary.selectPlaceFromCity')}
         </div>
 
         <Select
@@ -1714,10 +1709,10 @@ const handleSaveSelectedFlight = async () => {
           isLoading={locationsLoading}
           placeholder={
             locationsLoading
-              ? "Cargando lugares..."
+              ? t('tripItinerary.loadingPlaces')
               : locationsOptions.length === 0
-                ? "No hay lugares para mostrar"
-                : "Seleccioná un lugar"
+                ? t('home.noPlacesToShow')
+                : t('tripItinerary.selectPlace')
           }
           isClearable
           onFocus={() => {
@@ -1728,7 +1723,7 @@ const handleSaveSelectedFlight = async () => {
             fetchLocationsForCountry(country, city);
           }}
           noOptionsMessage={() =>
-            locationsLoading ? "Cargando..." : "No hay lugares en la ciudad"
+            locationsLoading ? t('tripItinerary.loadingPlaces') : t('tripItinerary.noPlacesInCity')
           }
           formatOptionLabel={(opt) => {
             const meta = opt?.meta || {};
@@ -1760,7 +1755,7 @@ const handleSaveSelectedFlight = async () => {
           onClick={handleAddLocationToItinerary}
           disabled={addingLocation || !selectedLocationOption}
         >
-          {addingLocation ? "Agregando..." : "Agregar al itinerario"}
+          {addingLocation ? t('tripItinerary.adding') : t('tripItinerary.addToItinerary')}
         </button>
 
         {addLocationMessage && (
@@ -1799,7 +1794,7 @@ const handleSaveSelectedFlight = async () => {
           {image ? (
             <img
               src={image}
-              alt="Lugar"
+              alt={t('tripItinerary.place')}
               style={{
                 width: 220,
                 height: 140,
@@ -1820,7 +1815,7 @@ const handleSaveSelectedFlight = async () => {
                 color: "#999",
               }}
             >
-              Sin imagen
+              {t('tripItinerary.noImage')}
             </div>
           )}
           <div style={{ flex: 1 }}>
@@ -1844,7 +1839,7 @@ const handleSaveSelectedFlight = async () => {
                   rel="noreferrer"
                   style={{ color: primaryLight }}
                 >
-                  Ver sitio
+                  {t('tripItinerary.viewSite')}
                 </a>
               </div>
             )}
@@ -1852,13 +1847,13 @@ const handleSaveSelectedFlight = async () => {
         </div>
 
         <div style={{ marginTop: "1rem", flex: 1 }}>
-          <h4 style={{ margin: "0 0 0.5rem 0" }}>Notas</h4>
+          <h4 style={{ margin: "0 0 0.5rem 0" }}>{t('tripItinerary.notes')}</h4>
           <div style={{ color: "#333", lineHeight: 1.5 }}>{p.notes || "-"}</div>
 
           <div style={{ marginTop: "1.125rem" }}>
-            <h4 style={{ margin: "0 0 8px 0" }}>Ubicación</h4>
+            <h4 style={{ margin: "0 0 8px 0" }}>{t('tripItinerary.location')}</h4>
             <div style={{ color: "#333" }}>
-              {loc.titulo || loc.address || "Sin dirección"}
+              {loc.titulo || loc.address || t('tripItinerary.noAddress')}
             </div>
             {Number.isFinite(Number(loc.latitude)) &&
               Number.isFinite(Number(loc.longitude)) && (
@@ -1876,7 +1871,7 @@ const handleSaveSelectedFlight = async () => {
                       }));
                     }}
                   >
-                    Ver en mapa
+                    {t('tripItinerary.viewOnMap')}
                   </button>
                 </div>
               )}
@@ -1901,18 +1896,18 @@ const handleSaveSelectedFlight = async () => {
               )
             }
           >
-            Editar
+            {t('tripItinerary.edit')}
           </button>
           <button
             className="btn-secondary"
             onClick={() => {
-              if (window.confirm("¿Eliminar este punto del itinerario?"))
+              if (window.confirm(t('tripItinerary.deleteConfirm')))
                 apiDelete(`/trips/${tripId}/places/${p.id}`).then(() =>
                   apiGet(`/trips/${tripId}`).then(setTrip)
                 );
             }}
           >
-            Eliminar
+            {t('tripItinerary.delete')}
           </button>
         </div>
       </div>
@@ -1947,7 +1942,7 @@ const handleSaveSelectedFlight = async () => {
           >
             <div>
               {/*<button className="back-link" onClick={() => navigate("/trips")}>
-                ← Volver a viajes
+                {t('tripItinerary.backToTrips')}
               </button>*/}
               <h2 style={{ marginTop: 8, marginBottom: 4 }}>
                 {displayTripDestination}
@@ -1966,7 +1961,7 @@ const handleSaveSelectedFlight = async () => {
             ></div>
 
             <div style={{ textAlign: "right" }}>
-              <div style={{ color: "#888", fontSize: 13 }}>Creado</div>
+              <div style={{ color: "#888", fontSize: 13 }}>{t('tripItinerary.created')}</div>
               <div style={{ fontWeight: 700 }}>{fmtDate(trip.created_at)}</div>
             </div>
           </div>
@@ -1977,12 +1972,12 @@ const handleSaveSelectedFlight = async () => {
             {/* Add location from city card */}
             {addLocationCard}
             <h3 style={{ marginTop: 18, marginBottom: 8 }}>
-              Itinerario por día
+              {t('tripItinerary.itineraryByDay')}
             </h3>
 
             <div style={{ marginTop: 8 }}>
               {groupKeys.length === 0 ? (
-                <div className="muted">Aún no hay puntos en el itinerario.</div>
+                <div className="muted">{t('tripItinerary.noPointsInItinerary')}</div>
               ) : (
                 groupKeys.map((dateKey) => {
                   const dayPlaces = groupedPlaces[dateKey] || [];
@@ -2020,7 +2015,7 @@ const handleSaveSelectedFlight = async () => {
                         >
                           <div style={{ fontWeight: 700, fontSize: 15 }}>
                             {dateKey === "no-date"
-                              ? "Fecha sin especificar"
+                              ? t('tripItinerary.dateNotSpecified')
                               : fmtDate(dateKey)}
                           </div>
                           <div
@@ -2031,8 +2026,7 @@ const handleSaveSelectedFlight = async () => {
                               fontSize: 13,
                             }}
                           >
-                            {dayPlaces.length} punto
-                            {dayPlaces.length > 1 ? "s" : ""}
+                            {dayPlaces.length} {dayPlaces.length > 1 ? t('tripItinerary.points') : t('tripItinerary.point')}
                           </div>
                         </div>
 
@@ -2052,7 +2046,7 @@ const handleSaveSelectedFlight = async () => {
                                 ev.stopPropagation();
                                 showRouteForDate(dateKey, groupedPlaces);
                               }}
-                              title={isActive ? "Ocultar ruta" : "Mostrar ruta"}
+                              title={isActive ? t('tripItinerary.hideRoute') : t('tripItinerary.showRoute')}
                             >
                               {/* small route icon */}
                               <svg
@@ -2071,7 +2065,7 @@ const handleSaveSelectedFlight = async () => {
                                 />
                               </svg>
                               <span style={{ fontSize: 13 }}>
-                                {isActive ? "Ocultar ruta" : "Mostrar ruta"}
+                                {isActive ? t('tripItinerary.hideRoute') : t('tripItinerary.showRoute')}
                               </span>
                             </button>
                           )}
@@ -2083,9 +2077,9 @@ const handleSaveSelectedFlight = async () => {
                               ev.stopPropagation();
                               navigate(`/add_place/${tripId}?date=${dateKey}`);
                             }}
-                            title="Añadir punto a este día"
+                            title={t('tripItinerary.addPointToDay')}
                           >
-                            + Añadir
+                            + {t('tripItinerary.add')}
                           </button>
                         </div>
                       </div>
@@ -2157,7 +2151,7 @@ const handleSaveSelectedFlight = async () => {
                                   >
                                     {p.title ??
                                       p.location?.titulo ??
-                                      `Actividad`}
+                                      t('tripItinerary.activity')}
                                   </div>
                                   {p.notes && (
                                     <div
@@ -2181,7 +2175,7 @@ const handleSaveSelectedFlight = async () => {
                                           fontSize: 13,
                                         }}
                                       >
-                                        Ver sitio
+                                        {t('tripItinerary.viewSite')}
                                       </a>
                                     </div>
                                   )}
@@ -2300,7 +2294,7 @@ const handleSaveSelectedFlight = async () => {
                                           );
                                           setMenuOpen(null);
                                         }}
-                                        title="Editar punto"
+                                        title={t('tripItinerary.editPoint')}
                                       >
                                         ✎
                                       </button>
@@ -2311,7 +2305,7 @@ const handleSaveSelectedFlight = async () => {
                                         onClick={(ev) =>
                                           handleDeletePlace(ev, p)
                                         }
-                                        title="Eliminar punto"
+                                        title={t('tripItinerary.deletePoint')}
                                       >
                                         🗑
                                       </button>
@@ -2334,7 +2328,7 @@ const handleSaveSelectedFlight = async () => {
                 onClick={() => navigate(`/add_place/${tripId}`)}
                 className="btn-primary"
               >
-                Agregar al itinerario
+                {t('tripItinerary.addToItineraryButton')}
               </button>
             </div>
           </section>
@@ -2542,7 +2536,7 @@ const handleSaveSelectedFlight = async () => {
                           <div className="img-spinner" />
                         </div>
                       ) : selectedLocationOnMap.imageUrl && <div className="img-popup-container">
-                        <img src={selectedLocationOnMap.imageUrl} className="img-popUp" alt="Lugar actual" /></div>
+                        <img src={selectedLocationOnMap.imageUrl} className="img-popUp" alt={t('tripItinerary.currentPlace')} /></div>
                       }
 
                       <div className="place-info" style={{ paddingTop: 8 }}>

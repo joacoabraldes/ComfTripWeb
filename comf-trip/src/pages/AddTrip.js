@@ -8,8 +8,10 @@ import Header from "../components/Header";
 import flightsApi from "../services/flightsApi";
 import { Country, City } from "country-state-city";
 import countryList from "react-select-country-list";
+import { useTranslation } from "../i18n";
 
 export default function AddTrip() {
+  const { t } = useTranslation();
   // small ISO map for a few countries used in UI
   const COUNTRY_NAME_TO_CODE = {
     Spain: "ES",
@@ -605,7 +607,7 @@ export default function AddTrip() {
         const offers = (res?.data || []).map((offer, i) => {
           const price = offer?.price?.total
             ? `${offer.price.total} ${offer.price.currency || ""}`
-            : "Precio N/A";
+            : t('addTrip.priceNotAvailable');
           const itinerary =
             Array.isArray(offer.itineraries) && offer.itineraries[0];
           let dep = "";
@@ -729,12 +731,12 @@ export default function AddTrip() {
     try {
       const stored = JSON.parse(localStorage.getItem("user") || "null");
       if (!stored || !stored.id) {
-        alert("Usuario no identificado. Inicia sesión nuevamente.");
+        alert(t('addTrip.userNotIdentified'));
         nav("/login");
         return;
       }
 
-      if (!pace) throw new Error("Selecciona el ritmo del viaje (pace).");
+      if (!pace) throw new Error(t('addTrip.selectPaceError'));
 
       let createdTripId = null;
 
@@ -745,10 +747,10 @@ export default function AddTrip() {
 
       for (const dest of destinations) {
         if (!dest.city || !dest.startDate || !dest.endDate)
-          throw new Error("Por favor completa todos los destinos y fechas.");
+          throw new Error(t('addTrip.completeAllDestinations'));
         if (!dest.originAirport || !dest.destinationAirport)
           throw new Error(
-            "Seleccioná origen y destino (aeropuertos) para cada destino."
+            t('addTrip.selectOriginAndDestination')
           );
 
         // --- reemplazar where you build `payload` ---
@@ -776,10 +778,10 @@ export default function AddTrip() {
           notes: notes || null,
         };
 
-        setStatusMessage(`Creando viaje a ${payload.destination} ...`);
+        setStatusMessage(t('addTrip.creatingTrip', { destination: payload.destination }));
         const t = await apiPost("/trips", payload);
         if (!t || !t.trip || !t.trip.id)
-          throw new Error("No se pudo crear el viaje");
+          throw new Error(t('addTrip.createTripError'));
         createdTripId = t.trip.id;
 
         try {
@@ -828,21 +830,19 @@ export default function AddTrip() {
           }
 
           if (canonicalFlightId) {
-            setStatusMessage(`Guardando vuelo ${canonicalFlightId}...`);
+            setStatusMessage(t('addTrip.savingFlight', { flightId: canonicalFlightId }));
             await apiPost("/flights", {
               flight_id: canonicalFlightId,
               trip_id: createdTripId,
             });
-            setStatusMessage(`Vuelo ${canonicalFlightId} guardado.`);
+            setStatusMessage(t('addTrip.flightSaved', { flightId: canonicalFlightId }));
           }
 
         } catch (err) {
           console.error("Error guardando vuelo:", err);
         }
 
-        setStatusMessage(
-          "Generando itinerario automáticamente (esto puede tardar unos segundos) ..."
-        );
+        setStatusMessage(t('addTrip.generatingItinerary'));
 
         const itineraryBody = {
           save: true,
@@ -857,14 +857,14 @@ export default function AddTrip() {
         };
 
         await apiPost(`/trips/${createdTripId}/itinerary`, itineraryBody);
-        setStatusMessage("Itinerario generado y guardado!");
+        setStatusMessage(t('addTrip.itineraryGenerated'));
       }
 
       if (createdTripId)
         nav("/load-trip", { state: { tripId: createdTripId } });
     } catch (err) {
       console.error("Error creando viaje:", err);
-      alert(err.message || "Ocurrió un error al crear el viaje.");
+      alert(err.message || t('addTrip.createTripGenericError'));
     } finally {
       setLoadingTrip(false);
       setStatusMessage(null);
@@ -872,20 +872,28 @@ export default function AddTrip() {
   };
 
   const monthNames = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
+    t('calendar.months.january'),
+    t('calendar.months.february'),
+    t('calendar.months.march'),
+    t('calendar.months.april'),
+    t('calendar.months.may'),
+    t('calendar.months.june'),
+    t('calendar.months.july'),
+    t('calendar.months.august'),
+    t('calendar.months.september'),
+    t('calendar.months.october'),
+    t('calendar.months.november'),
+    t('calendar.months.december'),
   ];
-  const weekDays = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
+  const weekDays = [
+    t('calendar.weekDays.sunday'),
+    t('calendar.weekDays.monday'),
+    t('calendar.weekDays.tuesday'),
+    t('calendar.weekDays.wednesday'),
+    t('calendar.weekDays.thursday'),
+    t('calendar.weekDays.friday'),
+    t('calendar.weekDays.saturday'),
+  ];
 
   if (loading) {
     return (
@@ -900,7 +908,7 @@ export default function AddTrip() {
             height: "80vh",
           }}
         >
-          <div style={{ fontSize: "1.5625rem" }}>Cargando…</div>
+          <div style={{ fontSize: "1.5625rem" }}>{t('addTrip.loading')}</div>
         </main>
       </div>
     );
@@ -938,7 +946,7 @@ export default function AddTrip() {
           </div>
           <div style={{ color: "#666", fontSize: 12 }}>
             {(m.stops || m.duration) &&
-              `${m.stops ? `${m.stops} stop${m.stops > 1 ? "s" : ""}` : ""}${m.stops && m.duration ? " · " : ""
+              `${m.stops ? `${m.stops} ${m.stops > 1 ? t('addTrip.stops') : t('addTrip.stop')}` : ""}${m.stops && m.duration ? " · " : ""
               }${m.duration || ""}`}
           </div>
         </div>
@@ -954,14 +962,14 @@ export default function AddTrip() {
           <form className="form" onSubmit={handleSubmit}>
             {/* SECTION: Destination */}
             <section className="card">
-              <h3>Destino y Fechas</h3>
+              <h3>{t('addTrip.destinationAndDates')}</h3>
 
-              <label>Ciudad de destino</label>
+              <label>{t('addTrip.destinationCity')}</label>
               <Select
                 options={cityOptions}
                 value={currentDestination.city}
                 onChange={handleChangeDestinationCity}
-                placeholder="Selecciona ciudad de destino"
+                placeholder={t('addTrip.selectDestinationCity')}
                 isClearable
                 className="dropdown-select"
                 classNamePrefix="react-select"
@@ -1055,13 +1063,11 @@ export default function AddTrip() {
 
                 {currentDestination.startDate && currentDestination.endDate && (
                   <p className="date-range" style={{ marginTop: 8 }}>
-                    Viaje a {currentDestination.city?.label || ""} del{" "}
-                    {currentDestination.startDate.getDate()}/
-                    {currentDestination.startDate.getMonth() + 1}/
-                    {currentDestination.startDate.getFullYear()} al{" "}
-                    {currentDestination.endDate.getDate()}/
-                    {currentDestination.endDate.getMonth() + 1}/
-                    {currentDestination.endDate.getFullYear()}
+                    {t('addTrip.tripFrom', {
+                      city: currentDestination.city?.label || "",
+                      startDate: `${currentDestination.startDate.getDate()}/${currentDestination.startDate.getMonth() + 1}/${currentDestination.startDate.getFullYear()}`,
+                      endDate: `${currentDestination.endDate.getDate()}/${currentDestination.endDate.getMonth() + 1}/${currentDestination.endDate.getFullYear()}`
+                    })}
                   </p>
                 )}
               </div>
@@ -1069,24 +1075,24 @@ export default function AddTrip() {
 
             {/* SECTION: Flight selection */}
             <section className="card card--white">
-              <h3>Vuelos</h3>
+              <h3>{t('addTrip.flights')}</h3>
 
               <div className="flights-grid">
                 <div className="field">
-                  <label>País de origen</label>
+                  <label>{t('addTrip.originCountry')}</label>
                   <Select
                     className="dropdown-select"
                     classNamePrefix="react-select"
                     options={countryOptions}
                     value={currentDestination.originCountry || null}
                     onChange={(val) => handleChangeOriginCountry(val)}
-                    placeholder="Selecciona el pais de origen"
+                    placeholder={t('addTrip.selectOriginCountry')}
                     isDisabled={loading}
                   />
                 </div>
 
                 <div className="field">
-                  <label>Ciudad de origen (escribe para buscar)</label>
+                  <label>{t('addTrip.originCity')}</label>
                   <Select
                     className="dropdown-select"
                     classNamePrefix="react-select"
@@ -1103,17 +1109,17 @@ export default function AddTrip() {
                     }}
                     placeholder={
                       currentDestination.originCountry
-                        ? "Escribe mínimo 2 letras para buscar ciudad"
-                        : "Seleccioná país primero"
+                        ? t('addTrip.typeMin2Letters')
+                        : t('addTrip.selectCountryFirst')
                     }
                     isClearable
-                    noOptionsMessage={() => "Escribe para buscar ciudades"}
+                    noOptionsMessage={() => t('addTrip.typeToSearchCities')}
                     isDisabled={!currentDestination.originCountry}
                   />
                 </div>
 
                 <div className="field">
-                  <label>Aeropuerto de origen</label>
+                  <label>{t('addTrip.originAirport')}</label>
                   <Select
                     className="dropdown-select"
                     classNamePrefix="react-select"
@@ -1122,8 +1128,8 @@ export default function AddTrip() {
                     onChange={(opt) => handleChangeAirport("origin", opt)}
                     placeholder={
                       airportsLoadingMap[currentDestinationIndex]
-                        ? "Cargando aeropuertos..."
-                        : "Selecciona aeropuerto de origen"
+                        ? t('addTrip.loadingAirports')
+                        : t('addTrip.selectOriginAirport')
                     }
                     isClearable
                     isDisabled={
@@ -1134,7 +1140,7 @@ export default function AddTrip() {
                 </div>
 
                 <div className="field">
-                  <label>Aeropuerto de destino</label>
+                  <label>{t('addTrip.destinationAirport')}</label>
                   <Select
                     className="dropdown-select"
                     classNamePrefix="react-select"
@@ -1143,8 +1149,8 @@ export default function AddTrip() {
                     onChange={(opt) => handleChangeAirport("destination", opt)}
                     placeholder={
                       airportsLoadingMap[currentDestinationIndex]
-                        ? "Cargando aeropuertos..."
-                        : "Selecciona aeropuerto de destino"
+                        ? t('addTrip.loadingAirports')
+                        : t('addTrip.selectDestinationAirport')
                     }
                     isClearable
                     isDisabled={
@@ -1155,7 +1161,7 @@ export default function AddTrip() {
                 </div>
 
                 <div className="field wide">
-                  <label>Vuelos disponibles (según día elegido)</label>
+                  <label>{t('addTrip.availableFlights')}</label>
                   <Select
                     className="dropdown-select"
                     classNamePrefix="react-select"
@@ -1164,8 +1170,8 @@ export default function AddTrip() {
                     onChange={handleSelectFlight}
                     placeholder={
                       currentDestination.offersLoading
-                        ? "Buscando vuelos..."
-                        : "Seleccioná un vuelo (si hay)"
+                        ? t('addTrip.searchingFlights')
+                        : t('addTrip.selectFlight')
                     }
                     isClearable
                     isDisabled={
@@ -1187,17 +1193,17 @@ export default function AddTrip() {
 
             {/* SECTION: Preferences */}
             <section className="card">
-              <h3>Preferencias</h3>
+              <h3>{t('addTrip.preferences')}</h3>
 
-              <label>Ritmo del viaje</label>
+              <label>{t('addTrip.tripPace')}</label>
               <Select
                 className="dropdown-select"
                 classNamePrefix="react-select"
-                placeholder="-- Selecciona ritmo --"
+                placeholder={t('addTrip.selectPace')}
                 options={[
-                  { value: "Relajado", label: "Relajado" },
-                  { value: "Moderado", label: "Moderado" },
-                  { value: "Intenso", label: "Intenso" },
+                  { value: "Relajado", label: t('addTrip.paceRelaxed') },
+                  { value: "Moderado", label: t('addTrip.paceModerate') },
+                  { value: "Intenso", label: t('addTrip.paceIntense') },
                 ]}
                 value={pace ? { value: pace, label: pace } : null}
                 onChange={(option) => setPace(option.value)}
@@ -1205,25 +1211,25 @@ export default function AddTrip() {
               />
 
               <label style={{ marginTop: 10 }}>
-                Lugares que querés incluir (opcional)
+                {t('addTrip.placesToInclude')}
               </label>
               <textarea
                 value={placesText}
                 className="textarea"
                 onChange={(e) => setPlacesText(e.target.value)}
                 rows={3}
-                placeholder="Escribe nombres separados por comas o por línea."
+                placeholder={t('addTrip.placesPlaceholder')}
               />
 
               <label style={{ marginTop: 10 }}>
-                Notas del viaje (opcional)
+                {t('addTrip.tripNotes')}
               </label>
               <textarea
                 value={notes}
                 className="textarea"
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                placeholder="Información que quieras que tenga en cuenta el generador."
+                placeholder={t('addTrip.notesPlaceholder')}
               />
             </section>
 
@@ -1240,15 +1246,15 @@ export default function AddTrip() {
                 disabled={loadingTrip}
               >
                 {loadingTrip
-                  ? "Creando y generando itinerario..."
-                  : "Armar Viaje"}
+                  ? t('addTrip.creating')
+                  : t('addTrip.createTrip')}
               </button>
               <button
                 type="button"
                 className="btn-secondary add-destination"
                 onClick={handleAddDestination}
               >
-                + Agregar otro destino
+                {t('addTrip.addAnotherDestination')}
               </button>
             </div>
           </form>

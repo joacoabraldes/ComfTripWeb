@@ -8,9 +8,11 @@ import "../styles/auth.css";
 import { apiGet, apiPut } from "./api";
 import Header from "../components/Header";
 import Map, {Marker, NavigationControl} from "react-map-gl/mapbox";
+import { useTranslation } from "../i18n";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function EditPlace() {
+    const { t } = useTranslation();
     const { tripId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
@@ -57,7 +59,7 @@ export default function EditPlace() {
 
                 const p = tripRes.places?.[placeIndex];
                 if (!p) {
-                    setError("Lugar no encontrado");
+                    setError(t('editPlace.placeNotFound'));
                 } else {
                     setPlace(p);
                     setDate(p.date ? p.date.split("T")[0] : "");
@@ -80,7 +82,7 @@ export default function EditPlace() {
                 }
             } catch (err) {
                 console.error("Error cargando viaje:", err);
-                setError("No se pudo cargar el viaje");
+                setError(t('editPlace.loadTripError'));
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -167,11 +169,11 @@ export default function EditPlace() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!date) {
-            alert("Seleccione una fecha.");
+            alert(t('editPlace.selectDate'));
             return;
         }
         if(!startHour || !endHour){
-            alert("Seleccione hora inicio y fin.");
+            alert(t('editPlace.selectStartAndEndTime'));
             return;
         }
 
@@ -204,7 +206,7 @@ export default function EditPlace() {
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Error actualizando lugar:", err);
-            setError("No se pudo guardar los cambios.");
+            setError(t('editPlace.saveError'));
         } finally {
             setSaving(false);
         }
@@ -227,7 +229,7 @@ export default function EditPlace() {
                     alignItems: "center",
                     height: "80vh"
                 }}>
-                    <div style={{fontSize:"1.5625rem"}}> Cargando… </div>
+                    <div style={{fontSize:"1.5625rem"}}> {t('editPlace.loading')} </div>
                 </main>
             </div>
         );
@@ -246,10 +248,28 @@ export default function EditPlace() {
     if (!place) return null;
 
     const monthNames = [
-        'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-        'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+        t('calendar.months.january'),
+        t('calendar.months.february'),
+        t('calendar.months.march'),
+        t('calendar.months.april'),
+        t('calendar.months.may'),
+        t('calendar.months.june'),
+        t('calendar.months.july'),
+        t('calendar.months.august'),
+        t('calendar.months.september'),
+        t('calendar.months.october'),
+        t('calendar.months.november'),
+        t('calendar.months.december'),
     ];
-    const weekDays = ['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
+    const weekDays = [
+        t('calendar.weekDays.sunday'),
+        t('calendar.weekDays.monday'),
+        t('calendar.weekDays.tuesday'),
+        t('calendar.weekDays.wednesday'),
+        t('calendar.weekDays.thursday'),
+        t('calendar.weekDays.friday'),
+        t('calendar.weekDays.saturday'),
+    ];
 
     return (
         <div className="trip-it-root">
@@ -260,10 +280,10 @@ export default function EditPlace() {
                     <div className="trip-it-dates">
                         {fmtDate(trip.start_date)} — {fmtDate(trip.end_date)}
                     </div>
-                    <h3 style={{ marginTop: 18 }}>Editar punto del itinerario</h3>
+                    <h3 style={{ marginTop: 18 }}>{t('editPlace.editItineraryPoint')}</h3>
                     <form onSubmit={handleSubmit} className="trip-it-form">
                         <h2 className="trip-it-title">{place.location.titulo}</h2>
-                        <label>Fecha</label>
+                        <label>{t('editPlace.date')}</label>
                     <div style={ {borderRadius: "12px", padding:"20px", border: "1px solid #e6e6e6"}}>
                         <div className="calendar-header" style={{paddingBottom:"15px"}}>
                             <span className="month-year">{monthNames[currentMonth]} {currentYear}</span>
@@ -304,13 +324,13 @@ export default function EditPlace() {
                         </div>
                     </div>
 
-                        <label>Hora inicio</label>
+                        <label>{t('editPlace.startTime')}</label>
                         <TimePicker
                             value={startHour}
                             onChange={setStartHour}
                             occupiedSlots={occupiedSlots}
                             disabled={!date}/>
-                        <label>Hora fin</label>
+                        <label>{t('editPlace.endTime')}</label>
                         <TimePicker
                             value={endHour}
                             onChange={setEndHour}
@@ -319,12 +339,12 @@ export default function EditPlace() {
                             maxTime={nextOccupiedStart || null} // null = sin límite superior
                             disabled={!startHour.split(":")[1]}/>
 
-                        <label>Notas</label>
+                        <label>{t('editPlace.notes')}</label>
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
 
                         <div style={{ marginTop: 10 }}>
                             <button type="submit" className="btn-primary" disabled={saving}>
-                                {saving ? "Guardando…" : "Guardar cambios"}
+                                {saving ? t('editPlace.saving') : t('editPlace.saveChanges')}
                             </button>
                         </div>
                     </form>
@@ -337,13 +357,13 @@ export default function EditPlace() {
                             <img
                                 src={place.location?.imagenes[0]}
                                 className="place-image"
-                                alt="Lugar actual"
+                                alt={t('editPlace.currentPlace')}
                             />}
                             <div className="place-it-info">
                                 <h3 style={{fontSize:"50px",marginTop:"5px",  marginBottom:"5px"}}>{place.location?.titulo}</h3>
                                 </div></div>
                         {locationData?.descripcion && <p style={{fontSize:"20px", marginTop:"5px", marginBottom:"5px"}}>
-                            <strong>Descripcion:</strong> {locationData?.descripcion ?? "-"}
+                            <strong>{t('editPlace.description')}:</strong> {locationData?.descripcion ?? "-"}
                         </p>}
                         <div style={{ flex: 1, marginTop: 20 }}>
                             <Map

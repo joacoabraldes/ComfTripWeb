@@ -5,8 +5,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import "../styles/AddTrip.css";
 import LogoSvg from "../components/LogoSvg";
 import Header from "../components/Header";
+import { useTranslation } from "../i18n";
 
 export default function EditTrip() {
+    const { t } = useTranslation();
     const { tripId } = useParams(); // 👈 recibimos el ID por la URL
     const [destinations, setDestinations] = useState([
         { destination:"", startDate: null, endDate: null }
@@ -74,7 +76,7 @@ export default function EditTrip() {
                 setNotes(trip.notes || "");
             } catch (err) {
                 console.error("Error cargando trip:", err);
-                alert("No se pudo cargar el viaje.");
+                alert(t('editTrip.loadError'));
                 nav("/");
             } finally {
                 if (mounted) setLoadingOpen(false);
@@ -191,7 +193,7 @@ export default function EditTrip() {
         try {
             const dest = destinations[0];
             if (!dest.startDate || !dest.endDate) {
-                throw new Error("Por favor selecciona la fecha de fin del viaje.");
+                throw new Error(t('editTrip.selectEndDateError'));
             }
 
             const payload = {
@@ -206,11 +208,11 @@ export default function EditTrip() {
             };
 
             await apiPut(`/trips/${tripId}`, payload);
-            alert("Viaje actualizado ✅");
+            alert(t('editTrip.updateSuccess'));
             nav("/load-trip", { state: { tripId } });
         } catch (err) {
             console.error("Error editando viaje:", err);
-            alert(err.message || "Ocurrió un error al editar el viaje.");
+            alert(err.message || t('editTrip.updateError'));
         } finally {
             setLoading(false);
         }
@@ -231,7 +233,7 @@ export default function EditTrip() {
                     alignItems: "center",
                     height: "80vh" // ocupa casi toda la pantalla
                 }}>
-                    <div style={{fontSize:"1.5625rem"}}> Cargando… </div>
+                    <div style={{fontSize:"1.5625rem"}}> {t('editTrip.loading')} </div>
                 </main>
             </div>
         );
@@ -249,7 +251,7 @@ export default function EditTrip() {
                         </h2>
 
                         <h2 className="add-trip-subtitle">
-                            Selecciona la fecha de fin del viaje
+                            {t('editTrip.selectEndDate')}
                         </h2>
 
                         <div className="calendar-header">
@@ -328,18 +330,16 @@ export default function EditTrip() {
 
                         {currentDestination?.startDate && currentDestination?.endDate && (
                             <p className="date-range">
-                                Tu viaje a {currentDestination.province?.label},{" "}
-                                {currentDestination.country?.label} será del{" "}
-                                {currentDestination.startDate.getDate()}/
-                                {currentDestination.startDate.getMonth() + 1}/
-                                {currentDestination.startDate.getFullYear()} al{" "}
-                                {currentDestination.endDate.getDate()}/
-                                {currentDestination.endDate.getMonth() + 1}/
-                                {currentDestination.endDate.getFullYear()}
+                                {t('editTrip.tripWillBe', {
+                                  province: currentDestination.province?.label || '',
+                                  country: currentDestination.country?.label || '',
+                                  startDate: `${currentDestination.startDate.getDate()}/${currentDestination.startDate.getMonth() + 1}/${currentDestination.startDate.getFullYear()}`,
+                                  endDate: `${currentDestination.endDate.getDate()}/${currentDestination.endDate.getMonth() + 1}/${currentDestination.endDate.getFullYear()}`
+                                })}
                             </p>
                         )}
 
-                        <label>Presupuesto (opcional)</label>
+                        <label>{t('editTrip.budget')}</label>
                         <input
                             value={budget}
                             className={"input"}
@@ -347,7 +347,7 @@ export default function EditTrip() {
                             onChange={(e) => setBudget(e.target.value)}
                         />
 
-                        <label>Notas (opcional)</label>
+                        <label>{t('editTrip.notes')}</label>
                         <textarea
                             value={notes}
                             className={"textarea"}
@@ -361,7 +361,7 @@ export default function EditTrip() {
                             style={{marginBottom:"20px", marginTop:"20px"}}
                             disabled={loading}
                         >
-                            {loading ? "Guardando..." : "Guardar Cambios"}
+                            {loading ? t('editTrip.saving') : t('editTrip.saveChanges')}
                         </button></div>
                     </form>
                 </div>

@@ -8,6 +8,7 @@ import Header from "../components/Header";
 import "../styles/header.css";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
+import { useTranslation } from "../i18n";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 const API_URL_RAW = (process.env.REACT_APP_API_URL || "").replace(/\/$/, ""); // user-provided base
@@ -52,6 +53,7 @@ function parseImagesField(imgField) {
 
 export default function MapPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // picker marker (draggable)
   // NOTE: using [lat, lng] tuple throughout for pickerPos (consistent with existing code)
@@ -243,7 +245,7 @@ export default function MapPage() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center"
-      }}><div className="muted" style={{fontSize:"1.5625rem"}}>Cargando mapa…</div></main>
+      }}><div className="muted" style={{fontSize:"1.5625rem"}}>{t('map.loading')}</div></main>
       </div>)
   }
 
@@ -253,14 +255,14 @@ export default function MapPage() {
 
       <main className="map-main" style={{ display: "flex", flex: 1 }}>
         <section className="map-left" style={{ width: 400, padding: 16, boxSizing: "border-box" }}>
-          <h2>Localidades</h2>
+          <h2>{t('map.locations')}</h2>
 
-          <label htmlFor="interest-select" style={{ display: "block", marginBottom: 15 }}>Filtrar por categoría</label>
+          <label htmlFor="interest-select" style={{ display: "block", marginBottom: 15 }}>{t('map.filterByCategory')}</label>
             <div style={{marginBottom:20}}>
             <Select
                 className="dropdown-select"
                 classNamePrefix="react-select"
-                options={[{value: "", label: "Todas"},
+                options={[{value: "", label: t('map.all')},
                     ...interests.map(it => ({
                     value: it.slug ?? it.id ?? it.title,
                     label: it.title ?? it.slug ?? it.id
@@ -275,7 +277,7 @@ export default function MapPage() {
                                     i.id === selectedInterest ||
                                     i.title === selectedInterest
                                 )?.title || selectedInterest
-                        }:{value: "", label: "Todas"}
+                        }:{value: "", label: t('map.all')}
                 }
                 onChange={(option) => setSelectedInterest(option.value)}
                 isSearchable={false}
@@ -292,14 +294,14 @@ export default function MapPage() {
           </div>*/}
 
           <div style={{ maxHeight: "60vh", overflow: "auto" }}>
-            {loading && <p>Cargando...</p>}
+            {loading && <p>{t('map.loadingLocations')}</p>}
             {error && (
               <div>
-                <p style={{ color: "red" }}>No se pudieron cargar las localidades</p>
+                <p style={{ color: "red" }}>{t('map.loadError')}</p>
                 <small style={{ color: "#aa0000", whiteSpace: "pre-wrap" }}>{error}</small>
               </div>
             )}
-            {!loading && !error && locations.length === 0 && <p>No hay localidades</p>}
+            {!loading && !error && locations.length === 0 && <p>{t('map.noLocations')}</p>}
 
               {!loading && <ul style={{ listStyle: "none", padding: 0 }}>
               {locations.map((loc) => (
@@ -447,8 +449,8 @@ export default function MapPage() {
               closeOnClick={false}
             >
               <div style={{ fontSize: 12 }}>
-                {Number.isFinite(pickerPos[0]) ? `Lat: ${pickerPos[0].toFixed(5)}` : "Lat: N/A"} <br />
-                {Number.isFinite(pickerPos[1]) ? `Lon: ${pickerPos[1].toFixed(5)}` : "Lon: N/A"}
+                {Number.isFinite(pickerPos[0]) ? `${t('map.latitude')} ${pickerPos[0].toFixed(5)}` : `${t('map.latitude')} ${t('map.notAvailable')}`} <br />
+                {Number.isFinite(pickerPos[1]) ? `${t('map.longitude')} ${pickerPos[1].toFixed(5)}` : `${t('map.longitude')} ${t('map.notAvailable')}`}
               </div>
             </Popup>
           </Map>

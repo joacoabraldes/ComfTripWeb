@@ -282,9 +282,9 @@ export default function ProfilePage() {
             </Avatar>
 
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold mb-2">{profile.name || "Sin nombre"}</h1>
+              <h1 className="text-3xl font-bold mb-2">{profile.name || t('profile.noName')}</h1>
               <p className="text-muted-foreground mb-4">
-                {profile.description || "Agregá una descripción en editar perfil."}
+                {profile.description || t('profile.addDescription')}
               </p>
 
               <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm text-muted-foreground">

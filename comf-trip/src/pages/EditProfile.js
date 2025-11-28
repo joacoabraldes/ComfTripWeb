@@ -101,7 +101,7 @@ export default function EditProfile() {
                 <button
                     className="back-btn"
                     onClick={() => navigate(-1)}
-                    aria-label="volver"
+                    aria-label={t('common.back')}
                 >
                     ←
                 </button>

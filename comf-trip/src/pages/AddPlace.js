@@ -6,6 +6,7 @@ import TimePicker from "../components/TimePicker"
 import "../styles/addPlace.css";
 import "../styles/auth.css"
 import Select from "react-select";
+import { useTranslation } from "../i18n";
 
 
 
@@ -14,6 +15,7 @@ import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function AddPlace() {
+    const { t } = useTranslation();
     // NOTE: read the param name that you defined in App.jsx (/:tripId)
     const params = useParams();
     const navigate = useNavigate();
@@ -77,7 +79,7 @@ export default function AddPlace() {
         let mounted = true;
         (async () => {
             if (!Number.isFinite(tripId) || tripId <= 0) {
-                setError("ID de viaje inválido en la URL.");
+                setError(t('addPlace.invalidTripId'));
                 setLoading(false);
                 return;
             }
@@ -105,10 +107,10 @@ export default function AddPlace() {
 
             } catch (err) {
                 console.error("TripItinerary load error:", err);
-                if (err?.status === 401) setError("No autenticado. Por favor inicie sesión.");
-                else if (err?.status === 403) setError("No autorizado para ver ese viaje.");
-                else if (err?.status === 404) setError("Viaje no encontrado (compruebe ownership o id).");
-                else setError("No se pudo cargar el viaje o las localidades.");
+                if (err?.status === 401) setError(t('addPlace.notAuthenticated'));
+                else if (err?.status === 403) setError(t('addPlace.notAuthorized'));
+                else if (err?.status === 404) setError(t('addPlace.tripNotFound'));
+                else setError(t('addPlace.loadTripOrLocationsError'));
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -271,20 +273,20 @@ export default function AddPlace() {
     async function handleAddPlace(e) {
         e?.preventDefault();
         if (!selectedLocation) {
-            alert("Seleccione una ubicación.");
+            alert(t('addPlace.selectLocation'));
             return;
         }
         if (!date) {
-            alert("Seleccione una fecha.");
+            alert(t('addPlace.selectDate'));
             return;
         }
         if(!startHour || !startHour.split(":")[1]){
-            alert("Seleccione hora de inicio");
+            alert(t('addPlace.selectStartTime'));
             return;
         }
 
         if(!endHour || !endHour.split(":")[1]){
-            alert("Seleccione hora de final");
+            alert(t('addPlace.selectEndTime'));
             return;
         }
         setAdding(true);
@@ -314,7 +316,7 @@ export default function AddPlace() {
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Add place error:", err);
-            setError("No se pudo añadir el lugar. Intente nuevamente.");
+            setError(t('addPlace.addPlaceError'));
         } finally {
             setAdding(false);
         }
@@ -324,11 +326,11 @@ export default function AddPlace() {
     async function handleAutoAddPlace(e) {
         e?.preventDefault();
         if (!selectedLocation) {
-            alert("Seleccione una ubicación.");
+            alert(t('addPlace.selectLocation'));
             return;
         }
         if (!date) {
-            alert("Seleccione una fecha.");
+            alert(t('addPlace.selectDate'));
             return;
         }
 
@@ -361,7 +363,7 @@ export default function AddPlace() {
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error('Auto add error:', err);
-            const message = err?.message || (err?.response && err.response?.data && err.response.data.message) || 'No se pudo añadir automáticamente.';
+            const message = err?.message || (err?.response && err.response?.data && err.response.data.message) || t('addPlace.autoAddError');
             setError(message);
         } finally {
             setAdding(false);
@@ -377,7 +379,7 @@ export default function AddPlace() {
                     alignItems: "center",
                     height: "80vh" // ocupa casi toda la pantalla
                 }}>
-                    <div style={{fontSize:25}}> Cargando… </div>
+                    <div style={{fontSize:"1.5625rem"}}> {t('addPlace.loading')} </div>
                 </main>
             </div>
         );
@@ -389,7 +391,7 @@ export default function AddPlace() {
                 <Header/>
                 <main className="trip-it-main">
                     <div style={{ padding: 24 }}>
-                        <button className="back-link" onClick={() => navigate("/trips")}>← Volver a viajes</button>
+                        <button className="back-link" onClick={() => navigate("/trips")}>{t('addPlace.backToTrips')}</button>
                         <div style={{ marginTop: 18, color: "#b00020" }}>{error}</div>
                     </div>
                 </main>
@@ -416,10 +418,10 @@ export default function AddPlace() {
                     <div className="trip-it-dates">
                         {trip.start_date ? fmtDate(trip.start_date) : "-"} — {trip.end_date ? fmtDate(trip.end_date) : "-"}
                     </div>
-                    <h3 style={{ marginTop: 18 }}>Agregar punto al itinerario</h3>
+                    <h3 style={{ marginTop: 18 }}>{t('addPlace.addPointToItinerary')}</h3>
                     <form onSubmit={handleAddPlace} className="trip-it-form" style={{overflowY: "auto"}}>
                         <div className="trip-it-card">
-                            <label>Ubicación</label>
+                            <label>{t('addPlace.location')}</label>
                         <Select
                             className="dropdown-select"
                             classNamePrefix="react-select"
@@ -444,19 +446,19 @@ export default function AddPlace() {
                                     }
                                 }
                             }}
-                            placeholder={availableLocations.length ? "Buscar ubicación..." : `No se encontraron lugares en ${trip.destination}`}
+                            placeholder={availableLocations.length ? t('addPlace.searchLocation') : t('addPlace.noLocationsFound', { destination: trip.destination })}
                             isDisabled={availableLocations.length === 0}
                         />
 
                         {/* show an action to reveal all locations when filter returns none */}
                         {filteredLocations.length === 0 && locations.length > 0 && !showAllLocations && (
                             <div style={{ marginTop: 20 }}>
-                                <small>No se encontraron lugares que coincidan con la ciudad del viaje.</small>
-                                <button type="button" className="btn-small" onClick={() => setShowAllLocations(true)} style={{ marginLeft: 8 }}>Mostrar todas</button>
+                                <small>{t('addPlace.noMatchingLocations')}</small>
+                                <button type="button" className="btn-small" onClick={() => setShowAllLocations(true)} style={{ marginLeft: 8 }}>{t('addPlace.showAll')}</button>
                             </div>
                         )}</div>
                         <div className="trip-it-card">
-                        <label>Fecha</label>
+                        <label>{t('addPlace.date')}</label>
 
                         <div style={ {borderRadius: "0.75rem", padding:"1.25rem", border: "0.0625rem solid #e6e6e6"}}>
                         <div className="calendar-header" style={{paddingBottom:"0.9375rem"}}>
@@ -498,13 +500,13 @@ export default function AddPlace() {
                         </div>
                         </div>
 
-                        <label style={{paddingTop:"1.25rem"}}>Hora inicio</label>
+                        <label style={{paddingTop:"1.25rem"}}>{t('addPlace.startTime')}</label>
                         <TimePicker
                             value={startHour}
                             onChange={setStartHour}
                             occupiedSlots={occupiedSlots}
                             disabled={!date}/>
-                        <label style={{paddingTop:"1.25rem"}}>Hora fin</label>
+                        <label style={{paddingTop:"1.25rem"}}>{t('addPlace.endTime')}</label>
                         <TimePicker
                             value={endHour}
                             onChange={setEndHour}
@@ -513,16 +515,16 @@ export default function AddPlace() {
                             maxTime={nextOccupiedStart || null} // null = sin límite superior
                             disabled={!startHour.split(":")[1]}/></div>
                         <div className="trip-it-card">
-                        <label>Notas (opcional)</label>
+                        <label>{t('addPlace.notes')}</label>
                         <textarea value={notes}
                                   onChange={(e) => setNotes(e.target.value)} rows={3} /></div>
 
                         <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
                             <button type="submit" disabled={adding} className="btn-primary">
-                                {adding ? "Agregando…" : "Agregar al itinerario"}
+                                {adding ? t('addPlace.adding') : t('addPlace.addToItinerary')}
                             </button>
                             <button type="button" disabled={adding} onClick={handleAutoAddPlace} className="btn-secondary">
-                                {adding ? "Procesando…" : "Agregar automáticamente"}
+                                {adding ? t('addPlace.processing') : t('addPlace.addAutomatically')}
                             </button>
                         </div>
                         {error && <div className="error">{error}</div>}
@@ -608,7 +610,7 @@ export default function AddPlace() {
                                             <img
                                                 src={selectedLocationOnMap.image}
                                                 className="img-popUp"
-                                                alt="Lugar actual"
+                                                alt={t('addPlace.currentPlace')}
                                             />
                                             <div className="place-info">
                                                 <h3>{selectedLocationOnMap.titulo}</h3>
@@ -626,12 +628,12 @@ export default function AddPlace() {
                                 <img
                                     src={imgs[0]}
                                     className="place-image"
-                                    alt="Lugar actual"
+                                    alt={t('addPlace.currentPlace')}
                                 />
                                 <div className="place-it-info">
                                     <h3 style={{fontSize:"3.125rem",marginTop:"0.3125rem",  marginBottom:"0.3125rem"}}>{locationInfo.titulo}</h3>
                                     <p style= {{fontSize:"1.25rem",marginTop:"0.3125rem",  marginBottom:"0.3125rem"}}>( {locationInfo.fk_interest} )</p></div></div>
-                            <p style= {{fontSize:"1.25rem",marginTop:"0.3125rem",  marginBottom:"0.3125rem"}}><strong>Descripcion: </strong>
+                            <p style= {{fontSize:"1.25rem",marginTop:"0.3125rem",  marginBottom:"0.3125rem"}}><strong>{t('addPlace.description')}: </strong>
                                 {locationInfo.descripcion ? locationInfo.descripcion : ""}</p>
                             <div style={{ flex: 1, marginTop: 20 }}>
                                 <Map
@@ -707,7 +709,7 @@ export default function AddPlace() {
                                                 <img
                                                     src={selectedLocationOnMap.image}
                                                     className="img-popUp"
-                                                    alt="Lugar actual"
+                                                    alt={t('addPlace.currentPlace')}
                                                 />
                                                 <div className="place-info">
                                                     <h3>{selectedLocationOnMap.titulo}</h3>

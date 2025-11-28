@@ -84,6 +84,31 @@ export default function Explore() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  // Helper function to translate filter values
+  const translateFilterValue = (type, value) => {
+    if (!value) return '';
+    const map = {
+      duration: {
+        corto: t('explore.durationShort'),
+        medio: t('explore.durationMedium'),
+        largo: t('explore.durationLong'),
+        fin_semana: t('explore.weekend'),
+      },
+      budget: {
+        economico: t('explore.budgetEconomyLabel'),
+        moderado: t('explore.budgetModerateLabel'),
+        lujo: t('explore.budgetLuxuryLabel'),
+      },
+      season: {
+        primavera: t('explore.seasonSpring'),
+        verano: t('explore.seasonSummer'),
+        otono: t('explore.seasonAutumn'),
+        invierno: t('explore.seasonWinter'),
+      },
+    };
+    return map[type]?.[value] || value;
+  };
+
   // server-driven
   const [categories, setCategories] = useState([]); // from /api/interests
   const [popularLocations, setPopularLocations] = useState([]); // raw loc objects
@@ -351,40 +376,40 @@ export default function Explore() {
           <div className="filters-section compact">
             <div className="filters-row">
               <div className="filter-field">
-                <label>Duración</label>
+                <label>{t('explore.duration')}</label>
                 <select value={selectedDuration} onChange={(e) => setSelectedDuration(e.target.value)} className="filter-select">
-                  <option value="">Cualquiera</option>
-                  <option value="corto">Corto (1-3 días)</option>
-                  <option value="medio">Medio (4-7 días)</option>
-                  <option value="largo">Largo (8+ días)</option>
-                  <option value="fin_semana">Fin de semana</option>
+                  <option value="">{t('explore.any')}</option>
+                  <option value="corto">{t('explore.short')}</option>
+                  <option value="medio">{t('explore.medium')}</option>
+                  <option value="largo">{t('explore.long')}</option>
+                  <option value="fin_semana">{t('explore.weekend')}</option>
                 </select>
               </div>
 
               <div className="filter-field">
-                <label>Presupuesto</label>
+                <label>{t('explore.budget')}</label>
                 <select value={selectedBudget} onChange={(e) => setSelectedBudget(e.target.value)} className="filter-select">
-                  <option value="">Cualquiera</option>
-                  <option value="economico">Económico</option>
-                  <option value="moderado">Moderado</option>
-                  <option value="lujo">Lujo</option>
+                  <option value="">{t('explore.any')}</option>
+                  <option value="economico">{t('explore.budgetEconomy')}</option>
+                  <option value="moderado">{t('explore.budgetModerate')}</option>
+                  <option value="lujo">{t('explore.budgetLuxury')}</option>
                 </select>
               </div>
 
               <div className="filter-field">
-                <label>Época</label>
+                <label>{t('explore.season')}</label>
                 <select value={selectedSeason} onChange={(e) => setSelectedSeason(e.target.value)} className="filter-select">
-                  <option value="">Cualquiera</option>
-                  <option value="primavera">Primavera</option>
-                  <option value="verano">Verano</option>
-                  <option value="otono">Otoño</option>
-                  <option value="invierno">Invierno</option>
+                  <option value="">{t('explore.any')}</option>
+                  <option value="primavera">{t('explore.spring')}</option>
+                  <option value="verano">{t('explore.summer')}</option>
+                  <option value="otono">{t('explore.autumn')}</option>
+                  <option value="invierno">{t('explore.winter')}</option>
                 </select>
               </div>
 
               <div className="filter-actions">
-                <button className="btn-clear" onClick={clearFilters}>Borrar filtros</button>
-                <div className="hint">Nota: filtros UI (pueden conectarse al backend)</div>
+                <button className="btn-clear" onClick={clearFilters}>{t('explore.clearFilters')}</button>
+                <div className="hint">{t('explore.filtersNote')}</div>
               </div>
             </div>
 
@@ -392,19 +417,19 @@ export default function Explore() {
             <div className="active-chips">
               {selectedDuration && (
                 <div className="filter-chip">
-                  Duración: {selectedDuration}
+                  {t('explore.durationLabel')}: {translateFilterValue('duration', selectedDuration)}
                   <button className="chip-x" onClick={() => removeActiveFilter("duration")}>✕</button>
                 </div>
               )}
               {selectedBudget && (
                 <div className="filter-chip">
-                  Presupuesto: {selectedBudget}
+                  {t('explore.budgetLabel')}: {translateFilterValue('budget', selectedBudget)}
                   <button className="chip-x" onClick={() => removeActiveFilter("budget")}>✕</button>
                 </div>
               )}
               {selectedSeason && (
                 <div className="filter-chip">
-                  Época: {selectedSeason}
+                  {t('explore.seasonLabel')}: {translateFilterValue('season', selectedSeason)}
                   <button className="chip-x" onClick={() => removeActiveFilter("season")}>✕</button>
                 </div>
               )}
@@ -414,8 +439,8 @@ export default function Explore() {
           {/* filtered results first */}
           <div className="experiences-section">
             <div className="section-header">
-              <h2>{selectedCategorySlug === "todo" ? "Resultados" : `Resultados — ${selectedCategoryTitle}`}</h2>
-              <div className="small-muted">{filteredExperiences.length} resultados</div>
+              <h2>{selectedCategorySlug === "todo" ? t('explore.results') : `${t('explore.results')} — ${selectedCategoryTitle}`}</h2>
+              <div className="small-muted">{filteredExperiences.length} {t('explore.resultsCount')}</div>
             </div>
 
             {locationsLoading ? (
@@ -426,7 +451,7 @@ export default function Explore() {
             ) : (
               <div className="experiences-grid">
                 {filteredExperiences.length === 0 ? (
-                  <div className="muted">No se encontraron lugares para esta categoría.</div>
+                  <div className="muted">{t('explore.noPlacesForCategory')}</div>
                 ) : (
                   filteredExperiences.map((exp, idx) => (
                     <div key={exp.id} className="experience-card" onClick={() => handleExperienceClick(exp)}>
@@ -458,7 +483,7 @@ export default function Explore() {
           {/* popular below */}
           <div className="experiences-section">
             <div className="section-header">
-              <h2>Populares</h2>
+              <h2>{t('explore.popular')}</h2>
             </div>
 
             {locationsLoading ? (
@@ -515,8 +540,8 @@ export default function Explore() {
               <h2>{selectedExperience.title}</h2>
               <p className="modal-description">{selectedExperience.description}</p>
               <div className="modal-actions">
-                <button className="btn-create" onClick={handleCreateTrip}>Crear plan de viaje</button>
-                <button className="btn-share" onClick={handleShare}>Compartir</button>
+                <button className="btn-create" onClick={handleCreateTrip}>{t('explore.createTripPlan')}</button>
+                <button className="btn-share" onClick={handleShare}>{t('explore.share')}</button>
               </div>
             </div>
           </div>

@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import loadingGif from '../components/loading.gif';
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "../i18n";
 
 export default function LoadTrip() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const tripId = location.state?.tripId;
 
   useEffect(() => {
@@ -20,11 +22,11 @@ export default function LoadTrip() {
   return (
     <div style={styles.container}>
       <p style={styles.text}>
-        Estamos calculando los mejores lugares para visitar en tu viaje
+        {t('loadTrip.calculating')}
       </p>
       <img 
         src={loadingGif} 
-        alt="Loading..."
+        alt={t('common.loading')}
         style={styles.loadingImage}
       />
     </div>

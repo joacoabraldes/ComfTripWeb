@@ -257,7 +257,7 @@ export default function Community() {
                 {incoming.map(r => (
                   <div key={r.id} className="list-item">
                     <div className="info">
-                      <div className="title">{r.requester_name || r.requester_email || `Usuario ${r.requester_id}`}</div>
+                      <div className="title">{r.requester_name || r.requester_email || `${t('community.user')} ${r.requester_id}`}</div>
                       <div className="subtitle">{r.requester_email}</div>
                     </div>
                     <div className="actions">
@@ -313,7 +313,7 @@ export default function Community() {
                 {outgoing.map(o => (
                   <div key={o.id} className="list-item">
                     <div className="info">
-                      <div className="title">{o.addressee_name || o.addressee_email || `Usuario ${o.addressee_id}`}</div>
+                      <div className="title">{o.addressee_name || o.addressee_email || `${t('community.user')} ${o.addressee_id}`}</div>
                       <div className="subtitle">{o.addressee_email}</div>
                       <div className="tiny">{t('community.status')} {o.status}</div>
                     </div>
@@ -330,7 +330,7 @@ export default function Community() {
         <div className="modal-overlay" onClick={() => { if (!sharing) setShowShareModal(false); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => { if (!sharing) setShowShareModal(false); }}>×</button>
-            <h3>{t('community.shareTitle', { name: shareTargetFriend.name || shareTargetFriend.email || `Usuario ${shareTargetFriend.id}` })}</h3>
+            <h3>{t('community.shareTitle', { name: shareTargetFriend.name || shareTargetFriend.email || `${t('community.user')} ${shareTargetFriend.id}` })}</h3>
             <p className="hint">{t('community.shareSubtitle')}</p>
 
             <div style={{ marginTop: 14, maxHeight: '50vh', overflow: 'auto' }}>

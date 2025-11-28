@@ -3,9 +3,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiPut } from "./api";
 import "../styles/changePassword.css";
-import Header from "../components/Header";
 import "../styles/header.css";
 import { useTranslation } from "../i18n";
+import { FaArrowLeft } from "react-icons/fa";
+import ActionButton from "../components/ActionButton";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -84,10 +85,8 @@ export default function ChangePassword() {
 
   return (
     <div className="change-root">
-      <Header/>
 
       <main className="change-container">
-        <button className="back-btn" onClick={() => navigate(-1)} aria-label={t('common.back')}>←</button>
 
         <h1 className="change-title">{t('changePassword.title')}</h1>
 
@@ -136,9 +135,9 @@ export default function ChangePassword() {
           </label>
 
           <div className="form-actions">
-            <button type="submit" className="edit-btn-primary" disabled={loading}>
+            <ActionButton type="submit" variant="edit" disabled={loading}>
               {loading ? t('changePassword.changing') : t('changePassword.change')}
-            </button>
+            </ActionButton>
           </div>
         </form>
       </main>

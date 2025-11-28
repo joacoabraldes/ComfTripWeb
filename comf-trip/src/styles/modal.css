@@ -1,0 +1,53 @@
+/* Modal styles - shared across all modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.modal-content {
+  width: 51.25rem;
+  max-width: calc(100% - 2rem);
+  background: #fff;
+  border-radius: 0.625rem;
+  padding: 1.125rem;
+  box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  font-size: 1.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.modal-close:hover:not(:disabled) {
+  color: #333;
+}
+
+.modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 51.25rem) {
+  .modal-content {
+    width: 95%;
+  }
+}
+

@@ -5,9 +5,9 @@ import Select from "react-select";
 import countryList from "react-select-country-list";
 import "../styles/editProfile.css";
 import { FaUser } from "react-icons/fa";
-import Header from "../components/Header";
 import "../styles/header.css";
 import { useTranslation } from "../i18n";
+import ActionButton from "../components/ActionButton";
 
 export default function EditProfile() {
     const navigate = useNavigate();
@@ -95,16 +95,8 @@ export default function EditProfile() {
 
     return (
         <div className="edit-root">
-            <Header/>
 
             <main className="edit-container">
-                <button
-                    className="back-btn"
-                    onClick={() => navigate(-1)}
-                    aria-label={t('common.back')}
-                >
-                    ←
-                </button>
 
                 <h1 className="edit-title">{t('editProfile.title')}</h1>
 
@@ -177,9 +169,9 @@ export default function EditProfile() {
                     </label>
 
                     <div className="form-actions">
-                        <button type="submit" className="edit-btn-primary" disabled={loading}>
+                        <ActionButton type="submit" variant="edit" disabled={loading}>
                             {loading ? t('editProfile.saving') : t('editProfile.save')}
-                        </button>
+                        </ActionButton>
                     </div>
                 </form>
             </main>

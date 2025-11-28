@@ -9,13 +9,16 @@ import Map, {
   Layer,
 } from "react-map-gl/mapbox";
 import "../styles/tripItinerary.css";
-import Header from "../components/Header";
 import "../styles/header.css";
 import Select from "react-select";
 import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 import flightsApi from "../services/flightsApi";
 import { Country, City } from "country-state-city";
 import { useTranslation } from "../i18n";
+import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
+import IconButton from "../components/IconButton";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const MAPBOX_TOKEN =
   process.env.REACT_APP_MAPBOX_TOKEN ||
@@ -1285,16 +1288,8 @@ const handleSaveSelectedFlight = async () => {
   if (loading) {
     return (
       <div className="trip-it-root">
-        <main
-          className="trip-it-main"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "80vh",
-          }}
-        >
-          <div style={{ fontSize: 25 }}> {t('tripItinerary.loading')} </div>
+        <main className="trip-it-main">
+          <LoadingSpinner message={t('tripItinerary.loading')} />
         </main>
       </div>
     );
@@ -1303,7 +1298,6 @@ const handleSaveSelectedFlight = async () => {
   if (error) {
     return (
       <div className="trip-it-root">
-        <Header />
         <main className="trip-it-main">
           <div style={{ padding: 24 }}>
             <button className="back-link" onClick={() => navigate("/trips")}>
@@ -1319,7 +1313,6 @@ const handleSaveSelectedFlight = async () => {
   if (!trip) {
     return (
       <div className="trip-it-root">
-        <Header />
       </div>
     );
   }
@@ -1923,7 +1916,6 @@ const handleSaveSelectedFlight = async () => {
       className="trip-it-root"
       style={{ background: "#f6f7f9", minHeight: "100vh" }}
     >
-      <Header />
 
       <main
         className="trip-it-main"
@@ -2049,21 +2041,7 @@ const handleSaveSelectedFlight = async () => {
                               title={isActive ? t('tripItinerary.hideRoute') : t('tripItinerary.showRoute')}
                             >
                               {/* small route icon */}
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                style={{ marginRight: 8 }}
-                              >
-                                <path
-                                  d="M3 12h4l3-8 4 16 3-8h4"
-                                  stroke="currentColor"
-                                  strokeWidth="1.6"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                              <FaMapMarkedAlt size={16} style={{ marginRight: 8 }} />
                               <span style={{ fontSize: 13 }}>
                                 {isActive ? t('tripItinerary.hideRoute') : t('tripItinerary.showRoute')}
                               </span>
@@ -2280,8 +2258,8 @@ const handleSaveSelectedFlight = async () => {
                                       }}
                                     >
                                       {/* edit */}
-                                      <button
-                                        className="trip-it-menu-btn"
+                                      <IconButton
+                                        icon={<FaEdit size={18} />}
                                         onClick={(ev) => {
                                           ev.stopPropagation();
                                           navigate(
@@ -2295,20 +2273,16 @@ const handleSaveSelectedFlight = async () => {
                                           setMenuOpen(null);
                                         }}
                                         title={t('tripItinerary.editPoint')}
-                                      >
-                                        ✎
-                                      </button>
+                                        variant="menu"
+                                      />
 
                                       {/* delete */}
-                                      <button
-                                        className="trip-it-menu-btn"
-                                        onClick={(ev) =>
-                                          handleDeletePlace(ev, p)
-                                        }
+                                      <IconButton
+                                        icon={<FaTrash size={18} />}
+                                        onClick={(ev) => handleDeletePlace(ev, p)}
                                         title={t('tripItinerary.deletePoint')}
-                                      >
-                                        🗑
-                                      </button>
+                                        variant="menu"
+                                      />
                                     </div>
                                   )}
                                 </div>

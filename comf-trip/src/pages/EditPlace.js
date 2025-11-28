@@ -6,7 +6,6 @@ import "../styles/tripItinerary.css";
 import "../styles/addPlace.css";
 import "../styles/auth.css";
 import { apiGet, apiPut } from "./api";
-import Header from "../components/Header";
 import Map, {Marker, NavigationControl} from "react-map-gl/mapbox";
 import { useTranslation } from "../i18n";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
@@ -222,7 +221,6 @@ export default function EditPlace() {
 
     if (loading) return(
     <div className="trip-it-root">
-                <Header />
                 <main className="trip-it-main" style={{
                     display: "flex",
                     justifyContent: "center",
@@ -234,7 +232,6 @@ export default function EditPlace() {
             </div>
         );
     if (error) return (<div className="trip-it-root">
-            <Header/>
             <main className="trip-it-main" style={{
                 display: "flex",
                 justifyContent: "center",
@@ -273,7 +270,6 @@ export default function EditPlace() {
 
     return (
         <div className="trip-it-root">
-            <Header />
             <main className="trip-it-main">
                 <section className="trip-it-left">
                     <h2 className="trip-it-title">{trip.destination}</h2>

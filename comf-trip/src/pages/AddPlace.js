@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/tripItinerary.css";
-import Header from "../components/Header";
 import TimePicker from "../components/TimePicker"
 import "../styles/addPlace.css";
 import "../styles/auth.css"
@@ -388,7 +387,6 @@ export default function AddPlace() {
     if (error) {
         return (
             <div className="trip-it-root">
-                <Header/>
                 <main className="trip-it-main">
                     <div style={{ padding: 24 }}>
                         <button className="back-link" onClick={() => navigate("/trips")}>{t('addPlace.backToTrips')}</button>
@@ -402,14 +400,12 @@ export default function AddPlace() {
     if (!trip) {
         return (
             <div className="trip-it-root">
-                <Header/>
             </div>
         );
     }
 
     return (
         <div className="trip-it-root" style={{background: "#fbfbfb"}}>
-            <Header/>
 
             <main className="trip-it-main">
                 <section className="trip-it-left" >

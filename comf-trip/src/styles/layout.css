@@ -1,0 +1,12 @@
+/* src/styles/layout.css */
+.app-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-main {
+    flex: 1;
+    padding-top: calc(var(--header-height, 5rem) - 0.5rem);
+}
+

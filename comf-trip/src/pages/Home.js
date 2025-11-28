@@ -1,10 +1,9 @@
 // src/pages/Home.jsx
 import React, {useEffect, useState, useRef} from "react";
 import { useNavigate } from "react-router-dom";
-import {Calendar, MapPin, Clock } from "lucide-react";
+import { FaCalendar, FaMapMarkerAlt, FaClock } from "react-icons/fa";
 import { Country, City } from 'country-state-city';
 import "../styles/home.css";
-import Header from "../components/Header";
 import { apiGet } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 import OptimizedImage from "../components/OptimizedImage";
@@ -333,7 +332,6 @@ export default function Home() {
     if(loadingTrips || loadingCurrent || loadingPopular){
         return (
             <div className="home-root">
-                <Header/>
                 <div style={{
                     display: "flex",
                     justifyContent: "center",
@@ -349,7 +347,6 @@ export default function Home() {
 
     return (
         <div className="home-root">
-            <Header/>
 
             <main className="hero">
                 <div className="hero-left"><div style={{ marginTop: (currentPlace && nextPlace) ? "1.25rem": "", marginBottom:(currentPlace && nextPlace) ? "2.5rem":""}}>
@@ -359,10 +356,9 @@ export default function Home() {
                             {currentTrip ? t('home.currentTrip', { destination: currentTrip.destination }) : (nextTrip ? t('home.nextTrip', { destination: nextTrip.destination }) : t('home.readyForAdventure'))}
                         </h1>
                         <div style={{ display: "flex", alignItems: "center", marginTop: 20 }}>
-                            <Calendar
+                            <FaCalendar
                                 size={18}
                                 color="#8a6b80"
-                                strokeWidth={2}
                                 style={{ marginRight: 8, marginBottom: 4 }}
                             />
                             <p className="hero-sub" style={{ margin: 0 }}>
@@ -413,17 +409,16 @@ export default function Home() {
                                         alt={t('home.currentPlace')}
                                     />}
                                     <div className="place-info">
-                                        <div style={{display: "flex", alignItems: "center"}}><MapPin size={25}
+                                        <div style={{display: "flex", alignItems: "center"}}><FaMapMarkerAlt size={25}
                                                                                                      color="#ff3951"
-                                                                                                     strokeWidth={2.5}
                                                                                                      style={{marginRight: 12}}/>
                                             <h2>{currentPlace.location?.titulo}</h2></div>
-                                        <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Calendar
-                                            size={18} color="#8a6b80" strokeWidth={2}
+                                        <div style={{display: "flex", alignItems: "center", marginTop: 10}}><FaCalendar
+                                            size={18} color="#8a6b80"
                                             style={{marginRight: 8, marginBottom: 10}}/> <p
                                             className="sub-title"> {formatDate(currentPlace.date)} </p></div>
-                                        <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Clock
-                                            size={18} color="#8a6b80" strokeWidth={2}
+                                        <div style={{display: "flex", alignItems: "center", marginTop: 10}}><FaClock
+                                            size={18} color="#8a6b80"
                                             style={{marginRight: 8, marginBottom: 10}}/> <p
                                             className="sub-title"> {fmtHour(currentPlace.start_hour)} - {fmtHour(currentPlace.end_hour)} </p>
                                         </div>
@@ -464,17 +459,16 @@ export default function Home() {
                                             alt={t('home.nextPlace')}
                                         />}
                                         <div className="place-info">
-                                            <div style={{display: "flex", alignItems: "center"}}><MapPin size={25}
+                                            <div style={{display: "flex", alignItems: "center"}}><FaMapMarkerAlt size={25}
                                                                                                          color="#ff3951"
-                                                                                                         strokeWidth={2.5}
                                                                                                          style={{marginRight: 12}}/>
                                                 <h2>{nextPlace.location?.titulo}</h2></div>
                                             <div style={{display: "flex", alignItems: "center", marginTop: 10}}>
-                                                <Calendar size={18} color="#8a6b80" strokeWidth={2}
+                                                <FaCalendar size={18} color="#8a6b80"
                                                           style={{marginRight: 8, marginBottom: 10}}/>
                                                 <p> {formatDate(nextPlace.date)} </p></div>
-                                            <div style={{display: "flex", alignItems: "center", marginTop: 10}}><Clock
-                                                size={18} color="#8a6b80" strokeWidth={2}
+                                            <div style={{display: "flex", alignItems: "center", marginTop: 10}}><FaClock
+                                                size={18} color="#8a6b80"
                                                 style={{marginRight: 8, marginBottom: 10}}/>
                                                 <p> {fmtHour(nextPlace.start_hour)} - {fmtHour(nextPlace.end_hour)} </p>
                                             </div>
@@ -798,7 +792,7 @@ export default function Home() {
                 </div>
                 {!currentTrip && <div className="trips-cta">
                     <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
-                        {t('trips.newTrip')} &nbsp; &gt;
+                        {t('trips.newTrip')}
                     </button>
                 </div>}
             </main>

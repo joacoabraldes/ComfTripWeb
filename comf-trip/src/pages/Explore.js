@@ -1,8 +1,8 @@
 // src/pages/Explore.js
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
 import "../styles/explore.css";
+import { FaTimes } from "react-icons/fa";
 import { apiGet } from "./api";
 import OptimizedImage from "../components/OptimizedImage";
 import { useTranslation } from "../i18n";
@@ -326,7 +326,6 @@ export default function Explore() {
   if (initialLoading) {
     return (
       <div className="explorar-page">
-        <Header />
           <div style={{
               display: "flex",
               justifyContent: "center",
@@ -340,7 +339,6 @@ export default function Explore() {
   // main render (categories already loaded)
   return (
     <div className="explorar-page">
-      <Header />
       <main className="explorar-main">
         <div className="explorar-container">
           <h1 className="explorar-title">{t('explore.title')}</h1>
@@ -522,7 +520,9 @@ export default function Explore() {
       {showDetailModal && selectedExperience && (
         <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowDetailModal(false)}>×</button>
+            <button className="modal-close" onClick={() => setShowDetailModal(false)}>
+              <FaTimes size={20} />
+            </button>
 
             <div className="modal-image">
               {selectedExperience.imageLarge || selectedExperience.image ? (

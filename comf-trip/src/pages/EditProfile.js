@@ -5,7 +5,6 @@ import Select from "react-select";
 import countryList from "react-select-country-list";
 import "../styles/editProfile.css";
 import { FaUser } from "react-icons/fa";
-import Header from "../components/Header";
 import "../styles/header.css";
 import { useTranslation } from "../i18n";
 
@@ -95,16 +94,8 @@ export default function EditProfile() {
 
     return (
         <div className="edit-root">
-            <Header/>
 
             <main className="edit-container">
-                <button
-                    className="back-btn"
-                    onClick={() => navigate(-1)}
-                    aria-label={t('common.back')}
-                >
-                    ←
-                </button>
 
                 <h1 className="edit-title">{t('editProfile.title')}</h1>
 

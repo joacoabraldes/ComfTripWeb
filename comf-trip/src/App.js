@@ -29,6 +29,7 @@ import { LanguageProvider } from "./i18n";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AddPlace from "./pages/AddPlace";
 import EditPlace from "./pages/EditPlace";
+import Layout from "./components/Layout";
 
 function App() {
   return (
@@ -44,16 +45,16 @@ function App() {
 
 
           {/* Protected routes - require authentication */}
-            <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-            <Route path="/add-trip" element={<ProtectedRoute><AddTrip /></ProtectedRoute>} />
-            <Route path="/load-trip" element={<ProtectedRoute><LoadTrip /></ProtectedRoute>} />
-            <Route path="/edit-trip/:tripId" element={<ProtectedRoute><EditTrip /></ProtectedRoute>} />
+            <Route path="/home" element={<ProtectedRoute><Layout><Home /></Layout></ProtectedRoute>} />
+            <Route path="/explore" element={<ProtectedRoute><Layout><Explore /></Layout></ProtectedRoute>} />
+            <Route path="/add-trip" element={<ProtectedRoute><Layout><AddTrip /></Layout></ProtectedRoute>} />
+            <Route path="/load-trip" element={<ProtectedRoute><Layout><LoadTrip /></Layout></ProtectedRoute>} />
+            <Route path="/edit-trip/:tripId" element={<ProtectedRoute><Layout><EditTrip /></Layout></ProtectedRoute>} />
             <Route
             path="/trips"
             element={
               <ProtectedRoute>
-                <Trips />
+                <Layout><Trips /></Layout>
               </ProtectedRoute>
             }
           />
@@ -62,7 +63,7 @@ function App() {
                 path="/edit-place/:tripId"
                 element={
                     <ProtectedRoute>
-                        <EditPlace />
+                        <Layout><EditPlace /></Layout>
                     </ProtectedRoute>
                 }
             />
@@ -71,7 +72,7 @@ function App() {
             path="/map"
             element={
               <ProtectedRoute>
-                <MapPage />
+                <Layout><MapPage /></Layout>
               </ProtectedRoute>
             }
           />
@@ -80,7 +81,7 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <Profile />
+                <Layout><Profile /></Layout>
               </ProtectedRoute>
             }
           />
@@ -88,7 +89,7 @@ function App() {
                 path="/edit-profile"
                 element={
                     <ProtectedRoute>
-                        <EditProfile />
+                        <Layout><EditProfile /></Layout>
                     </ProtectedRoute>
                 }
             />
@@ -97,11 +98,11 @@ function App() {
             path="/change-password"
             element={
               <ProtectedRoute>
-                <ChangePassword />
+                <Layout><ChangePassword /></Layout>
               </ProtectedRoute>
             }
           />
-          <Route path="/interests" element={<ProtectedRoute><InterestsPage /></ProtectedRoute>} />
+          <Route path="/interests" element={<ProtectedRoute><Layout><InterestsPage /></Layout></ProtectedRoute>} />
 
           <Route path="/error" element={<ErrorPage />} />
 
@@ -109,7 +110,7 @@ function App() {
             path="/trip_itinerary/:tripId"
             element={
               <ProtectedRoute>
-                <TripItinerary />
+                <Layout><TripItinerary /></Layout>
               </ProtectedRoute>
             }
           />
@@ -117,12 +118,12 @@ function App() {
                 path="/add_place/:tripId"
                 element={
                     <ProtectedRoute>
-                        <AddPlace/>
+                        <Layout><AddPlace/></Layout>
                     </ProtectedRoute>
                 }
             />
-          <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-          <Route path="/friend/:friendId" element={<ProtectedRoute><FriendProfile /></ProtectedRoute>} />
+          <Route path="/community" element={<ProtectedRoute><Layout><Community /></Layout></ProtectedRoute>} />
+          <Route path="/friend/:friendId" element={<ProtectedRoute><Layout><FriendProfile /></Layout></ProtectedRoute>} />
 
           {/* fallback: send to error */}
           <Route path="*" element={<Navigate to="/error" replace />} />

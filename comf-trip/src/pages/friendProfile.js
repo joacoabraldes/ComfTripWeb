@@ -1,6 +1,5 @@
 // src/pages/friendProfile.js
 import React, { useEffect, useState } from 'react';
-import Header from '../components/Header';
 import '../styles/friendProfile.css';
 import { apiGet } from './api';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -63,7 +62,6 @@ export default function FriendProfile() {
   if (loading) {
     return (
       <div>
-        <Header />
         <main className="friend-main">
           <div className="friend-container">
             <div className="muted">{t('friendProfile.loading')}</div>
@@ -76,7 +74,6 @@ export default function FriendProfile() {
   if (error) {
     return (
       <div>
-        <Header />
         <main className="friend-main">
           <div className="friend-container">
             <div className="error">{error}</div>
@@ -90,7 +87,6 @@ export default function FriendProfile() {
   if (!friend) {
     return (
       <div>
-        <Header />
         <main className="friend-main">
           <div className="friend-container">
             <div className="muted">{t('friendProfile.notFound')}</div>
@@ -103,7 +99,6 @@ export default function FriendProfile() {
 
   return (
     <div>
-      <Header />
       <main className="friend-main">
         <div className="friend-container">
           <div className="friend-card">

@@ -3,7 +3,7 @@
   height: 100vh;
   background: #f9f9f9;
   padding: 1.25rem;
-  padding-top: var(--header-height, 5rem);
+  padding-top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -152,7 +152,7 @@
 /* Responsive */
 @media (max-width: 48rem) {
   .profile-root {
-    padding-top: calc(var(--header-height, 5rem) + 1rem);
+    padding-top: 0.5rem;
     padding-left: 1rem;
     padding-right: 1rem;
   }

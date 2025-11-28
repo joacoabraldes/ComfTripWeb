@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import "../styles/AddTrip.css";
 import LogoSvg from "../components/LogoSvg";
 import Select from "react-select";
-import Header from "../components/Header";
 import flightsApi from "../services/flightsApi";
 import { Country, City } from "country-state-city";
 import countryList from "react-select-country-list";
@@ -898,7 +897,6 @@ export default function AddTrip() {
   if (loading) {
     return (
       <div className="add-trip-root">
-        <Header />
         <main
           className="add-trip-container"
           style={{
@@ -956,7 +954,6 @@ export default function AddTrip() {
 
   return (
     <div className="add-trip-root">
-      <Header />
       <div className="add-trip-container">
         <div className="add-trip-left">
           <form className="form" onSubmit={handleSubmit}>

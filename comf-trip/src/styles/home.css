@@ -30,7 +30,7 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  padding-top: calc(var(--header-height));
+  padding-top: 0;
 }
 
 

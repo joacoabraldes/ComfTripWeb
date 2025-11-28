@@ -4,7 +4,6 @@ import { apiPut, apiGet } from "./api";
 import { useNavigate, useParams } from "react-router-dom";
 import "../styles/AddTrip.css";
 import LogoSvg from "../components/LogoSvg";
-import Header from "../components/Header";
 import { useTranslation } from "../i18n";
 
 export default function EditTrip() {
@@ -226,7 +225,6 @@ export default function EditTrip() {
     if (loadingOpen) {
         return (
             <div className="add-trip-root">
-                <Header />
                 <main className="add-trip-container" style={{
                     display: "flex",
                     justifyContent: "center",
@@ -241,7 +239,6 @@ export default function EditTrip() {
 
     return (
         <div className="add-trip-root" >
-            <Header/>
             <div className="add-trip-container" >
                 {/* LEFT: Form */}
                 <div className="add-trip-left">

@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost } from "./api";
 import "../styles/interests.css";
 import Sidebar from "../components/Sidebar";
-import Hamburger from "../components/icons/Hamburger";
-import UserIcon from "../components/icons/UserIcon";
+import { FaBars, FaUser } from "react-icons/fa";
 import { useTranslation } from "../i18n";
 
 // --- image loader: compatible Vite (import.meta.glob) y CRA/webpack (require.context)
@@ -124,10 +123,10 @@ export default function InterestsPage() {
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="home-header">
         <button className="icon-btn icon-left" aria-label={t('common.menu')} onClick={() => setMenuOpen(v => !v)}>
-          <Hamburger />
+          <FaBars size={24} />
         </button>
         <button className="icon-btn icon-right" aria-label={t('common.profile')} onClick={() => navigate("/profile")}>
-          <UserIcon />
+          <FaUser size={24} />
         </button>
       </div>
 

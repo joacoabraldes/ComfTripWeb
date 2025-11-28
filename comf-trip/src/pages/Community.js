@@ -1,7 +1,7 @@
 // src/pages/community.js
 import React, { useEffect, useState } from 'react';
-import Header from '../components/Header';
 import '../styles/community.css';
+import { FaCheck, FaTimes, FaUser, FaShare, FaTrash } from 'react-icons/fa';
 import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
@@ -219,7 +219,6 @@ export default function Community() {
   if (loading) {
     return (
       <div>
-        <Header />
             <div style={{
                 display: "flex",
                 justifyContent: "center",
@@ -232,7 +231,6 @@ export default function Community() {
 
   return (
     <div>
-      <Header />
       <main className="community-main">
         <div className="community-container">
           <h2>{t('community.title')}</h2>
@@ -262,10 +260,10 @@ export default function Community() {
                     </div>
                     <div className="actions">
                       <button className="icon-btn" title={t('community.accept')} onClick={() => acceptRequest(r.id)} aria-label={t('community.accept')}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#1abc9c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <FaCheck size={16} color="#1abc9c" />
                       </button>
                       <button className="icon-btn muted" title={t('community.reject')} onClick={() => rejectRequest(r.id)} aria-label={t('community.reject')}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#e74c3c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <FaTimes size={16} color="#e74c3c" />
                       </button>
                     </div>
                   </div>
@@ -289,15 +287,15 @@ export default function Community() {
                     </div>
                     <div className="actions">
                       <button className="icon-btn" title={t('community.viewProfile')} onClick={() => navigate(`/friend/${f.id}`)} aria-label={t('community.viewProfile')}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM2 22a10 10 0 0120 0" stroke="#34495e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <FaUser size={16} color="#34495e" />
                       </button>
 
                       <button className="icon-btn" title={t('community.shareTrips')} onClick={() => openShareModal(f)} aria-label={t('community.shareTrips')}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="#2b8cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 3v13M8 7l4-4 4 4" stroke="#2b8cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <FaShare size={16} color="#2b8cff" />
                       </button>
 
                       <button className="icon-btn muted" title={t('community.removeFriend')} onClick={() => removeFriend(f.id)} aria-label={t('community.removeFriend')}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6v12a2 2 0 002 2h4a2 2 0 002-2V6M10 6V4a2 2 0 012-2h0a2 2 0 012 2v2" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <FaTrash size={16} color="#e74c3c" />
                       </button>
                     </div>
                   </div>
@@ -329,7 +327,9 @@ export default function Community() {
       {showShareModal && shareTargetFriend && (
         <div className="modal-overlay" onClick={() => { if (!sharing) setShowShareModal(false); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => { if (!sharing) setShowShareModal(false); }}>×</button>
+            <button className="modal-close" onClick={() => { if (!sharing) setShowShareModal(false); }}>
+              <FaTimes size={20} />
+            </button>
             <h3>{t('community.shareTitle', { name: shareTargetFriend.name || shareTargetFriend.email || `${t('community.user')} ${shareTargetFriend.id}` })}</h3>
             <p className="hint">{t('community.shareSubtitle')}</p>
 

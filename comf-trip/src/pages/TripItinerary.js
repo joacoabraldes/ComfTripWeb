@@ -9,13 +9,13 @@ import Map, {
   Layer,
 } from "react-map-gl/mapbox";
 import "../styles/tripItinerary.css";
-import Header from "../components/Header";
 import "../styles/header.css";
 import Select from "react-select";
 import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 import flightsApi from "../services/flightsApi";
 import { Country, City } from "country-state-city";
 import { useTranslation } from "../i18n";
+import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
 
 const MAPBOX_TOKEN =
   process.env.REACT_APP_MAPBOX_TOKEN ||
@@ -1303,7 +1303,6 @@ const handleSaveSelectedFlight = async () => {
   if (error) {
     return (
       <div className="trip-it-root">
-        <Header />
         <main className="trip-it-main">
           <div style={{ padding: 24 }}>
             <button className="back-link" onClick={() => navigate("/trips")}>
@@ -1319,7 +1318,6 @@ const handleSaveSelectedFlight = async () => {
   if (!trip) {
     return (
       <div className="trip-it-root">
-        <Header />
       </div>
     );
   }
@@ -1923,7 +1921,6 @@ const handleSaveSelectedFlight = async () => {
       className="trip-it-root"
       style={{ background: "#f6f7f9", minHeight: "100vh" }}
     >
-      <Header />
 
       <main
         className="trip-it-main"
@@ -2049,21 +2046,7 @@ const handleSaveSelectedFlight = async () => {
                               title={isActive ? t('tripItinerary.hideRoute') : t('tripItinerary.showRoute')}
                             >
                               {/* small route icon */}
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                style={{ marginRight: 8 }}
-                              >
-                                <path
-                                  d="M3 12h4l3-8 4 16 3-8h4"
-                                  stroke="currentColor"
-                                  strokeWidth="1.6"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                              <FaMapMarkedAlt size={16} style={{ marginRight: 8 }} />
                               <span style={{ fontSize: 13 }}>
                                 {isActive ? t('tripItinerary.hideRoute') : t('tripItinerary.showRoute')}
                               </span>
@@ -2296,7 +2279,7 @@ const handleSaveSelectedFlight = async () => {
                                         }}
                                         title={t('tripItinerary.editPoint')}
                                       >
-                                        ✎
+                                        <FaEdit size={18} />
                                       </button>
 
                                       {/* delete */}
@@ -2307,7 +2290,7 @@ const handleSaveSelectedFlight = async () => {
                                         }
                                         title={t('tripItinerary.deletePoint')}
                                       >
-                                        🗑
+                                        <FaTrash size={18} />
                                       </button>
                                     </div>
                                   )}

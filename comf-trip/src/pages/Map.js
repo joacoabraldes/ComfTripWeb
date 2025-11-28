@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import Map, { Marker, NavigationControl, Popup } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "../styles/map.css";
-import Header from "../components/Header";
 import "../styles/header.css";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
@@ -240,7 +239,6 @@ export default function MapPage() {
   };
   if (loading){
       return (<div className="map-root">
-          <Header/>
           <main className="map-main" style={{
           display: "flex",
           justifyContent: "center",
@@ -251,8 +249,6 @@ export default function MapPage() {
 
   return (
     <div className="map-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <Header/>
-
       <main className="map-main" style={{ display: "flex", flex: 1 }}>
         <section className="map-left" style={{ width: 400, padding: 16, boxSizing: "border-box" }}>
           <h2>{t('map.locations')}</h2>

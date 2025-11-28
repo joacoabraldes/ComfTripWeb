@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/trips.css";
-import Header from "../components/Header";
+import { FaShare } from "react-icons/fa";
 import "../styles/header.css";
 import { apiGet, apiDelete, apiPost } from "./api";
-import { MapPin, Calendar,  ArrowDownWideNarrow, ArrowUpWideNarrow } from "lucide-react";
+import { FaMapMarkerAlt, FaCalendar, FaSortAmountDown, FaSortAmountUp, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import { useTranslation } from "../i18n";
 import { formatDate, formatDateRange, normalizeDate, isTripCurrent } from "../utils/dateUtils";
 
@@ -188,7 +188,6 @@ export default function Trips() {
   if (loading) {
     return (
       <div className="trips-root">
-        <Header />
 
             <div style={{
                 display: "flex",
@@ -203,8 +202,6 @@ export default function Trips() {
 
   return (
     <div className="trips-root">
-      <Header />
-
       <main className="trips-main">
 
           {trips.length === 0 ? (
@@ -276,9 +273,9 @@ export default function Trips() {
                             title={sortOrder === "asc" ? t('trips.filters.ascending') : t('trips.filters.descending')}
                         >
                             {sortOrder === "asc" ? (
-                                <ArrowUpWideNarrow size={22} color="#333" />
+                                <FaSortAmountUp size={22} color="#333" />
                             ) : (
-                                <ArrowDownWideNarrow size={22} color="#333" />
+                                <FaSortAmountDown size={22} color="#333" />
                             )}
                         </button>
 
@@ -301,7 +298,7 @@ export default function Trips() {
                         className="trip-item-main"
                         onClick={() => navigate(`/trip_itinerary/${trip.id}`)}
                       >
-                        <div className="trip-destination"><MapPin size={28} color="#ff3951" strokeWidth={2.5} style={{ marginRight: 12, marginBottom:-3 }} />
+                        <div className="trip-destination"><FaMapMarkerAlt size={28} color="#ff3951" style={{ marginRight: 12, marginBottom:-3 }} />
                             {trip.destination ?? t('trips.unknownDestination')}
                           {trip.share ? (
                             <span className="badge badge-primary" style={{ marginLeft: 8 }}>
@@ -316,7 +313,7 @@ export default function Trips() {
                         </div>
 
                           <div className="trip-dates" style={{paddingBottom:10}}>
-                              <Calendar size={18} color="#8a6b80" strokeWidth={2} style={{ marginRight: 8, marginBottom:-3 }} />
+                              <FaCalendar size={18} color="#8a6b80" style={{ marginRight: 8, marginBottom:-3 }} />
                               {formatDateRange(trip.start_date, trip.end_date)}
                           </div>
 
@@ -334,16 +331,13 @@ export default function Trips() {
                         {menuOpen === trip.id && (
                           <div className="trip-menu">
                             <button className="trip-menu-btn" onClick={() => openShareModal(trip)}>
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M4 12V19C4 19.55 4.45 20 5 20H19C19.55 20 20 19.55 20 19V12"
-                                      stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M12 4V15M12 4L8 8M12 4L16 8"
-                                      stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <FaShare size={20} color="#1E1E1E" />
                             </button>
 
                             <button className="trip-menu-btn"
-                              onClick={() => {navigate(`/edit-trip/${trip.id}`); setMenuOpen(null);}}>✎</button>
+                              onClick={() => {navigate(`/edit-trip/${trip.id}`); setMenuOpen(null);}}>
+                              <FaEdit size={18} />
+                            </button>
 
                             <button
                               className="trip-menu-btn"
@@ -359,7 +353,9 @@ export default function Trips() {
                                   }
                                 }
                               }}
-                            >🗑</button>
+                            >
+                              <FaTrash size={18} />
+                            </button>
                           </div>
                         )}
                       </div>
@@ -373,7 +369,7 @@ export default function Trips() {
 
         <div className="trips-cta">
           <button className="btn-newtrip" onClick={() => navigate("/add-trip")}>
-            {t('trips.newTrip')} &nbsp; &gt;
+            {t('trips.newTrip')}
           </button>
         </div>
 
@@ -381,7 +377,9 @@ export default function Trips() {
         {showShareModal && tripToShare && (
           <div className="modal-overlay" onClick={() => !sharing && setShowShareModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-close" onClick={() => !sharing && setShowShareModal(false)}>×</button>
+              <button className="modal-close" onClick={() => !sharing && setShowShareModal(false)}>
+                <FaTimes size={20} />
+              </button>
               <h3>{t('trips.share.title', { destination: tripToShare.destination })}</h3>
               <p className="hint">{t('trips.share.subtitle')}</p>
 

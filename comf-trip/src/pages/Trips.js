@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/trips.css";
-import { FaShare } from "react-icons/fa";
+import { FaShare, FaMapMarkerAlt, FaCalendar, FaSortAmountDown, FaSortAmountUp, FaEdit, FaTrash } from "react-icons/fa";
 import "../styles/header.css";
-import { apiGet, apiDelete, apiPost } from "./api";
-import { FaMapMarkerAlt, FaCalendar, FaSortAmountDown, FaSortAmountUp, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
+import { apiGet, apiDelete } from "./api";
 import { useTranslation } from "../i18n";
 import { formatDate, formatDateRange, normalizeDate, isTripCurrent } from "../utils/dateUtils";
+import ShareTripModal from "../components/ShareTripModal";
+import IconButton from "../components/IconButton";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ConfirmDialog from "../components/ConfirmDialog";
+import EmptyState from "../components/EmptyState";
+import FilterSelect from "../components/FilterSelect";
 
 export default function Trips() {
   const [loading, setLoading] = useState(true);
@@ -18,10 +23,10 @@ export default function Trips() {
 
   // estados para compartir viajes
   const [showShareModal, setShowShareModal] = useState(false);
-  const [friends, setFriends] = useState([]);
-  const [selectedFriend, setSelectedFriend] = useState(null);
   const [tripToShare, setTripToShare] = useState(null);
-  const [sharing, setSharing] = useState(false);
+  
+  // estado para confirmación de eliminación
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, trip: null });
 
     const [typeFilter, setTypeFilter] = useState("");
     const [countryFilter, setCountryFilter] = useState("");
@@ -146,56 +151,20 @@ export default function Trips() {
 
 
 
-    // funciones para compartir viajes
-  async function loadFriends() {
-    try {
-      const res = await apiGet('/friends');
-      const friendsArr = Array.isArray(res) ? res : (res && res.rows ? res.rows : []);
-      setFriends(friendsArr);
-    } catch (err) {
-      console.error('Error cargando amigos:', err);
-      alert(t('trips.share.errorLoadingFriends'));
-    }
-  }
-
+  // funciones para compartir viajes
   function openShareModal(trip) {
     setTripToShare(trip);
-    setSelectedFriend(null);
     setShowShareModal(true);
-    loadFriends();
   }
 
-  async function submitShare() {
-    if (!tripToShare || !selectedFriend) return alert(t('trips.share.selectFriend'));
-    setSharing(true);
-    try {
-      await apiPost(`/trips/${tripToShare.id}/share`, {
-        mode: 'viewer',
-        public: false,
-        shared_with_user_id: selectedFriend.id,
-      });
-      alert(t('trips.share.success', { friendName: selectedFriend.name || selectedFriend.email }));
-      setShowShareModal(false);
-      setTripToShare(null);
-    } catch (err) {
-      console.error('Error compartiendo viaje:', err);
-      alert(t('trips.share.error'));
-    } finally {
-      setSharing(false);
-    }
+  function handleShareSuccess() {
+    // Optionally refresh trips or show success message
   }
 
   if (loading) {
     return (
       <div className="trips-root">
-
-            <div style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh"
-            }}><div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('trips.loading')}</div></div>
-          
+        <LoadingSpinner message={t('trips.loading')} fullScreen />
       </div>
     );
   }
@@ -205,46 +174,51 @@ export default function Trips() {
       <main className="trips-main">
 
           {trips.length === 0 ? (
-            <div className="trips-message" style={{border:"none"}}>
-              {t('trips.empty')}
-              <br />
-              {t('trips.emptySubtitle')}
-            </div>
+            <EmptyState 
+              message={t('trips.empty')} 
+              subtitle={t('trips.emptySubtitle')}
+              className="trips-message"
+            />
           ) : (
             <>
               <h3 className="trips-list-title">{t('trips.title')}</h3>
                 <div className="trips-filters">
                     <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center", flex: 1 }}>
-                        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-                            <option value="">{t('trips.filters.all')}</option>
-                            <option value="current">{t('trips.filters.current')}</option>
-                            <option value="upcoming">{t('trips.filters.upcoming')}</option>
-                            <option value="past">{t('trips.filters.past')}</option>
-                        </select>
+                        <FilterSelect
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            placeholder={t('trips.filters.all')}
+                            options={[
+                                { value: 'current', label: t('trips.filters.current') },
+                                { value: 'upcoming', label: t('trips.filters.upcoming') },
+                                { value: 'past', label: t('trips.filters.past') },
+                            ]}
+                        />
 
-                        <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)}>
-                            <option value="">{t('trips.filters.allCountries')}</option>
-                            {availableCountries.map((c) => (
-                                <option key={c} value={c}>{c}</option>
-                            ))}
-                        </select>
+                        <FilterSelect
+                            value={countryFilter}
+                            onChange={(e) => setCountryFilter(e.target.value)}
+                            placeholder={t('trips.filters.allCountries')}
+                            options={availableCountries.map(c => ({ value: c, label: c }))}
+                        />
 
-                        <select
+                        <FilterSelect
                             value={provinceFilter}
                             onChange={(e) => setProvinceFilter(e.target.value)}
+                            placeholder={t('trips.filters.allCities')}
                             disabled={!countryFilter}
-                        >
-                            <option value="">{t('trips.filters.allCities')}</option>
-                            {availableProvinces.map((p) => (
-                                <option key={p} value={p}>{p}</option>
-                            ))}
-                        </select>
+                            options={availableProvinces.map(p => ({ value: p, label: p }))}
+                        />
 
-                        <select value={creatorFilter} onChange={(e) => setCreatorFilter(e.target.value)}>
-                            <option value="">{t('trips.filters.allCreators')}</option>
-                            <option value="me">{t('trips.filters.createdByMe')}</option>
-                            <option value="others">{t('trips.filters.createdByOthers')}</option>
-                        </select>
+                        <FilterSelect
+                            value={creatorFilter}
+                            onChange={(e) => setCreatorFilter(e.target.value)}
+                            placeholder={t('trips.filters.allCreators')}
+                            options={[
+                                { value: 'me', label: t('trips.filters.createdByMe') },
+                                { value: 'others', label: t('trips.filters.createdByOthers') },
+                            ]}
+                        />
                     </div>
 
                     {/* NUEVOS CONTROLES A LA DERECHA */}
@@ -330,32 +304,26 @@ export default function Trips() {
 
                         {menuOpen === trip.id && (
                           <div className="trip-menu">
-                            <button className="trip-menu-btn" onClick={() => openShareModal(trip)}>
-                              <FaShare size={20} color="#1E1E1E" />
-                            </button>
+                            <IconButton
+                              icon={<FaShare size={20} color="#1E1E1E" />}
+                              onClick={() => { openShareModal(trip); setMenuOpen(null); }}
+                              variant="menu"
+                            />
 
-                            <button className="trip-menu-btn"
-                              onClick={() => {navigate(`/edit-trip/${trip.id}`); setMenuOpen(null);}}>
-                              <FaEdit size={18} />
-                            </button>
+                            <IconButton
+                              icon={<FaEdit size={18} />}
+                              onClick={() => { navigate(`/edit-trip/${trip.id}`); setMenuOpen(null); }}
+                              variant="menu"
+                            />
 
-                            <button
-                              className="trip-menu-btn"
-                              onClick={async () => {
-                                if (window.confirm(t('trips.delete.confirm', { destination: trip.destination }))) {
-                                  try {
-                                    await apiDelete(`/trips/${trip.id}`);
-                                    setTrips((prev) => prev.filter((tripItem) => tripItem.id !== trip.id));
-                                    setMenuOpen(null);
-                                  } catch (err) {
-                                    console.error("Error eliminando viaje:", err);
-                                    alert(t('trips.delete.error'));
-                                  }
-                                }
+                            <IconButton
+                              icon={<FaTrash size={18} />}
+                              onClick={() => {
+                                setDeleteConfirm({ isOpen: true, trip });
+                                setMenuOpen(null);
                               }}
-                            >
-                              <FaTrash size={18} />
-                            </button>
+                              variant="menu"
+                            />
                           </div>
                         )}
                       </div>
@@ -374,43 +342,35 @@ export default function Trips() {
         </div>
 
         {/* Modal de compartir */}
-        {showShareModal && tripToShare && (
-          <div className="modal-overlay" onClick={() => !sharing && setShowShareModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-close" onClick={() => !sharing && setShowShareModal(false)}>
-                <FaTimes size={20} />
-              </button>
-              <h3>{t('trips.share.title', { destination: tripToShare.destination })}</h3>
-              <p className="hint">{t('trips.share.subtitle')}</p>
+        <ShareTripModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setTripToShare(null);
+          }}
+          trip={tripToShare}
+          onShareSuccess={handleShareSuccess}
+        />
 
-              {friends.length === 0 ? (
-                <div className="muted">{t('trips.share.noFriends')}</div>
-              ) : (
-                <div className="list">
-                  {friends.map(f => (
-                    <label key={f.id} style={{ display: 'block', cursor: 'pointer', marginBottom: 8 }}>
-                      <input
-                        type="radio"
-                        name="friend"
-                        value={f.id}
-                        checked={selectedFriend && selectedFriend.id === f.id}
-                        onChange={() => setSelectedFriend(f)}
-                        disabled={sharing}
-                      /> {f.name || f.email || `Usuario ${f.id}`}
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button className="btn ghost" onClick={() => !sharing && setShowShareModal(false)}>{t('common.cancel')}</button>
-                <button className="btn" onClick={submitShare} disabled={!selectedFriend || sharing}>
-                  {sharing ? t('trips.share.sharing') : t('trips.share.share')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Confirmación de eliminación */}
+        <ConfirmDialog
+          isOpen={deleteConfirm.isOpen}
+          onClose={() => setDeleteConfirm({ isOpen: false, trip: null })}
+          onConfirm={async () => {
+            if (!deleteConfirm.trip) return;
+            try {
+              await apiDelete(`/trips/${deleteConfirm.trip.id}`);
+              setTrips((prev) => prev.filter((tripItem) => tripItem.id !== deleteConfirm.trip.id));
+            } catch (err) {
+              console.error("Error eliminando viaje:", err);
+              alert(t('trips.delete.error'));
+            }
+          }}
+          title={t('trips.delete.title')}
+          message={t('trips.delete.confirm', { destination: deleteConfirm.trip?.destination || '' })}
+          confirmText={t('trips.delete.confirmButton')}
+          variant="primary"
+        />
       </main>
     </div>
   );

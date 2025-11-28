@@ -6,6 +6,7 @@ import "../styles/changePassword.css";
 import "../styles/header.css";
 import { useTranslation } from "../i18n";
 import { FaArrowLeft } from "react-icons/fa";
+import ActionButton from "../components/ActionButton";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -134,9 +135,9 @@ export default function ChangePassword() {
           </label>
 
           <div className="form-actions">
-            <button type="submit" className="edit-btn-primary" disabled={loading}>
+            <ActionButton type="submit" variant="edit" disabled={loading}>
               {loading ? t('changePassword.changing') : t('changePassword.change')}
-            </button>
+            </ActionButton>
           </div>
         </form>
       </main>

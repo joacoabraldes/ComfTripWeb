@@ -7,6 +7,7 @@ import "../styles/editProfile.css";
 import { FaUser } from "react-icons/fa";
 import "../styles/header.css";
 import { useTranslation } from "../i18n";
+import ActionButton from "../components/ActionButton";
 
 export default function EditProfile() {
     const navigate = useNavigate();
@@ -168,9 +169,9 @@ export default function EditProfile() {
                     </label>
 
                     <div className="form-actions">
-                        <button type="submit" className="edit-btn-primary" disabled={loading}>
+                        <ActionButton type="submit" variant="edit" disabled={loading}>
                             {loading ? t('editProfile.saving') : t('editProfile.save')}
-                        </button>
+                        </ActionButton>
                     </div>
                 </form>
             </main>

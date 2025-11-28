@@ -2,10 +2,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/explore.css";
-import { FaTimes } from "react-icons/fa";
 import { apiGet } from "./api";
 import OptimizedImage from "../components/OptimizedImage";
 import { useTranslation } from "../i18n";
+import Modal from "../components/Modal";
+import ActionButton from "../components/ActionButton";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 /**
  * Normalize many image shapes into an array of URL strings
@@ -326,12 +328,7 @@ export default function Explore() {
   if (initialLoading) {
     return (
       <div className="explorar-page">
-          <div style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100vh"
-          }}><div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('common.loading')}</div></div>
+        <LoadingSpinner message={t('common.loading')} fullScreen />
       </div>
     );
   }
@@ -517,13 +514,12 @@ export default function Explore() {
       </main>
 
       {/* modal */}
-      {showDetailModal && selectedExperience && (
-        <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowDetailModal(false)}>
-              <FaTimes size={20} />
-            </button>
-
+      <Modal
+        isOpen={showDetailModal && !!selectedExperience}
+        onClose={() => setShowDetailModal(false)}
+      >
+        {selectedExperience && (
+          <>
             <div className="modal-image">
               {selectedExperience.imageLarge || selectedExperience.image ? (
                 <img
@@ -540,13 +536,17 @@ export default function Explore() {
               <h2>{selectedExperience.title}</h2>
               <p className="modal-description">{selectedExperience.description}</p>
               <div className="modal-actions">
-                <button className="btn-create" onClick={handleCreateTrip}>{t('explore.createTripPlan')}</button>
-                <button className="btn-share" onClick={handleShare}>{t('explore.share')}</button>
+                <ActionButton variant="create" onClick={handleCreateTrip}>
+                  {t('explore.createTripPlan')}
+                </ActionButton>
+                <ActionButton variant="share" onClick={handleShare}>
+                  {t('explore.share')}
+                </ActionButton>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

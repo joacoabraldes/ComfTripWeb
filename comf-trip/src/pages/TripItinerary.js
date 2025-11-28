@@ -16,6 +16,9 @@ import flightsApi from "../services/flightsApi";
 import { Country, City } from "country-state-city";
 import { useTranslation } from "../i18n";
 import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
+import IconButton from "../components/IconButton";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const MAPBOX_TOKEN =
   process.env.REACT_APP_MAPBOX_TOKEN ||
@@ -1285,16 +1288,8 @@ const handleSaveSelectedFlight = async () => {
   if (loading) {
     return (
       <div className="trip-it-root">
-        <main
-          className="trip-it-main"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "80vh",
-          }}
-        >
-          <div style={{ fontSize: 25 }}> {t('tripItinerary.loading')} </div>
+        <main className="trip-it-main">
+          <LoadingSpinner message={t('tripItinerary.loading')} />
         </main>
       </div>
     );
@@ -2263,8 +2258,8 @@ const handleSaveSelectedFlight = async () => {
                                       }}
                                     >
                                       {/* edit */}
-                                      <button
-                                        className="trip-menu-btn"
+                                      <IconButton
+                                        icon={<FaEdit size={18} />}
                                         onClick={(ev) => {
                                           ev.stopPropagation();
                                           navigate(
@@ -2278,20 +2273,16 @@ const handleSaveSelectedFlight = async () => {
                                           setMenuOpen(null);
                                         }}
                                         title={t('tripItinerary.editPoint')}
-                                      >
-                                        <FaEdit size={18} />
-                                      </button>
+                                        variant="menu"
+                                      />
 
                                       {/* delete */}
-                                      <button
-                                        className="trip-menu-btn"
-                                        onClick={(ev) =>
-                                          handleDeletePlace(ev, p)
-                                        }
+                                      <IconButton
+                                        icon={<FaTrash size={18} />}
+                                        onClick={(ev) => handleDeletePlace(ev, p)}
                                         title={t('tripItinerary.deletePoint')}
-                                      >
-                                        <FaTrash size={18} />
-                                      </button>
+                                        variant="menu"
+                                      />
                                     </div>
                                   )}
                                 </div>

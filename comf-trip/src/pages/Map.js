@@ -8,6 +8,7 @@ import "../styles/header.css";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { useTranslation } from "../i18n";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 const API_URL_RAW = (process.env.REACT_APP_API_URL || "").replace(/\/$/, ""); // user-provided base
@@ -63,6 +64,8 @@ export default function MapPage() {
     longitude: -58.3816,
     latitude: -34.6037,
     zoom: 6,
+    pitch: 0,
+    bearing: 0,
   });
 
   // data & UI state
@@ -212,7 +215,14 @@ export default function MapPage() {
           const lng = pos.coords.longitude;
           if (Number.isFinite(lat) && Number.isFinite(lng)) {
             setPickerPos([lat, lng]);
-            setViewState((v) => ({ ...v, latitude: lat, longitude: lng, zoom: 13 }));
+            setViewState((v) => ({ 
+              ...v, 
+              latitude: lat, 
+              longitude: lng, 
+              zoom: 13,
+              pitch: v.pitch || 0,
+              bearing: v.bearing || 0,
+            }));
           }
         },
         () => { /* ignore */ }
@@ -220,14 +230,14 @@ export default function MapPage() {
     }
   }, []);
 
-  // keep view centered on picker (optional)
-  useEffect(() => {
-    if (Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1])) {
-      setViewState((v) => ({ ...v, latitude: pickerPos[0], longitude: pickerPos[1] }));
-    } else {
-      console.warn("pickerPos inválido, no centrar view:", pickerPos);
-    }
-  }, [pickerPos]);
+  // keep view centered on picker (optional) - REMOVED to prevent conflicts with geolocation
+  // useEffect(() => {
+  //   if (Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1])) {
+  //     setViewState((v) => ({ ...v, latitude: pickerPos[0], longitude: pickerPos[1] }));
+  //   } else {
+  //     console.warn("pickerPos inválido, no centrar view:", pickerPos);
+  //   }
+  // }, [pickerPos]);
 
   // color helper
   const colorForCategory = (slug) => {
@@ -238,13 +248,13 @@ export default function MapPage() {
     return `hsl(${hue} 70% 45%)`;
   };
   if (loading){
-      return (<div className="map-root">
-          <main className="map-main" style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center"
-      }}><div className="muted" style={{fontSize:"1.5625rem"}}>{t('map.loading')}</div></main>
-      </div>)
+      return (
+        <div className="map-root">
+          <main className="map-main">
+            <LoadingSpinner message={t('map.loading')} fullScreen />
+          </main>
+        </div>
+      )
   }
 
   return (
@@ -306,7 +316,14 @@ export default function MapPage() {
                   style={{ marginBottom: 10, cursor: "pointer" }}
                   onClick={() => {
                     if (Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
-                      setViewState((v) => ({ ...v, latitude: loc.latitude, longitude: loc.longitude, zoom: 14 }));
+                      setViewState((v) => ({ 
+                        ...v, 
+                        latitude: loc.latitude, 
+                        longitude: loc.longitude, 
+                        zoom: 14,
+                        pitch: v.pitch || 0,
+                        bearing: v.bearing || 0,
+                      }));
                       setSelectedLocation(loc);
                     } else {
                       console.warn("Intento de centrar en location con coords inválidas:", loc);
@@ -322,6 +339,11 @@ export default function MapPage() {
         </section>
 
         <section className="map-canvas" style={{ flex: 1 }}>
+          {!MAPBOX_TOKEN ? (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", color: "red" }}>
+              <p>{t('map.noToken') || 'Mapbox token no configurado'}</p>
+            </div>
+          ) : MAPBOX_TOKEN && viewState && Number.isFinite(viewState.latitude) && Number.isFinite(viewState.longitude) ? (
           <Map
             {...viewState}
             onMove={(evt) => {
@@ -329,7 +351,18 @@ export default function MapPage() {
                 console.warn('onMove sin viewState válido', evt);
                 return;
               }
-              setViewState(evt.viewState);
+              const newViewState = evt.viewState;
+              // Validate viewState before setting
+              if (newViewState && 
+                  Number.isFinite(newViewState.latitude) && 
+                  Number.isFinite(newViewState.longitude) &&
+                  Number.isFinite(newViewState.zoom)) {
+                setViewState({
+                  ...newViewState,
+                  pitch: newViewState.pitch || 0,
+                  bearing: newViewState.bearing || 0,
+                });
+              }
             }}
             style={{ width: "100%", height: "100%" }}
             mapStyle="mapbox://styles/mapbox/streets-v11"
@@ -392,6 +425,7 @@ export default function MapPage() {
             )}
 
             {/* draggable picker */}
+            {Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1]) && (
             <Marker
               longitude={pickerPos[1]}
               latitude={pickerPos[0]}
@@ -435,21 +469,25 @@ export default function MapPage() {
                 <circle cx="12" cy="9" r="2.3" fill="#fff" />
               </svg>
             </Marker>
+            )}
 
-            <Popup
-              longitude={Number.isFinite(pickerPos[1]) ? pickerPos[1] : 0}
-              latitude={Number.isFinite(pickerPos[0]) ? pickerPos[0] : 0}
-              anchor="bottom"
-              onClose={() => {}}
-              closeButton={false}
-              closeOnClick={false}
-            >
-              <div style={{ fontSize: 12 }}>
-                {Number.isFinite(pickerPos[0]) ? `${t('map.latitude')} ${pickerPos[0].toFixed(5)}` : `${t('map.latitude')} ${t('map.notAvailable')}`} <br />
-                {Number.isFinite(pickerPos[1]) ? `${t('map.longitude')} ${pickerPos[1].toFixed(5)}` : `${t('map.longitude')} ${t('map.notAvailable')}`}
-              </div>
-            </Popup>
+            {Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1]) && (
+              <Popup
+                longitude={pickerPos[1]}
+                latitude={pickerPos[0]}
+                anchor="bottom"
+                onClose={() => {}}
+                closeButton={false}
+                closeOnClick={false}
+              >
+                <div style={{ fontSize: 12 }}>
+                  {`${t('map.latitude')} ${pickerPos[0].toFixed(5)}`} <br />
+                  {`${t('map.longitude')} ${pickerPos[1].toFixed(5)}`}
+                </div>
+              </Popup>
+            )}
           </Map>
+          ) : null}
         </section>
       </main>
     </div>

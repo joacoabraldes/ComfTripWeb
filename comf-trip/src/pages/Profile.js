@@ -7,6 +7,7 @@ import { FaUser, FaEdit, FaLock, FaSignOutAlt } from "react-icons/fa";
 import "../styles/header.css";
 import {useAuth} from "../auth/AuthProvider";
 import { useTranslation } from "../i18n";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -96,12 +97,7 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <div><div style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh"
-    }}><div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('profile.loading')}</div></div></div>
+    return <LoadingSpinner message={t('profile.loading')} fullScreen />
   }
 
   return (

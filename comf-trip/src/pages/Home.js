@@ -9,6 +9,7 @@ import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 import OptimizedImage from "../components/OptimizedImage";
 import { useTranslation } from "../i18n";
 import { formatDate, normalizeDate } from "../utils/dateUtils";
+import LoadingSpinner from "../components/LoadingSpinner";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 
@@ -332,15 +333,7 @@ export default function Home() {
     if(loadingTrips || loadingCurrent || loadingPopular){
         return (
             <div className="home-root">
-                <div style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "calc(100vh - var(--header-height, 5rem))",
-                    paddingTop: "var(--header-height, 5rem)"
-                }}>
-                    <div className="muted" style={{fontSize:"1.5625rem", alignSelf:"center"}}>{t('home.loading')}</div>
-                </div>
+                <LoadingSpinner message={t('home.loading')} fullScreen />
             </div>
         )
     }

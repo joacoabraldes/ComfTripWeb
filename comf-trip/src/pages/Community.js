@@ -6,6 +6,12 @@ import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
 import { formatDateRange } from '../utils/dateUtils';
+import ShareTripModal from '../components/ShareTripModal';
+import IconButton from '../components/IconButton';
+import ActionButton from '../components/ActionButton';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ConfirmDialog from '../components/ConfirmDialog';
+import EmptyState from '../components/EmptyState';
 
 export default function Community() {
   const [loading, setLoading] = useState(true);
@@ -20,8 +26,9 @@ export default function Community() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareTargetFriend, setShareTargetFriend] = useState(null);
   const [availableTrips, setAvailableTrips] = useState([]);
-  const [selectedTripIds, setSelectedTripIds] = useState(new Set());
-  const [sharing, setSharing] = useState(false);
+  
+  // confirm dialog state
+  const [removeConfirm, setRemoveConfirm] = useState({ isOpen: false, userId: null });
 
   const navigate = useNavigate();
 
@@ -103,8 +110,11 @@ export default function Community() {
     }
   }
 
+  function handleRemoveFriendClick(userId) {
+    setRemoveConfirm({ isOpen: true, userId });
+  }
+
   async function removeFriend(userId) {
-    if (!window.confirm(t('community.removeConfirm'))) return;
     try {
       await apiDelete(`/friends/${userId}`);
       await loadAll();
@@ -145,7 +155,6 @@ export default function Community() {
 
   async function openShareModal(friend) {
     setShareTargetFriend(friend);
-    setSelectedTripIds(new Set());
     setShowShareModal(true);
 
     try {
@@ -174,59 +183,13 @@ export default function Community() {
     }
   }
 
-  function toggleTripSelection(id) {
-    setSelectedTripIds(prev => {
-      const copy = new Set(prev);
-      if (copy.has(id)) copy.delete(id);
-      else copy.add(id);
-      return copy;
-    });
-  }
-
-  async function submitShare() {
-    if (!shareTargetFriend) return alert(t('community.share'));
-    if (!selectedTripIds.size) return alert(t('community.selectAtLeastOne'));
-
-    setSharing(true);
-    const successes = [];
-    const failures = [];
-
-    for (const tripId of Array.from(selectedTripIds)) {
-      try {
-        await apiPost(`/trips/${tripId}/share`, { mode: 'viewer', public: false, shared_with_user_id: shareTargetFriend.id });
-        successes.push(tripId);
-      } catch (err) {
-        console.error(`Share failed for trip ${tripId}:`, err);
-        // try to extract meaningful message
-        const message = (err && err.message) ? err.message : (err && err.data && err.data.message) ? err.data.message : t('common.error');
-        failures.push({ tripId, message });
-      }
-    }
-
-    setSharing(false);
-    let msg = '';
-    if (successes.length) msg += t('community.shareSuccess', { count: successes.length }) + '\n';
-    if (failures.length) msg += t('community.shareErrors', { count: failures.length }) + '\n' + failures.map(f => ` - ${f.tripId}: ${f.message}`).join('\n');
-
-    alert(msg || t('community.operationCompleted'));
-    setShowShareModal(false);
-    setShareTargetFriend(null);
-    setSelectedTripIds(new Set());
-    await loadAll();
+  function handleShareSuccess() {
+    loadAll();
   }
 
   // ---------- UI ----------
   if (loading) {
-    return (
-      <div>
-            <div style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh"
-            }}><div className="muted" style={{fontSize:"25px", alignSelf:"center"}}>{t('community.loading')}</div></div>
-      </div>
-    );
+    return <LoadingSpinner message={t('community.loading')} fullScreen />;
   }
 
   return (
@@ -243,14 +206,18 @@ export default function Community() {
                 value={emailOrId}
                 onChange={(e) => setEmailOrId(e.target.value)}
               />
-              <button className="btn" onClick={sendRequest} disabled={sending}>{t('community.send')}</button>
+              <ActionButton variant="primary" onClick={sendRequest} disabled={sending}>
+                {t('community.send')}
+              </ActionButton>
             </div>
             <p className="hint">{t('community.hint')}</p>
           </section>
 
           <section className="card">
             <h3>{t('community.incomingRequests')}</h3>
-            {incoming.length === 0 ? <div className="muted">{t('community.noIncoming')}</div> : (
+            {incoming.length === 0 ? (
+              <EmptyState message={t('community.noIncoming')} />
+            ) : (
               <div className="list">
                 {incoming.map(r => (
                   <div key={r.id} className="list-item">
@@ -259,12 +226,19 @@ export default function Community() {
                       <div className="subtitle">{r.requester_email}</div>
                     </div>
                     <div className="actions">
-                      <button className="icon-btn" title={t('community.accept')} onClick={() => acceptRequest(r.id)} aria-label={t('community.accept')}>
-                        <FaCheck size={16} color="#1abc9c" />
-                      </button>
-                      <button className="icon-btn muted" title={t('community.reject')} onClick={() => rejectRequest(r.id)} aria-label={t('community.reject')}>
-                        <FaTimes size={16} color="#e74c3c" />
-                      </button>
+                      <IconButton
+                        icon={<FaCheck size={16} color="#1abc9c" />}
+                        onClick={() => acceptRequest(r.id)}
+                        title={t('community.accept')}
+                        ariaLabel={t('community.accept')}
+                      />
+                      <IconButton
+                        icon={<FaTimes size={16} color="#e74c3c" />}
+                        onClick={() => rejectRequest(r.id)}
+                        title={t('community.reject')}
+                        ariaLabel={t('community.reject')}
+                        variant="muted"
+                      />
                     </div>
                   </div>
                 ))}
@@ -274,7 +248,9 @@ export default function Community() {
 
           <section className="card">
             <h3>{t('community.friends')}</h3>
-            {friends.length === 0 ? <div className="muted">{t('community.noFriends')}</div> : (
+            {friends.length === 0 ? (
+              <EmptyState message={t('community.noFriends')} />
+            ) : (
               <div className="list">
                 {friends.map(f => (
                   <div key={f.id} className="list-item">
@@ -286,17 +262,27 @@ export default function Community() {
                       </div>
                     </div>
                     <div className="actions">
-                      <button className="icon-btn" title={t('community.viewProfile')} onClick={() => navigate(`/friend/${f.id}`)} aria-label={t('community.viewProfile')}>
-                        <FaUser size={16} color="#34495e" />
-                      </button>
+                      <IconButton
+                        icon={<FaUser size={16} color="#34495e" />}
+                        onClick={() => navigate(`/friend/${f.id}`)}
+                        title={t('community.viewProfile')}
+                        ariaLabel={t('community.viewProfile')}
+                      />
 
-                      <button className="icon-btn" title={t('community.shareTrips')} onClick={() => openShareModal(f)} aria-label={t('community.shareTrips')}>
-                        <FaShare size={16} color="#2b8cff" />
-                      </button>
+                      <IconButton
+                        icon={<FaShare size={16} color="#2b8cff" />}
+                        onClick={() => openShareModal(f)}
+                        title={t('community.shareTrips')}
+                        ariaLabel={t('community.shareTrips')}
+                      />
 
-                      <button className="icon-btn muted" title={t('community.removeFriend')} onClick={() => removeFriend(f.id)} aria-label={t('community.removeFriend')}>
-                        <FaTrash size={16} color="#e74c3c" />
-                      </button>
+                      <IconButton
+                        icon={<FaTrash size={16} color="#e74c3c" />}
+                        onClick={() => handleRemoveFriendClick(f.id)}
+                        title={t('community.removeFriend')}
+                        ariaLabel={t('community.removeFriend')}
+                        variant="muted"
+                      />
                     </div>
                   </div>
                 ))}
@@ -306,7 +292,9 @@ export default function Community() {
 
           <section className="card">
             <h3>{t('community.outgoingRequests')}</h3>
-            {outgoing.length === 0 ? <div className="muted">{t('community.noOutgoing')}</div> : (
+            {outgoing.length === 0 ? (
+              <EmptyState message={t('community.noOutgoing')} />
+            ) : (
               <div className="list">
                 {outgoing.map(o => (
                   <div key={o.id} className="list-item">
@@ -324,58 +312,31 @@ export default function Community() {
       </main>
 
       {/* Share modal */}
-      {showShareModal && shareTargetFriend && (
-        <div className="modal-overlay" onClick={() => { if (!sharing) setShowShareModal(false); }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => { if (!sharing) setShowShareModal(false); }}>
-              <FaTimes size={20} />
-            </button>
-            <h3>{t('community.shareTitle', { name: shareTargetFriend.name || shareTargetFriend.email || `${t('community.user')} ${shareTargetFriend.id}` })}</h3>
-            <p className="hint">{t('community.shareSubtitle')}</p>
+      <ShareTripModal
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          setShareTargetFriend(null);
+        }}
+        friend={shareTargetFriend}
+        availableTrips={availableTrips}
+        onShareSuccess={handleShareSuccess}
+      />
 
-            <div style={{ marginTop: 14, maxHeight: '50vh', overflow: 'auto' }}>
-              {availableTrips.length === 0 ? (
-                <div className="muted">{t('community.noOwnTrips')}</div>
-              ) : (
-                <div className="list">
-                  {availableTrips.map(trip => {
-                    const isSelected = selectedTripIds.has(trip.id);
-                    return (
-                      <label key={trip.id} style={{ display: 'block', cursor: 'pointer' }}>
-                        <div className="list-item" style={{ alignItems: 'center', gap: 12 }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                              <div>
-                                <div className="title">{trip.destination || `Viaje #${trip.id}`}</div>
-                                <div className="subtitle">{trip.start_date ? formatDateRange(trip.start_date, trip.end_date) : t('trips.unknownDestination')}</div>
-                              </div>
-                              <div>
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={(e) => { e.stopPropagation(); toggleTripSelection(trip.id); }}
-                                  disabled={sharing}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="btn ghost" onClick={() => { if (!sharing) setShowShareModal(false); }} disabled={sharing}>{t('community.cancel')}</button>
-              <button className="btn" onClick={submitShare} disabled={sharing || selectedTripIds.size === 0}>
-                {sharing ? t('community.sharing') : `${t('community.share')} ${selectedTripIds.size ? `(${selectedTripIds.size})` : ''}`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirmación de eliminación */}
+      <ConfirmDialog
+        isOpen={removeConfirm.isOpen}
+        onClose={() => setRemoveConfirm({ isOpen: false, userId: null })}
+        onConfirm={() => {
+          if (removeConfirm.userId) {
+            removeFriend(removeConfirm.userId);
+          }
+        }}
+        title={t('community.removeTitle')}
+        message={t('community.removeConfirm')}
+        confirmText={t('community.remove')}
+        variant="primary"
+      />
     </div>
   );
 }

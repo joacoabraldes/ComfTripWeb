@@ -247,7 +247,6 @@ export default {
     recommendedPlaces: 'Lugares recomendados',
     noPlacesToShow: 'No hay lugares para mostrar',
     noImage: 'No image',
-    viewAll: 'Ver todos',
   },
 
   // Explore

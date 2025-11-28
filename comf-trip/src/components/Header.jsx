@@ -1,4 +1,3 @@
-// src/components/Header.jsx
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/header.css";
@@ -14,7 +13,6 @@ export default function Header() {
     const go = (path) => navigate(path);
     const isActive = (path) => location.pathname === path;
 
-    // Páginas principales donde no se muestra el botón de volver
     const mainPages = ["/home", "/explore", "/trips", "/map", "/community", "/profile"];
     const isMainPage = mainPages.includes(location.pathname);
     const showBackButton = !isMainPage;
@@ -25,7 +23,6 @@ export default function Header() {
 
     return (
         <header className="app-header">
-            {/* Logo y botón de volver */}
             <div className="app-header-left">
                 {showBackButton && (
                     <button 
@@ -39,7 +36,6 @@ export default function Header() {
                 <LogoSvg height={60} width={80} />
             </div>
 
-            {/* Links */}
             <div className="app-header-center">
                 <nav className="app-header-links">
                 <button
@@ -83,30 +79,3 @@ export default function Header() {
         </header>
     );
 }
-// src/components/Header.tsx
-// src/components/Header.tsx
-{/*import { useState } from "react";
-import { FaBars, FaUser } from "react-icons/fa";
-import Sidebar from "./Sidebar";
-import "../styles/header.css";
-import { useNavigate } from "react-router-dom";
-
-export default function Header() {
-    const [open, setOpen] = useState(false);
-    const navigate = useNavigate();
-
-    return (
-        <>
-            <header className="app-header">
-                <button className="icon-btn icon-left" onClick={() => setOpen(true)}>
-                    <FaBars />
-                </button>
-                <button className="icon-btn icon-right" onClick={() => navigate("/profile")}>
-                    <FaUser />
-                </button>
-            </header>
-
-            <Sidebar open={open} onClose={() => setOpen(false)} />
-        </>
-    );
-}*/}

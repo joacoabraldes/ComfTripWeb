@@ -12,7 +12,7 @@ export default function MapSvg({ width = 799, height = 600, className = "" }) {
       className={className}
       width={width}
       height={height}
-      viewBox="0 0 321 251"
+      viewBox="0 0 200 180"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"

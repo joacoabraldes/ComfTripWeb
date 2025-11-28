@@ -87,8 +87,9 @@ export default {
       allCreators: 'Todos',
       createdByMe: 'Creados por mí',
       createdByOthers: 'Creados por otros',
-      sortByTripDate: 'Ordenar por: Fecha de viaje',
-      sortByCreated: 'Ordenar por: Fecha de creación',
+        sortBy:'Ordenar por: ',
+      sortByTripDate: 'Fecha de viaje',
+      sortByCreated: 'Fecha de creación',
       ascending: 'Ascendente',
       descending: 'Descendente',
     },
@@ -243,7 +244,6 @@ export default {
     recommendedPlaces: 'Lugares recomendados',
     noPlacesToShow: 'No hay lugares para mostrar',
     noImage: 'No image',
-    viewAll: 'Ver todos',
   },
 
   // Explore

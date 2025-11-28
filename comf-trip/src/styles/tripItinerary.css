@@ -164,7 +164,7 @@
 }
 
 
-.trip-menu {
+.trip-it-menu {
     position: absolute;
     top: 100%;   /* appears below the button */
     right: 0;    /* aligned to right edge of wrapper */
@@ -178,12 +178,12 @@
     z-index: 1000;
 }
 
-.trip-menu-wrapper {
+.trip-it-menu-wrapper {
     position: relative;
     display: inline-block;
 }
 
-.trip-menu-btn {
+.trip-it-menu-btn {
     background-color: transparent;
     border: none;
     border-radius: 50%;
@@ -197,7 +197,7 @@
     justify-content: center;
     padding: 0.375rem;
 }
-.trip-menu-btn:hover { background-color: #ffe5e8; }
+.trip-it-menu-btn:hover { background-color: #ffe5e8; }
 
 /* === day header and separator (more visually distinct) === */
 .day-header {
@@ -281,4 +281,4 @@
 }
 
 /* make menu z-index safe inside lists */
-.trip-menu { z-index: 1100; }
+.trip-it-menu { z-index: 1100; }

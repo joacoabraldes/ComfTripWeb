@@ -250,7 +250,6 @@ font-size: 1.125rem; margin-top: 1.25rem}
     border: 0.0625rem solid #f1f1f1;
     margin-bottom: 0.375rem;
     display: flex;
-    justify-content: space-between; /* mantiene contenido a izquierda y el icono a derecha */
     align-items: center;
     text-align: left;
     cursor: pointer;

@@ -252,6 +252,7 @@ export default function Trips() {
 
                     {/* NUEVOS CONTROLES A LA DERECHA */}
                     <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginLeft: "auto" }}>
+                        {t('trips.filters.sortBy')}
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}

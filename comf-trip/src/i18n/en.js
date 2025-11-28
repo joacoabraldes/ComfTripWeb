@@ -87,8 +87,9 @@ export default {
       allCreators: 'All',
       createdByMe: 'Created by me',
       createdByOthers: 'Created by others',
-      sortByTripDate: 'Sort by: Trip date',
-      sortByCreated: 'Sort by: Creation date',
+        sortBy:'Sort by: ',
+      sortByTripDate: 'Trip date',
+      sortByCreated: 'Creation date',
       ascending: 'Ascending',
       descending: 'Descending',
     },
@@ -243,7 +244,6 @@ export default {
     recommendedPlaces: 'Recommended places',
     noPlacesToShow: 'No places to show',
     noImage: 'No image',
-    viewAll: 'View all',
   },
 
   // Explore

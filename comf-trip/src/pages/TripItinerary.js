@@ -2254,12 +2254,12 @@ const handleSaveSelectedFlight = async () => {
 
                                 {/* menu wrapper: position relative so menu absolute aligns to button */}
                                 <div
-                                  className="trip-menu-wrapper"
+                                  className="trip-it-menu-wrapper"
                                   style={{ position: "relative" }}
                                   ref={menuContainerRef}
                                 >
                                   <button
-                                    className="trip-menu-btn"
+                                    className="trip-it-menu-btn"
                                     onClick={(ev) => togglePlaceMenu(ev, p.id)}
                                     aria-haspopup="true"
                                     aria-expanded={menuOpen === p.id}
@@ -2270,7 +2270,7 @@ const handleSaveSelectedFlight = async () => {
                                   {/* menu: rendered when menuOpen === place id */}
                                   {menuOpen === p.id && (
                                     <div
-                                      className="trip-menu"
+                                      className="trip-it-menu"
                                       onClick={(e) => e.stopPropagation()} // prevent document click from immediately closing
                                       style={{
                                         position: "absolute",
@@ -2281,7 +2281,7 @@ const handleSaveSelectedFlight = async () => {
                                     >
                                       {/* edit */}
                                       <button
-                                        className="trip-menu-btn"
+                                        className="trip-it-menu-btn"
                                         onClick={(ev) => {
                                           ev.stopPropagation();
                                           navigate(
@@ -2301,7 +2301,7 @@ const handleSaveSelectedFlight = async () => {
 
                                       {/* delete */}
                                       <button
-                                        className="trip-menu-btn"
+                                        className="trip-it-menu-btn"
                                         onClick={(ev) =>
                                           handleDeletePlace(ev, p)
                                         }

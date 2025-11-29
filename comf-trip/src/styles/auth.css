@@ -320,6 +320,96 @@
     color: #bbb;  /* gris clarito */
 }
 
+/* Contenedor principal del select */
+.filter-select .react-select__control {
+    background: white;       /* mismo fondo que los inputs */
+    border: 0.0625rem solid #e6e6e6;/* mismo borde */
+    border-radius: 0.5rem;
+    min-height: 2.5rem;
+    box-shadow: none;
+    min-width: 10rem;
+}
+
+.filter-select .react-select__control--is-focused {
+    border: #ff3951;     /* borde rojo cuando está enfocado */
+    box-shadow: 0 0 0 0.0625rem #ff3951;
+}
+
+.filter-select .react-select__input-container {
+    width: 100%;  /* fuerza que el input ocupe todo */
+    height: 100%;
+    display: flex;
+}
+/* Input interno (cuando escribís) */
+.filter-select .react-select__input-container input {
+
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    height: 100%;
+    font-size: 1rem;
+    padding: 0;   /* saca el padding para que no parezca un campo nuevo */
+}
+
+/* Texto seleccionado */
+.filter-select .react-select__single-value {
+    color: #1e1e1e;
+    font-size: 1rem;
+}
+
+/* Indicador de la flechita */
+
+.filter-select .react-select__dropdown-indicator:disabled {
+    color: black !important;
+}
+
+.filter-select .react-select__dropdown-indicator:hover {
+    color: #ff3951;
+}
+.filter-select .react-select__clear-indicator:hover {
+    color: #ff3951;
+}
+
+.filter-select .react-select__option--is-focused {
+    background-color: #ffe5e8; /* color de hover */
+    color: #1e1e1e;           /* color de texto */
+}
+
+.filter-select .react-select__option--is-selected {
+    background-color: #ff3951; /* color cuando está seleccionado */
+    color: #fff;
+}
+
+.filter-select .react-select__menu {
+    z-index: 9999;
+}
+
+.filter-select .react-select__value-container {
+    padding: 0 0.625rem;
+}
+/* Estado deshabilitado */
+.filter-select .react-select__control--is-disabled {
+    background-color: #f3f3f3;    /* gris clarito */
+    border-color: #e6e6e6;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Cambiar el color del texto y del icono cuando está deshabilitado */
+.filter-select .react-select__single-value--is-disabled {
+    color: #999 !important;
+}
+
+.filter-select .react-select__dropdown-indicator {
+    transition: color 0.2s;
+}
+
+.filter-select .react-select__control--is-disabled,
+.react-select__dropdown-indicator {
+    color: #bbb;  /* gris clarito */
+}
+
 
 /* small responsive tweaks */
 @media (max-width: 64rem){

@@ -8,6 +8,7 @@ import { useTranslation } from "../i18n";
 import Modal from "../components/Modal";
 import ActionButton from "../components/ActionButton";
 import LoadingSpinner from "../components/LoadingSpinner";
+import FilterSelect from "../components/FilterSelect";
 
 /**
  * Normalize many image shapes into an array of URL strings
@@ -372,34 +373,55 @@ export default function Explore() {
             <div className="filters-row">
               <div className="filter-field">
                 <label>{t('explore.duration')}</label>
-                <select value={selectedDuration} onChange={(e) => setSelectedDuration(e.target.value)} className="filter-select">
-                  <option value="">{t('explore.any')}</option>
-                  <option value="corto">{t('explore.short')}</option>
-                  <option value="medio">{t('explore.medium')}</option>
-                  <option value="largo">{t('explore.long')}</option>
-                  <option value="fin_semana">{t('explore.weekend')}</option>
-                </select>
+                  <FilterSelect
+                      value={selectedDuration}
+                      onChange={setSelectedDuration}
+                      placeholder={t('explore.any')}
+                      options={[
+                          { value: "", label: t('explore.any') }, // ← opción vacía
+                          { value: "corto", label: t('explore.short') },
+                          { value: "medio", label: t('explore.medium') },
+                          { value: "largo", label: t('explore.long') },
+                          { value: "fin_semana", label: t('explore.weekend') },
+                      ]}
+                      isClearable={false}
+                  />
+
               </div>
 
               <div className="filter-field">
                 <label>{t('explore.budget')}</label>
-                <select value={selectedBudget} onChange={(e) => setSelectedBudget(e.target.value)} className="filter-select">
-                  <option value="">{t('explore.any')}</option>
-                  <option value="economico">{t('explore.budgetEconomy')}</option>
-                  <option value="moderado">{t('explore.budgetModerate')}</option>
-                  <option value="lujo">{t('explore.budgetLuxury')}</option>
-                </select>
+                  <FilterSelect
+                      value={selectedBudget}
+                      onChange={setSelectedBudget}
+                      placeholder={t('explore.any')}
+                      options={[
+                          { value: "", label: t('explore.any') }, // ← opción vacía
+                          { value: "economico", label: t('explore.budgetEconomy') },
+                          { value: "moderado", label: t('explore.budgetModerate') },
+                          { value: "lujo", label: t('explore.budgetLuxury') },
+                      ]}
+                      isClearable={false}
+                  />
+
               </div>
 
               <div className="filter-field">
                 <label>{t('explore.season')}</label>
-                <select value={selectedSeason} onChange={(e) => setSelectedSeason(e.target.value)} className="filter-select">
-                  <option value="">{t('explore.any')}</option>
-                  <option value="primavera">{t('explore.spring')}</option>
-                  <option value="verano">{t('explore.summer')}</option>
-                  <option value="otono">{t('explore.autumn')}</option>
-                  <option value="invierno">{t('explore.winter')}</option>
-                </select>
+                  <FilterSelect
+                      value={selectedSeason}
+                      onChange={setSelectedSeason}
+                      placeholder={t('explore.any')}
+                      options={[
+                          { value: "", label: t('explore.any') }, // ← opción vacía
+                          { value: "primavera", label: t('explore.spring') },
+                          { value: "verano", label: t('explore.summer') },
+                          { value: "otono", label: t('explore.autumn') },
+                          { value: "invierno", label: t('explore.winter') },
+                      ]}
+                      isClearable={false}
+                  />
+
               </div>
 
               <div className="filter-actions">

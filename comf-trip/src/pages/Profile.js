@@ -8,6 +8,7 @@ import "../styles/header.css";
 import {useAuth} from "../auth/AuthProvider";
 import { useTranslation } from "../i18n";
 import LoadingSpinner from "../components/LoadingSpinner";
+import FilterSelect from "../components/FilterSelect";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -136,23 +137,15 @@ export default function ProfilePage() {
 
               <div className="profile-field">
                 <span className="profile-field-label">{t('profile.language')}</span>
-                <select
+                <FilterSelect
                   value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  style={{
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '0.5rem',
-                    border: '0.0625rem solid #ddd',
-                    fontSize: '1rem',
-                    marginTop: '0.5rem',
-                    cursor: 'pointer',
-                    backgroundColor: '#fff',
-                    maxWidth: '12.5rem',
-                  }}
-                >
-                  <option value="es">{t('profile.spanish')}</option>
-                  <option value="en">{t('profile.english')}</option>
-                </select>
+                  onChange={setLanguage}
+                  options={[
+                      { value: 'es', label: t('profile.spanish') },
+                      { value: 'en', label: t('profile.english') },
+                  ]}
+                  isClearable={false}
+                />
                 <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>{t('profile.languageDescription')}</p>
               </div>
             </div>

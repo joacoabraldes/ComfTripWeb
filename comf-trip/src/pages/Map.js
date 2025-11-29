@@ -250,9 +250,9 @@ export default function MapPage() {
   if (loading){
       return (
         <div className="map-root">
-          <main className="map-main">
+
             <LoadingSpinner message={t('map.loading')} fullScreen />
-          </main>
+
         </div>
       )
   }

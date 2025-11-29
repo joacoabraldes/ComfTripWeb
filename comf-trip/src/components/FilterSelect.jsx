@@ -1,36 +1,29 @@
 import React from "react";
+import Select from "react-select";
 
-/**
- * FilterSelect Component - Reusable select dropdown for filters
- * @param {string} value - Current selected value
- * @param {function} onChange - Change handler
- * @param {array} options - Array of {value, label} objects
- * @param {string} placeholder - Placeholder text (optional)
- * @param {boolean} disabled - Whether select is disabled
- * @param {string} className - Additional CSS classes
- */
-export default function FilterSelect({
-  value,
-  onChange,
-  options,
-  placeholder,
-  disabled = false,
-  className = "",
-}) {
-  return (
-    <select
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
-      className={`filter-select ${className}`}
-    >
-      {placeholder && <option value="">{placeholder}</option>}
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  );
+export default function FilterSelect({value, onChange, options, placeholder, disabled = false, className = "", isClearable=true}) {
+    return (
+        <Select
+            value={options.find(o => o.value === value) || null}
+            onChange={(selected) => onChange(selected ? selected.value : "")}
+            isDisabled={disabled}
+            className={`filter-select ${className}`}
+            classNamePrefix="react-select"
+            options={options}
+            placeholder={placeholder}
+            isClearable={isClearable}
+            isSearchable={false}
+            components={{ IndicatorSeparator: () => {if (!value || !isClearable) return null;
+                    // Si hay valor seleccionado → mostrar la línea default
+                    return (
+                        <span
+                            style={{
+                                width: "1px",
+                                height: "70%",
+                                backgroundColor: "#ccc",
+                            }}
+                        />
+                    );}}}
+        />
+    );
 }
-

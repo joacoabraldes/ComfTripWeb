@@ -186,7 +186,7 @@ export default function Trips() {
                     <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center", flex: 1 }}>
                         <FilterSelect
                             value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
+                            onChange={setTypeFilter}
                             placeholder={t('trips.filters.all')}
                             options={[
                                 { value: 'current', label: t('trips.filters.current') },
@@ -197,14 +197,14 @@ export default function Trips() {
 
                         <FilterSelect
                             value={countryFilter}
-                            onChange={(e) => setCountryFilter(e.target.value)}
+                            onChange={setCountryFilter}
                             placeholder={t('trips.filters.allCountries')}
                             options={availableCountries.map(c => ({ value: c, label: c }))}
                         />
 
                         <FilterSelect
                             value={provinceFilter}
-                            onChange={(e) => setProvinceFilter(e.target.value)}
+                            onChange={setProvinceFilter}
                             placeholder={t('trips.filters.allCities')}
                             disabled={!countryFilter}
                             options={availableProvinces.map(p => ({ value: p, label: p }))}
@@ -212,7 +212,7 @@ export default function Trips() {
 
                         <FilterSelect
                             value={creatorFilter}
-                            onChange={(e) => setCreatorFilter(e.target.value)}
+                            onChange={setCreatorFilter}
                             placeholder={t('trips.filters.allCreators')}
                             options={[
                                 { value: 'me', label: t('trips.filters.createdByMe') },
@@ -224,14 +224,17 @@ export default function Trips() {
                     {/* NUEVOS CONTROLES A LA DERECHA */}
                     <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginLeft: "auto" }}>
                         {t('trips.filters.sortBy')}
-                        <select
+                        <FilterSelect
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            style={{ padding: "0.5rem 0.75rem", borderRadius: "0.5rem", border: "0.0625rem solid #ddd" }}
+                            onChange={setSortBy}
+                            placeholder={t('trips.filters.sortByTripDate')}
+                            options={[
+                                { value: 'trip_date', label: t('trips.filters.sortByTripDate') },
+                                { value: 'created_at', label: t('trips.filters.sortByCreated') },
+                            ]}
+                            isClearable={false}
                         >
-                            <option value="trip_date">{t('trips.filters.sortByTripDate')}</option>
-                            <option value="created_at">{t('trips.filters.sortByCreated')}</option>
-                        </select>
+                        </FilterSelect>
 
                         <button
                             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}

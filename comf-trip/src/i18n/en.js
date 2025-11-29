@@ -2,7 +2,7 @@
  * English translations
  */
 
-export default {
+const en = {
   // Common
   common: {
     loading: 'Loading...',
@@ -571,3 +571,4 @@ export default {
   },
 };
 
+export default en;

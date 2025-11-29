@@ -2,7 +2,7 @@
  * Spanish translations
  */
 
-export default {
+  const es = {
   // Common
   common: {
     loading: 'Cargando...',
@@ -571,3 +571,4 @@ export default {
   },
 };
 
+export default es;

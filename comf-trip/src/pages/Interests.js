@@ -6,9 +6,12 @@ import "../styles/interests.css";
 import Sidebar from "../components/Sidebar";
 import { FaBars, FaUser } from "react-icons/fa";
 import { useTranslation } from "../i18n";
+import OptimizedImage from "../components/OptimizedImage";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 // --- image loader: compatible Vite (import.meta.glob) y CRA/webpack (require.context)
 const imagesMap = (() => {
+
   // Vite (import.meta.glob)
   try {
     // import.meta.glob with eager+as:'url' returns a map of path->url strings
@@ -58,8 +61,10 @@ export default function InterestsPage() {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving]=useState(false)
   const [interests, setInterests] = useState([]);
   const [selected, setSelected] = useState(new Set());
+  const scrollRoot = typeof document !== "undefined" ? document.querySelector(".explorar-main") : null;
 
   useEffect(() => {
     let mounted = true;
@@ -104,7 +109,7 @@ export default function InterestsPage() {
     }
 
     try {
-      setLoading(true);
+        setSaving(true);
       await apiPost(`/users/${userId}/interests`, { interestIds });
       const newStored = { ...stored, interests: interestIds };
       localStorage.setItem("user", JSON.stringify(newStored));
@@ -114,27 +119,25 @@ export default function InterestsPage() {
       const errMsg = err?.message || err?.error || "Error al guardar intereses";
       alert(errMsg);
     } finally {
-      setLoading(false);
+        setSaving(false);
     }
   }
 
+    if (loading) {
+        return (
+            <div className="interests-root">
+                <LoadingSpinner message={t('common.loading')} fullScreen />
+            </div>
+        );
+    }
   return (
     <div className="interests-root">
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className="home-header">
-        <button className="icon-btn icon-left" aria-label={t('common.menu')} onClick={() => setMenuOpen(v => !v)}>
-          <FaBars size={24} />
-        </button>
-        <button className="icon-btn icon-right" aria-label={t('common.profile')} onClick={() => navigate("/profile")}>
-          <FaUser size={24} />
-        </button>
-      </div>
 
       <main className="interests-container">
         <h2 className="interests-title">Seleccione sus intereses</h2>
 
         <div className="interests-grid">
-          {interests.map((it) => {
+          {interests.map((it, idx) => {
             const isSel = selected.has(it.id);
             // try slug first (recommended), fallback to id or title
             const slug = it.slug ?? String(it.id ?? it.title ?? "");
@@ -147,16 +150,27 @@ export default function InterestsPage() {
                 className={`interest-card ${isSel ? "selected" : ""}`}
                 onClick={() => toggle(it.id)}
                 aria-pressed={isSel}
-                disabled={loading}
+                disabled={loading || saving}
               >
-                <div className="interest-image" aria-hidden>
+                  {/*<div className="interest-image" aria-hidden>
                   <img
                     src={src}
                     alt={it.title || slug}
                     onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
                     style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }}
-                  />
-                </div>
+                  /></div>*/}
+
+                  <div className="interest-image" aria-hidden>
+
+                          <OptimizedImage
+                              src={src}
+                              alt={it.title || slug}
+                              width={400}
+                              height={400}
+                              scrollRoot={scrollRoot}
+                              priority={idx < 6}
+                          />
+                  </div>
 
                 <div className="interest-info">
                   <div className="interest-title">{it.title}</div>
@@ -169,7 +183,7 @@ export default function InterestsPage() {
 
         <div className="interests-actions">
           <button className="start-btn-primary" onClick={submitInterests} disabled={loading}>
-            {loading ? "Guardando…" : "Comenzar con ComfTrip"}
+            {saving ? "Guardando…" : "Comenzar con ComfTrip"}
           </button>
         </div>
       </main>

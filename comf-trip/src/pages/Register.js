@@ -3,10 +3,10 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import countryList from "react-select-country-list";
-import { apiPost } from "./api";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
 import { useTranslation } from "../i18n";
+import {useAuth} from "../auth/AuthProvider";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -22,6 +22,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+    const { register} = useAuth();
   // opciones de países
   const options = useMemo(() => countryList().getData(), []);
 
@@ -42,22 +43,14 @@ export default function Register() {
 
     try {
       // call backend register
-      const res = await apiPost("/auth/register", {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
-        nationality: form.nationality,
-        birthdate: form.birthdate || null,
+      await register({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          password: form.password,
+          nationality: form.nationality,
+          birthdate: form.birthdate || null,
       });
-
-      // backend should return { token, user } according to your controller
-      if (res.token) {
-        localStorage.setItem("token", res.token);
-      }
-      if (res.user) {
-        localStorage.setItem("user", JSON.stringify(res.user));
-      }
 
       // navigate to interests so the user chooses interests first
       navigate("/interests");

@@ -102,7 +102,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/interests" element={<ProtectedRoute><Layout><InterestsPage /></Layout></ProtectedRoute>} />
+          <Route path="/interests" element={<ProtectedRoute><InterestsPage /></ProtectedRoute>} />
 
           <Route path="/error" element={<ErrorPage />} />
 

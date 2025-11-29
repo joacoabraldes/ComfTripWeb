@@ -42,28 +42,28 @@ export default function Header() {
                     className={`nav-btn ${isActive("/home") ? "active trips" : ""}`}
                     onClick={() => go("/home")}
                 >
-                    <FaHome size={24} color={isActive("/home") ? "white" : "black"} /> {t('common.home')}
+                    <FaHome size={24}  /> {t('common.home')}
                 </button>
 
                 <button className={`nav-btn ${isActive("/explore") ? "active trips" : ""}`} onClick={() => go("/explore")}>
-                    <FaCompass size={24} color={isActive("/explore") ? "white" : "black"} /> {t('common.explore')}
+                    <FaCompass size={24} /> {t('common.explore')}
                 </button>
 
                 <button
                     className={`nav-btn ${isActive("/trips") ? "active trips" : ""}`}
                     onClick={() => go("/trips")}
                 >
-                    <FaSuitcase size={24} color={isActive("/trips") ? "white" : "black"} /> {t('common.trips')}
+                    <FaSuitcase size={24}  /> {t('common.trips')}
                 </button>
 
                 <button className={`nav-btn ${isActive("/map") ? "active trips" : ""}`}
                         onClick={() => go("/map")}>
-                    <FaMap size={24} color={isActive("/map") ? "white" : "black"} /> {t('common.map')}
+                    <FaMap size={24}  /> {t('common.map')}
                 </button>
 
                 <button className={`nav-btn ${isActive("/community") ? "active trips" : ""}`}
                         onClick={() => go("/community")}>
-                    <FaUsers size={24} color={isActive("/community") ? "white" : "black"} /> {t('common.community')}
+                    <FaUsers size={24} /> {t('common.community')}
                 </button>
 
             </nav></div>

@@ -178,12 +178,13 @@
 
 /* Right column: illustration & logo */
 .auth-right {
-  position: relative;
   display:flex;
   align-items:center;
   justify-content:center;
     height: 100%;
     width: 100%;
+    flex-direction:column;
+    gap:1.5rem;
 
 }
 
@@ -206,7 +207,7 @@
 .brand {
   margin-top: 1.125rem;
   color: var(--accent);
-  font-size: 6rem;
+  font-size: 4rem;
   font-family: "Nico Moji", "Mulish", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
   letter-spacing: 0.0625rem;
   text-align: center;

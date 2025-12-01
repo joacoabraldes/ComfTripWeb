@@ -330,7 +330,7 @@ export default function Home() {
     if(loadingTrips || loadingCurrent || loadingPopular){
         return (
             <div className="home-root">
-                <LoadingSpinner message={t('home.loading')} fullScreen />
+                <LoadingSpinner message={t('common.loading')} fullScreen />
             </div>
         )
     }

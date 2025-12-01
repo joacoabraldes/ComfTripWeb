@@ -27,7 +27,7 @@ body {
 
 /* page root */
 .home-root {
-  min-height: 100vh;
+    height: calc(100vh - var(--header-height));
   position: relative;
   overflow-x: hidden;
   padding-top: 0;
@@ -41,7 +41,7 @@ body {
   justify-content: space-between;
     align-items: stretch;
   gap: 2.5rem;
-    height: calc(100vh - var(--header-height));
+    height: 100%;
 }
 
 /* text block on the left */

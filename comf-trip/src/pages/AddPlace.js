@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {useParams, useNavigate, useLocation} from "react-router-dom";
 import "../styles/tripItinerary.css";
 import TimePicker from "../components/TimePicker"
 import "../styles/addPlace.css";
 import "../styles/auth.css"
 import Select from "react-select";
 import { useTranslation } from "../i18n";
+import {normalizeDate, formatDate} from "../utils/dateUtils";
 
 
 
 import { apiGet, apiPost } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
+import LoadingSpinner from "../components/LoadingSpinner";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function AddPlace() {
@@ -18,7 +20,10 @@ export default function AddPlace() {
     // NOTE: read the param name that you defined in App.jsx (/:tripId)
     const params = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const tripIdRaw = params.tripId ?? params.id ?? params?.tripId; // tolerate either
+    const query = new URLSearchParams(location.search);
+    const selectedDate = query.get("date");
     const tripId = Number(tripIdRaw);
 
     const [loading, setLoading] = useState(true);
@@ -26,7 +31,7 @@ export default function AddPlace() {
     const [locations, setLocations] = useState([]);
     const [selectedLocation, setSelectedLocation] = useState(null); // keep as number or null
     const [locationInfo, setLocationInfo]=useState(null);
-    const [date, setDate] =useState("");
+    const [date, setDate] =useState(selectedDate);
     const [startDate, setStartDate]=useState(null);
     const [endDate, setEndDate]=useState(null);
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -44,14 +49,6 @@ export default function AddPlace() {
     const [selectedLocationOnMap, setSelectedLocationOnMap] = useState(null);
     const [showAllLocations, setShowAllLocations] = useState(false);
 
-    const normalizeDate=(d)=>{
-        if(!d) return null;
-        const parts = d.split("T")[0].split("-");
-        const yy = Number(parts[0]);
-        const mm = Number(parts[1]) - 1;
-        const dd = Number(parts[2]);
-        return new Date(yy, mm, dd);
-    }
 
     // --- Helpers to handle different DB field names ---
     const getTripCity = (dest) => {
@@ -100,8 +97,8 @@ export default function AddPlace() {
                     setEndDate(normalizeDate(tripRes.end_date));
 
                     const start = tripRes.start_date ? new Date(tripRes.start_date) : new Date();
-                    setCurrentYear(start.getFullYear());
-                    setCurrentMonth(start.getMonth());
+                    setCurrentYear(selectedDate ? normalizeDate(selectedDate).getFullYear() : start.getFullYear());
+                    setCurrentMonth(selectedDate ? normalizeDate(selectedDate).getMonth() :  start.getMonth());
                 }
 
             } catch (err) {
@@ -371,15 +368,8 @@ export default function AddPlace() {
 
     if (loading) {
         return (
-            <div className="trip-it-root">
-                <main className="trip-it-main" style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "80vh" // ocupa casi toda la pantalla
-                }}>
-                    <div style={{fontSize:"1.5625rem"}}> {t('addPlace.loading')} </div>
-                </main>
+            <div className="trip-it-root" style={{backgroundColor:"white"}}>
+                <LoadingSpinner message={t('addPlace.loading')} />
             </div>
         );
     }
@@ -409,7 +399,6 @@ export default function AddPlace() {
 
             <main className="trip-it-main">
                 <section className="trip-it-left" >
-
                     <h2 className="trip-it-title">{trip.destination}</h2>
                     <div className="trip-it-dates">
                         {trip.start_date ? fmtDate(trip.start_date) : "-"} — {trip.end_date ? fmtDate(trip.end_date) : "-"}

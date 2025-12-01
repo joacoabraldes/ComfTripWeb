@@ -13,14 +13,18 @@ import {formatDateRange} from "../utils/dateUtils";
  * @param {object} friend - Friend object to share with (for sharing multiple trips)
  * @param {array} availableTrips - Array of trips available to share (for multi-trip sharing)
  * @param {function} onShareSuccess - Callback when sharing succeeds
+ * @param {boolean} chooseTrips
+ * @param {boolean} loadingTrips
  */
 export default function ShareTripModal({
-  isOpen,
-  onClose,
-  trip = null,
-  friend = null,
-  availableTrips = [],
-  onShareSuccess,
+                                           isOpen,
+                                           onClose,
+                                           trip = null,
+                                           friend = null,
+                                           availableTrips = [],
+                                           onShareSuccess,
+                                           chooseTrips = false,
+                                           loadingTrips = true
 }) {
   const { t } = useTranslation();
   const [friends, setFriends] = useState([]);
@@ -29,19 +33,20 @@ export default function ShareTripModal({
   const [sharing, setSharing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const isMultiTripMode = !!friend && availableTrips.length > 0;
+  //const chooseTrips = chooseTrips;
 
   useEffect(() => {
-    if (isOpen && !isMultiTripMode) {
+    if (isOpen && !chooseTrips) {
       loadFriends();
     }
-  }, [isOpen, isMultiTripMode]);
+  }, [isOpen, chooseTrips]);
 
   const loadFriends = async () => {
     setLoading(true);
     try {
       const res = await apiGet("/friends");
-      setFriends(res.friends || []);
+        const friendsArr = Array.isArray(res) ? res : (res && res.rows ? res.rows : []);
+        setFriends(friendsArr);
     } catch (err) {
       console.error("Error loading friends:", err);
       setFriends([]);
@@ -63,7 +68,7 @@ export default function ShareTripModal({
   };
 
   const submitShare = async () => {
-    if (isMultiTripMode) {
+    if (chooseTrips) {
       if (selectedTripIds.size === 0) return;
       setSharing(true);
       const successes = [];
@@ -130,7 +135,7 @@ export default function ShareTripModal({
       closeOnOverlayClick={!sharing}
       disabled={sharing}
     >
-      {isMultiTripMode ? (
+      {chooseTrips && isOpen ? (
         <>
           <h3>
             {t("community.shareTitle", {
@@ -143,7 +148,8 @@ export default function ShareTripModal({
           <p className="hint">{t("community.shareSubtitle")}</p>
 
           <div style={{ marginTop: 14, maxHeight: "50vh", overflow: "auto" }}>
-            {availableTrips.length === 0 ? (
+              {loadingTrips ? (<div className="muted">{t("trips.loading")}</div>) : (
+            availableTrips.length === 0 ? (
               <div className="muted">{t("community.noOwnTrips")}</div>
             ) : (
               <div className="list">
@@ -195,7 +201,7 @@ export default function ShareTripModal({
                   );
                 })}
               </div>
-            )}
+            ))}
           </div>
 
           <div
@@ -241,9 +247,10 @@ export default function ShareTripModal({
                 <label
                   key={f.id}
                   style={{
-                    display: "block",
+                    display: "flex",
                     cursor: "pointer",
                     marginBottom: 8,
+                      gap:10
                   }}
                 >
                   <input
@@ -254,7 +261,13 @@ export default function ShareTripModal({
                     onChange={() => setSelectedFriend(f)}
                     disabled={sharing}
                   />{" "}
-                  {f.name || f.email || `Usuario ${f.id}`}
+                    <div className="info" style={{display:"flex"}}>
+                        <div className="avatar">{(f.name || f.email || 'U').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
+                        <div style={{ marginLeft: 12 }}>
+                            <div className="title">{f.name || f.email}</div>
+                            {f.name && <div className="subtitle">{f.email}</div>}
+                        </div>
+                    </div>
                 </label>
               ))}
             </div>

@@ -71,7 +71,7 @@ export default function Register() {
           <h1 className="auth-title">{t('auth.register.title')}</h1>
           <p className="auth-sub">{t('auth.register.subtitle')}</p>
 
-          <form className="auth-form" onSubmit={handleSubmit}>
+          <form className="auth-form">
             <label className="auth-field">
               <span className="auth-field-label">{t('auth.register.name')}</span>
               <input className="input" name="name" value={form.name} onChange={handleChange} placeholder={t('auth.register.name')} required disabled={loading}/>
@@ -119,7 +119,7 @@ export default function Register() {
               </span>
             </label>
 
-            <button type="submit" disabled={loading} className="auth-btn-primary">
+            <button type="submit" disabled={loading} className="auth-btn-primary" onClick={handleSubmit}>
               {loading ? t('auth.register.submitting') : t('auth.register.submit')}
             </button>
 
@@ -133,12 +133,10 @@ export default function Register() {
 
         {/* RIGHT: art + logo */}
         <div className="auth-right">
-          <div>
             <div className="hero-art" aria-hidden>
               <LogoSvg />
             </div>
             <div className="brand">ComfTrip</div>
-          </div>
         </div>
       </div>
     </div>

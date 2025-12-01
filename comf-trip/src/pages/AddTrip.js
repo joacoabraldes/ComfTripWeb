@@ -1252,10 +1252,10 @@ export default function AddTrip() {
 
         <div className="add-trip-right">
           <div>
-            <div className="hero-art" aria-hidden>
+            <div className="hero-art-t" aria-hidden>
               <LogoSvg />
             </div>
-            <div className="brand">ComfTrip</div>
+            <div className="brand-t">ComfTrip</div>
           </div>
         </div>
       </div>

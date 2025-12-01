@@ -38,11 +38,10 @@ export default function Login() {
   return (
     <div className="auth-root">
       <div className="auth-container">
-        {/* LEFT: login form */}
         <div className="auth-left">
           <h1 className="auth-title">{t('auth.login.title')}</h1>
 
-          <form className="auth-form" onSubmit={submit}>
+          <form className="auth-form">
             <label className="auth-field">
               <span className="auth-field-label">{t('auth.login.usernameOrEmail')}</span>
               <input
@@ -72,9 +71,9 @@ export default function Login() {
               />
             </label>
 
-            <button className="forgot">{t('auth.login.forgotPassword')}</button>
+            <button type="forgot" className="forgot">{t('auth.login.forgotPassword')}</button>
 
-            <button type="submit" className="auth-btn-primary login" disabled={loading}>
+            <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading}>
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
             <div className="footer-cta">
@@ -84,14 +83,11 @@ export default function Login() {
           </form>
         </div>
 
-        {/* RIGHT: artwork + logo */}
         <div className="auth-right">
-          <div>
             <div className="hero-art" aria-hidden>
               <LogoSvg />
             </div>
             <div className="brand">ComfTrip</div>
-          </div>
         </div>
       </div>
     </div>

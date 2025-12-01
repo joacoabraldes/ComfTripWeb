@@ -106,7 +106,7 @@ const en = {
     },
     badges: {
       publicLink: 'Public link',
-      shared: 'Shared',
+      shared: 'Shared by ',
       createdByYou: 'Created by you',
     },
     delete: {
@@ -521,6 +521,7 @@ const en = {
     loading: 'Loading…',
     selectEndDate: 'Select trip end date',
     selectEndDateError: 'Please select the trip end date.',
+      selectStartAndEndDate: 'Select start and end date',
     notes: 'Notes (optional)',
     budget: 'Budget (optional)',
     tripWillBe: 'Your trip to {province}, {country} will be from {startDate} to {endDate}',

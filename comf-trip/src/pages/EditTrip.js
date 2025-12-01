@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import "../styles/AddTrip.css";
 import LogoSvg from "../components/LogoSvg";
 import { useTranslation } from "../i18n";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function EditTrip() {
     const { t } = useTranslation();
@@ -224,31 +225,25 @@ export default function EditTrip() {
 
     if (loadingOpen) {
         return (
-            <div className="add-trip-root">
-                <main className="add-trip-container" style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "80vh" // ocupa casi toda la pantalla
-                }}>
-                    <div style={{fontSize:"1.5625rem"}}> {t('editTrip.loading')} </div>
-                </main>
+            <div className="add-trip-root" style={{backgroundColor:"white"}}>
+
+                <LoadingSpinner message={t('common.loading')} fullScreen />
             </div>
         );
     }
 
     return (
         <div className="add-trip-root" >
-            <div className="add-trip-container" >
+            <div className="add-trip-container">
                 {/* LEFT: Form */}
-                <div className="add-trip-left">
+                <div className="add-trip-left" style={{marginTop:"0", marginBottom:"0.5rem"}}>
                     <form className="form" onSubmit={handleSubmit} style={{gap:"10px"}}>
                         <h2 className="add-trip-title" style={{marginBottom:"0"}}>
                             {currentDestination.destination}
                         </h2>
 
                         <h2 className="add-trip-subtitle">
-                            {t('editTrip.selectEndDate')}
+                            {today>=normalizeDate(currentDestination.start_date) ? t('editTrip.selectEndDate') : t('editTrip.selectStartAndEndDate')}
                         </h2>
 
                         <div className="calendar-header">
@@ -366,10 +361,10 @@ export default function EditTrip() {
                 {/* RIGHT: Logo */}
                 <div className="add-trip-right">
                     <div>
-                        <div className="hero-art" aria-hidden>
+                        <div className="hero-art-t" aria-hidden>
                             <LogoSvg />
                         </div>
-                        <div className="brand">ComfTrip</div>
+                        <div className="brand-t">ComfTrip</div>
                     </div>
                 </div>
             </div>

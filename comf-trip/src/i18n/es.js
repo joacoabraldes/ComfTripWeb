@@ -106,7 +106,7 @@
     },
     badges: {
       publicLink: 'Enlace público',
-      shared: 'Compartido',
+      shared: 'Compartido por ',
       createdByYou: 'Creado por ti',
     },
     delete: {

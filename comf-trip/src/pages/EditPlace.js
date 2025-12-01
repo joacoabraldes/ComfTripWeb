@@ -8,6 +8,7 @@ import "../styles/auth.css";
 import { apiGet, apiPut } from "./api";
 import Map, {Marker, NavigationControl} from "react-map-gl/mapbox";
 import { useTranslation } from "../i18n";
+import LoadingSpinner from "../components/LoadingSpinner";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function EditPlace() {
@@ -220,17 +221,10 @@ export default function EditPlace() {
 
 
     if (loading) return(
-    <div className="trip-it-root">
-                <main className="trip-it-main" style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "80vh"
-                }}>
-                    <div style={{fontSize:"1.5625rem"}}> {t('editPlace.loading')} </div>
-                </main>
-            </div>
-        );
+    <div className="trip-it-root" style={{backgroundColor:"white"}}>
+        <LoadingSpinner message={t('editPlace.loading')} />
+    </div>
+    );
     if (error) return (<div className="trip-it-root">
             <main className="trip-it-main" style={{
                 display: "flex",
@@ -279,7 +273,9 @@ export default function EditPlace() {
                     <h3 style={{ marginTop: 18 }}>{t('editPlace.editItineraryPoint')}</h3>
                     <form onSubmit={handleSubmit} className="trip-it-form">
                         <h2 className="trip-it-title">{place.location.titulo}</h2>
+                        <div className="trip-it-card">
                         <label>{t('editPlace.date')}</label>
+
                     <div style={ {borderRadius: "12px", padding:"20px", border: "1px solid #e6e6e6"}}>
                         <div className="calendar-header" style={{paddingBottom:"15px"}}>
                             <span className="month-year">{monthNames[currentMonth]} {currentYear}</span>
@@ -318,15 +314,15 @@ export default function EditPlace() {
                                 })}
                             </div>
                         </div>
-                    </div>
-
+                    </div></div>
+                        <div className="trip-it-card">
                         <label>{t('editPlace.startTime')}</label>
                         <TimePicker
                             value={startHour}
                             onChange={setStartHour}
                             occupiedSlots={occupiedSlots}
                             disabled={!date}/>
-                        <label>{t('editPlace.endTime')}</label>
+                        <label style={{marginTop:15}}>{t('editPlace.endTime')}</label>
                         <TimePicker
                             value={endHour}
                             onChange={setEndHour}
@@ -334,10 +330,12 @@ export default function EditPlace() {
                             minTime={startHour}   // <--- no permite horas anteriores a startHour
                             maxTime={nextOccupiedStart || null} // null = sin límite superior
                             disabled={!startHour.split(":")[1]}/>
+                        </div>
 
+                        <div className="trip-it-card">
                         <label>{t('editPlace.notes')}</label>
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
-
+                        </div>
                         <div style={{ marginTop: 10 }}>
                             <button type="submit" className="btn-primary" disabled={saving}>
                                 {saving ? t('editPlace.saving') : t('editPlace.saveChanges')}

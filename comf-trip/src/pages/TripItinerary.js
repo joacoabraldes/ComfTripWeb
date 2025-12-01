@@ -1287,7 +1287,7 @@ const handleSaveSelectedFlight = async () => {
   // ---------- UI rendering ----------
   if (loading) {
     return (
-      <div className="trip-it-root">
+      <div className="trip-it-root" style={{backgroundColor:"white"}}>
           <LoadingSpinner message={t('tripItinerary.loading')} />
       </div>
     );
@@ -1737,7 +1737,7 @@ const handleSaveSelectedFlight = async () => {
         />
       </div>
 
-      <div
+        <div
         style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}
       >
         <button

@@ -45,14 +45,21 @@
 }
 
 /* hero sizing */
-.hero-art {
-  width: 16.25rem;
-  height: 16.25rem;
+.hero-art-t {
+  width: 19.25rem;
+  height: 19.25rem;
   display: block;
 }
 
+.hero-art-t img,
+.hero-art-t svg {
+    width: 100%;
+    height: auto;
+    display:block;
+}
+
 /* brand */
-.brand {
+.brand-t {
   font-size: 1.75rem;
   font-weight: 700;
   color: #ff3951;

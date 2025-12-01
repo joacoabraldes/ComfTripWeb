@@ -32,6 +32,7 @@ export default function Trips() {
     const [countryFilter, setCountryFilter] = useState("");
     const [provinceFilter, setProvinceFilter] = useState("");
     const [creatorFilter, setCreatorFilter] = useState("");
+    const [friends, setFriends] = useState([]);
 
     const [sortBy, setSortBy] = useState("trip_date"); // 'trip_date' o 'created_at'
     const [sortOrder, setSortOrder] = useState("desc"); // 'asc' o 'desc'
@@ -66,8 +67,12 @@ export default function Trips() {
       setLoading(true);
       try {
         const res = await apiGet("/trips");
-
+        const fRes = await apiGet("/friends");
         if (!mounted) return;
+
+        const friendsArr = Array.isArray(fRes) ? fRes : (fRes && fRes.rows ? fRes.rows : []);
+        setFriends(friendsArr);
+
         if (Array.isArray(res)) {
           const sorted = [...res].sort((a, b) => {
             const aNow = isTripCurrent(a.start_date, a.end_date);
@@ -91,6 +96,13 @@ export default function Trips() {
       mounted = false;
     };
   }, []);
+
+    const getCreatorName = (trip) => {
+        const creator = friends.find(f => Number(f.id) === Number(trip.user_id));
+        if (!creator) return "";
+        return creator.name || creator.email;
+    };
+
 
     useEffect(() => {
         const countries = [...new Set(trips.map(t => t.destination.split(",")[1]).filter(Boolean))];
@@ -280,7 +292,12 @@ export default function Trips() {
                           {trip.share ? (
                             <span className="badge badge-primary" style={{ marginLeft: 8 }}>
                               {trip.share.public ? t('trips.badges.publicLink') : t('trips.badges.shared')}
-                              {trip.share.mode ? ` (${trip.share.mode})` : ""}
+                                {!isOwner && (
+                                    <>
+                                        <strong>{getCreatorName(trip)}</strong>
+                                    </>
+                                )}
+                                {trip.share.mode ? ` (${trip.share.mode})` : ""}
                             </span>
                           ) : isOwner ? (
                             <span className="badge badge-secondary" style={{ marginLeft: 8 }}>
@@ -307,11 +324,11 @@ export default function Trips() {
 
                         {menuOpen === trip.id && (
                           <div className="trip-menu">
-                            <IconButton
+                              {isOwner && <IconButton
                               icon={<FaShare size={20} color="#1E1E1E" />}
                               onClick={() => { openShareModal(trip); setMenuOpen(null); }}
                               variant="menu"
-                            />
+                            />}
 
                             <IconButton
                               icon={<FaEdit size={18} />}

@@ -5,7 +5,6 @@ import { FaCheck, FaTimes, FaUser, FaShare, FaTrash } from 'react-icons/fa';
 import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
-import { formatDateRange } from '../utils/dateUtils';
 import ShareTripModal from '../components/ShareTripModal';
 import IconButton from '../components/IconButton';
 import ActionButton from '../components/ActionButton';
@@ -26,6 +25,7 @@ export default function Community() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareTargetFriend, setShareTargetFriend] = useState(null);
   const [availableTrips, setAvailableTrips] = useState([]);
+    const [loadingTrips, setLoadingTrips] = useState(true);
   
   // confirm dialog state
   const [removeConfirm, setRemoveConfirm] = useState({ isOpen: false, userId: null });
@@ -154,6 +154,7 @@ export default function Community() {
   }
 
   async function openShareModal(friend) {
+      setLoadingTrips(true);
     setShareTargetFriend(friend);
     setShowShareModal(true);
 
@@ -180,6 +181,8 @@ export default function Community() {
       console.error('Error fetching trips for sharing:', err);
       alert(t('community.noTripsToShare'));
       setAvailableTrips([]);
+    }finally {
+        setLoadingTrips(false)
     }
   }
 
@@ -213,6 +216,50 @@ export default function Community() {
             <p className="hint">{t('community.hint')}</p>
           </section>
 
+            <section className="card">
+                <h3>{t('community.friends')}</h3>
+                {friends.length === 0 ? (
+                    <EmptyState message={t('community.noFriends')} />
+                ) : (
+                    <div className="list">
+                        {friends.map(f => (
+                            <div key={f.id} className="list-item">
+                                <div className="info">
+                                    <div className="avatar">{(f.name || f.email || 'U').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
+                                    <div style={{ marginLeft: 12 }}>
+                                        <div className="title">{f.name || f.email}</div>
+                                        {f.name && <div className="subtitle">{f.email}</div>}
+                                    </div>
+                                </div>
+                                <div className="actions">
+                                    <IconButton
+                                        icon={<FaUser size={16} color="#34495e" />}
+                                        onClick={() => navigate(`/friend/${f.id}`)}
+                                        title={t('community.viewProfile')}
+                                        ariaLabel={t('community.viewProfile')}
+                                    />
+
+                                    <IconButton
+                                        icon={<FaShare size={16} color="#2b8cff" />}
+                                        onClick={() => openShareModal(f)}
+                                        title={t('community.shareTrips')}
+                                        ariaLabel={t('community.shareTrips')}
+                                    />
+
+                                    <IconButton
+                                        icon={<FaTrash size={16} color="#e74c3c" />}
+                                        onClick={() => handleRemoveFriendClick(f.id)}
+                                        title={t('community.removeFriend')}
+                                        ariaLabel={t('community.removeFriend')}
+                                        variant="muted"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
           <section className="card">
             <h3>{t('community.incomingRequests')}</h3>
             {incoming.length === 0 ? (
@@ -224,8 +271,8 @@ export default function Community() {
                     <div className="info">
                       <div className="avatar">{(r.requester_name || r.requester_email || 'U').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
                       <div style={{ marginLeft: 12 }}>
-                          <div className="title">{r.requester_name}</div>
-                          <div className="subtitle">{r.requester_email}</div>
+                          <div className="title">{r.requester_name || r.requester_email}</div>
+                          {r.requester_name && <div className="subtitle">{r.requester_email}</div>}
                       </div>
                     </div>
                     <div className="actions">
@@ -250,50 +297,6 @@ export default function Community() {
           </section>
 
           <section className="card">
-            <h3>{t('community.friends')}</h3>
-            {friends.length === 0 ? (
-              <EmptyState message={t('community.noFriends')} />
-            ) : (
-              <div className="list">
-                {friends.map(f => (
-                  <div key={f.id} className="list-item">
-                    <div className="info">
-                      <div className="avatar">{(f.name || f.email || 'U').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
-                      <div style={{ marginLeft: 12 }}>
-                        <div className="title">{f.name}</div>
-                        <div className="subtitle">{f.email}</div>
-                      </div>
-                    </div>
-                    <div className="actions">
-                      <IconButton
-                        icon={<FaUser size={16} color="#34495e" />}
-                        onClick={() => navigate(`/friend/${f.id}`)}
-                        title={t('community.viewProfile')}
-                        ariaLabel={t('community.viewProfile')}
-                      />
-
-                      <IconButton
-                        icon={<FaShare size={16} color="#2b8cff" />}
-                        onClick={() => openShareModal(f)}
-                        title={t('community.shareTrips')}
-                        ariaLabel={t('community.shareTrips')}
-                      />
-
-                      <IconButton
-                        icon={<FaTrash size={16} color="#e74c3c" />}
-                        onClick={() => handleRemoveFriendClick(f.id)}
-                        title={t('community.removeFriend')}
-                        ariaLabel={t('community.removeFriend')}
-                        variant="muted"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="card">
             <h3>{t('community.outgoingRequests')}</h3>
             {outgoing.length === 0 ? (
               <EmptyState message={t('community.noOutgoing')} />
@@ -304,8 +307,8 @@ export default function Community() {
                     <div className="info">
                         <div className="avatar">{(o.addressee_name || o.addressee_email || 'U').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
                         <div style={{ marginLeft: 12 }}>
-                            <div className="title">{o.addressee_name}</div>
-                            <div className="subtitle">{o.addressee_email}</div>
+                            <div className="title">{o.addressee_name || o.addressee_email}</div>
+                            {o.addressee_name && <div className="subtitle">{o.addressee_email}</div>}
                             {/*<div className="tiny">{t('community.status')} {o.status}</div>*/}
                         </div>
                     </div>
@@ -327,6 +330,8 @@ export default function Community() {
         friend={shareTargetFriend}
         availableTrips={availableTrips}
         onShareSuccess={handleShareSuccess}
+        chooseTrips={true}
+        loadingTrips={loadingTrips}
       />
 
       {/* Confirmación de eliminación */}

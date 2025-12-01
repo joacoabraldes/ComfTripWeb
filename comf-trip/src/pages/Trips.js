@@ -72,12 +72,11 @@ export default function Trips() {
           const sorted = [...res].sort((a, b) => {
             const aNow = isTripCurrent(a.start_date, a.end_date);
             const bNow = isTripCurrent(b.start_date, b.end_date);
-            if (aNow && !bNow) return -1;
-            if (!aNow && bNow) return 1;
+            if (aNow && !bNow) setSelectedTrip(a)
+            if (!aNow && bNow) setSelectedTrip(b);
             return normalizeDate(b.start_date) - normalizeDate(a.start_date);
           });
           setTrips(sorted);
-          setSelectedTrip(sorted.length ? sorted[0] : null);
         } else {
           setTrips([]);
         }

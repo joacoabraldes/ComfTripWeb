@@ -1288,9 +1288,7 @@ const handleSaveSelectedFlight = async () => {
   if (loading) {
     return (
       <div className="trip-it-root">
-        <main className="trip-it-main">
           <LoadingSpinner message={t('tripItinerary.loading')} />
-        </main>
       </div>
     );
   }
@@ -1913,16 +1911,9 @@ const handleSaveSelectedFlight = async () => {
 
   return (
     <div
-      className="trip-it-root"
-      style={{ background: "#f6f7f9", minHeight: "100vh" }}
-    >
-
+      className="trip-it-root">
       <main
-        className="trip-it-main"
-        style={{
-          gridTemplateColumns: "1fr 35rem",
-        }}
-      >
+        className="trip-it-main">
         <section className="trip-it-left">
           <div
             style={{

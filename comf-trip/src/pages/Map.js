@@ -258,9 +258,9 @@ export default function MapPage() {
   }
 
   return (
-    <div className="map-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <main className="map-main" style={{ display: "flex", flex: 1 }}>
-        <section className="map-left" style={{ width: 400, padding: 16, boxSizing: "border-box" }}>
+    <div className="map-root">
+      <main className="map-main">
+        <section className="map-left">
           <h2>{t('map.locations')}</h2>
 
           <label htmlFor="interest-select" style={{ display: "block", marginBottom: 15 }}>{t('map.filterByCategory')}</label>
@@ -338,7 +338,7 @@ export default function MapPage() {
           </div>
         </section>
 
-        <section className="map-canvas" style={{ flex: 1 }}>
+        <section className="map-canvas">
           {!MAPBOX_TOKEN ? (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", color: "red" }}>
               <p>{t('map.noToken') || 'Mapbox token no configurado'}</p>

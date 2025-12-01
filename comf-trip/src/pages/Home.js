@@ -8,7 +8,7 @@ import { apiGet } from "./api";
 import Map, {Marker, NavigationControl, Popup} from "react-map-gl/mapbox";
 import OptimizedImage from "../components/OptimizedImage";
 import { useTranslation } from "../i18n";
-import { formatDate, normalizeDate } from "../utils/dateUtils";
+import {formatDate, isTripCurrent, normalizeDate} from "../utils/dateUtils";
 import LoadingSpinner from "../components/LoadingSpinner";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
@@ -26,6 +26,8 @@ export default function Home() {
   const [index, setIndex] = useState(0);
   const carouselLen = popular.length;
   const carouselAutoRef = useRef(null);
+
+    const [currentTrip, setCurrentTrip]=useState(null);
 
   // fetch user's trips
   useEffect(() => {
@@ -94,19 +96,14 @@ export default function Home() {
   }
 
   const upcoming = trips
-    .filter(t => t.start_date) // keep those with dates
-    .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    .filter(trip => trip.start_date) // keep those with dates
+    .sort((a, b) => normalizeDate(a.start_date) - normalizeDate(b.start_date));
 
-  const nextTrip = upcoming.length ? upcoming[0] : null;
+    const today=new Date;
 
-    const normalizeDate=(d)=>{
-        if(!d) return new Date();
-        const date=d.split("T")[0].split("-");
-        const yy = Number(date[0]);
-        const mm =Number(date[1])-1;
-        const dd = Number(date[2]);
-        return new Date(yy, mm, dd);
-    }
+  const nextTrip = upcoming.find(tri =>
+      isTripCurrent(tri.start_date, tri.end_date) || normalizeDate(tri.start_date)>today
+  );
 
     const safeParseImages = (im) => {
         if (!im) return [];
@@ -123,7 +120,6 @@ export default function Home() {
         return [];
     };
 
-    const [currentTrip, setCurrentTrip]=useState(null);
     const [currentPlace, setCurrentPlace]=useState(null);
     const [nextPlace, setNextPlace]=useState(null);
     const [hasNextToday, setHasNextToday]=useState(true);
@@ -145,8 +141,7 @@ export default function Home() {
             // Determinar si estamos en un viaje actual
             const tripNow =
                 nextTrip &&
-                normalizeDate(nextTrip.start_date) <= currentDay &&
-                normalizeDate(nextTrip.end_date) >= currentDay ? nextTrip : null;
+                isTripCurrent(nextTrip.start_date, nextTrip.end_date) ? nextTrip : null;
 
             setCurrentTrip(tripNow);
 
@@ -171,6 +166,7 @@ export default function Home() {
 
                 return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
             });
+
 
             setCurrentPlace(placeNow || null);
 
@@ -199,7 +195,8 @@ export default function Home() {
         const interval = setInterval(updateStatus, 60 * 1000);
         setLoadingCurrent(false);
         return () => clearInterval(interval);
-    }, [nextTrip]);
+    }, [nextTrip, trips]);
+
 
     useEffect(() => {
         if (!currentTrip) return;

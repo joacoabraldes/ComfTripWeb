@@ -222,8 +222,11 @@ export default function Community() {
                 {incoming.map(r => (
                   <div key={r.id} className="list-item">
                     <div className="info">
-                      <div className="title">{r.requester_name || r.requester_email || `${t('community.user')} ${r.requester_id}`}</div>
-                      <div className="subtitle">{r.requester_email}</div>
+                      <div className="avatar">{(r.requester_name || r.requester_email || 'U').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
+                      <div style={{ marginLeft: 12 }}>
+                          <div className="title">{r.requester_name}</div>
+                          <div className="subtitle">{r.requester_email}</div>
+                      </div>
                     </div>
                     <div className="actions">
                       <IconButton
@@ -299,9 +302,12 @@ export default function Community() {
                 {outgoing.map(o => (
                   <div key={o.id} className="list-item">
                     <div className="info">
-                      <div className="title">{o.addressee_name || o.addressee_email || `${t('community.user')} ${o.addressee_id}`}</div>
-                      <div className="subtitle">{o.addressee_email}</div>
-                      <div className="tiny">{t('community.status')} {o.status}</div>
+                        <div className="avatar">{(o.addressee_name || o.addressee_email || 'U').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
+                        <div style={{ marginLeft: 12 }}>
+                            <div className="title">{o.addressee_name}</div>
+                            <div className="subtitle">{o.addressee_email}</div>
+                            {/*<div className="tiny">{t('community.status')} {o.status}</div>*/}
+                        </div>
                     </div>
                   </div>
                 ))}

@@ -48,7 +48,7 @@ function App() {
             <Route path="/home" element={<ProtectedRoute><Layout><Home /></Layout></ProtectedRoute>} />
             <Route path="/explore" element={<ProtectedRoute><Layout><Explore /></Layout></ProtectedRoute>} />
             <Route path="/add-trip" element={<ProtectedRoute><Layout><AddTrip /></Layout></ProtectedRoute>} />
-            <Route path="/load-trip" element={<ProtectedRoute><Layout><LoadTrip /></Layout></ProtectedRoute>} />
+            <Route path="/load-trip" element={<ProtectedRoute><LoadTrip /></ProtectedRoute>} />
             <Route path="/edit-trip/:tripId" element={<ProtectedRoute><Layout><EditTrip /></Layout></ProtectedRoute>} />
             <Route
             path="/trips"

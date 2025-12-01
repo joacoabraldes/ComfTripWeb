@@ -8,6 +8,7 @@ import flightsApi from "../services/flightsApi";
 import { Country, City } from "country-state-city";
 import countryList from "react-select-country-list";
 import { useTranslation } from "../i18n";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function AddTrip() {
   const { t } = useTranslation();
@@ -778,12 +779,14 @@ export default function AddTrip() {
         };
 
         setStatusMessage(t('addTrip.creatingTrip', { destination: payload.destination }));
-        const t = await apiPost("/trips", payload);
-        if (!t || !t.trip || !t.trip.id)
-          throw new Error(t('addTrip.createTripError'));
-        createdTripId = t.trip.id;
+          const tripResponse = await apiPost("/trips", payload);
+          if (!tripResponse || !tripResponse.trip || !tripResponse.trip.id)
+              throw new Error(t('addTrip.createTripError'));
 
-        try {
+          createdTripId = tripResponse.trip.id;
+
+
+          try {
           // Build a canonical flight identifier (prefer carrier+number + date).
           // Example canonical formats: "KL1512|2023-08-01" (preferred) or "KL1512" if no date.
           const sel = dest.selectedFlight;
@@ -897,17 +900,7 @@ export default function AddTrip() {
   if (loading) {
     return (
       <div className="add-trip-root">
-        <main
-          className="add-trip-container"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "80vh",
-          }}
-        >
-          <div style={{ fontSize: "1.5625rem" }}>{t('addTrip.loading')}</div>
-        </main>
+            <LoadingSpinner message={t('addTrip.loading')} fullScreen />
       </div>
     );
   }
@@ -1236,7 +1229,7 @@ export default function AddTrip() {
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ display: "flex", gap: 12, paddingBottom:30}}>
               <button
                 type="submit"
                 className="btn-primary create-trip"

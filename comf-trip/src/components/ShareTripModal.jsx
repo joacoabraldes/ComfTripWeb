@@ -3,6 +3,7 @@ import { useTranslation } from "../i18n";
 import Modal from "./Modal";
 import ActionButton from "./ActionButton";
 import { apiGet, apiPost } from "../pages/api";
+import {formatDateRange} from "../utils/dateUtils";
 
 /**
  * ShareTripModal Component - Modal for sharing trips with friends
@@ -170,9 +171,9 @@ export default function ShareTripModal({
                               <div className="title">
                                 {trip.destination || `Viaje #${trip.id}`}
                               </div>
-                              <div className="subtitle">
+                              <div className="subtitle" style={{paddingTop:15}}>
                                 {trip.start_date
-                                  ? `${trip.start_date} - ${trip.end_date}`
+                                  ? formatDateRange(trip.start_date, trip.end_date)
                                   : t("trips.unknownDestination")}
                               </div>
                             </div>

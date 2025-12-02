@@ -19,6 +19,7 @@ import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
 import IconButton from "../components/IconButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ConfirmDialog from "../components/ConfirmDialog";
+import {normalizeDate} from "../utils/dateUtils";
 
 const MAPBOX_TOKEN =
   process.env.REACT_APP_MAPBOX_TOKEN ||
@@ -1105,15 +1106,6 @@ const handleSaveSelectedFlight = async () => {
     );
   };
 
-  // small helper for past check
-  const normalizeDate = (d) => {
-    if (!d) return new Date();
-    const date = String(d).split("T")[0].split("-");
-    const yy = Number(date[0]);
-    const mm = Number(date[1]) - 1;
-    const dd = Number(date[2]);
-    return new Date(yy, mm, dd);
-  };
   const pastPlace = (d, et) => {
     if (!d || !et) return false;
     const today = new Date(

@@ -1,55 +1,47 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import loadingGif from '../components/loading.gif';
-import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "../i18n";
 
-export default function LoadTrip() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const tripId = location.state?.tripId;
+export default function LoadTrip({ statusMessage }) {
+    const { t } = useTranslation();
 
-  useEffect(() => {
-    if (!tripId) return;
-    const timer = setTimeout(() => {
-      navigate(`/trip_itinerary/${tripId}`);
-    }, 3000); // ⏳ 3 segundos en la pantalla de carga
-
-    return () => clearTimeout(timer);
-  }, [tripId, navigate]);
-
-
-  return (
-    <div style={styles.container}>
-      <p style={styles.text}>
-        {t('loadTrip.calculating')}
-      </p>
-      <img 
-        src={loadingGif} 
-        alt={t('common.loading')}
-        style={styles.loadingImage}
-      />
-    </div>
-  );
+    return (
+        <div style={styles.overlay}>
+            <div style={styles.box}>
+                <p style={styles.text}>{statusMessage}</p>
+                <img
+                    src={loadingGif}
+                    alt={t('common.loading')}
+                    style={styles.loadingImage}
+                />
+            </div>
+        </div>
+    );
 };
 
 const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: 'white',
-  },
-  text: {
-    fontSize: '16px',
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: '20px',
-  },
-  loadingImage: {
-    width: '100px',
-    height: '100px',
-  }
+    overlay: {
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: "white",
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 9999,
+    },
+    box: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+    },
+    text: {
+        fontSize: '16px',
+        color: '#666',
+        marginBottom: '20px',
+        textAlign: 'center'
+    },
+    loadingImage: {
+        width: '100px',
+        height: '100px',
+    }
 };

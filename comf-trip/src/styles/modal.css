@@ -21,9 +21,8 @@
 
 .modal-close {
   position: absolute;
-  top: 0.625rem;
+  top: 0.75rem;
   right: 0.75rem;
-  background: transparent;
   border: none;
   font-size: 1.375rem;
   cursor: pointer;
@@ -33,6 +32,8 @@
   padding: 0.25rem;
   color: #666;
   transition: color 0.2s;
+    border-radius: 50%;
+    background-color: white;
 }
 
 .modal-close:hover:not(:disabled) {

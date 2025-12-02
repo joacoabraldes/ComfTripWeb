@@ -9,6 +9,8 @@ import { Country, City } from "country-state-city";
 import countryList from "react-select-country-list";
 import { useTranslation } from "../i18n";
 import LoadingSpinner from "../components/LoadingSpinner";
+import LoadTrip from "./LoadTrip";
+import {normalizeDate} from "../utils/dateUtils";
 
 export default function AddTrip() {
   const { t } = useTranslation();
@@ -127,16 +129,6 @@ export default function AddTrip() {
     ],
     []
   );
-
-  const normalizeDate = (d) => {
-    if (!d) return new Date();
-    const date = d.split("T")[0].split("-");
-    const yy = Number(date[0]);
-    const mm = Number(date[1]) - 1;
-    const dd = Number(date[2]);
-    return new Date(yy, mm, dd);
-  };
-
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -242,16 +234,27 @@ export default function AddTrip() {
     );
   };
 
-  const handlePrevMonth = () =>
-    setCurrentMonth((prev) =>
-      prev === 0 ? (setCurrentYear((c) => c - 1), 11) : prev - 1
-    );
-  const handleNextMonth = () =>
-    setCurrentMonth((prev) =>
-      prev === 11 ? (setCurrentYear((c) => c + 1), 0) : prev + 1
-    );
+    const handlePrevMonth = () => {
+        setCurrentMonth((prev) => {
+            if (prev === 0) {
+                setCurrentYear(currentYear - 1);
+                return 11;
+            }
+            return prev - 1;
+        });
+    };
 
-  const handleAddDestination = () => {
+    const handleNextMonth = () => {
+        setCurrentMonth((prev) => {
+            if (prev === 11) {
+                setCurrentYear(currentYear + 1);
+                return 0;
+            }
+            return prev + 1;
+        });
+    };
+
+    const handleAddDestination = () => {
     setDestinations((prev) => {
       const newDest = [
         ...prev,
@@ -863,10 +866,13 @@ export default function AddTrip() {
       }
 
       if (createdTripId)
-        nav("/load-trip", { state: { tripId: createdTripId } });
+          setStatusMessage(null);
+          nav(`/trip_itinerary/${createdTripId}`);
+
     } catch (err) {
       console.error("Error creando viaje:", err);
       alert(err.message || t('addTrip.createTripGenericError'));
+        setStatusMessage(null);
     } finally {
       setLoadingTrip(false);
       setStatusMessage(null);
@@ -1035,13 +1041,13 @@ export default function AddTrip() {
                           onClick={() => !isPast && handleDateSelect(day.date)}
                           disabled={isPast}
                           style={{
-                            borderTopLeftRadius: end || inRange ? "0" : "5.625rem",
+                            borderTopLeftRadius: (end || inRange) && !start ? "0" : "5.625rem",
                             borderBottomLeftRadius:
-                              end || inRange ? "0" : "5.625rem",
+                                (end || inRange) && !start ? "0" : "5.625rem",
                             borderTopRightRadius:
-                              start || inRange ? "0" : "5.625rem",
+                                (start || inRange) && !end ? "0" : "5.625rem",
                             borderBottomRightRadius:
-                              start || inRange ? "0" : "5.625rem",
+                                (start || inRange) && !end ? "0" : "5.625rem",
                           }}
                         >
                           {day.date}
@@ -1259,6 +1265,9 @@ export default function AddTrip() {
           </div>
         </div>
       </div>
+        {statusMessage && (
+            <LoadTrip statusMessage={statusMessage} />
+        )}
     </div>
   );
 }

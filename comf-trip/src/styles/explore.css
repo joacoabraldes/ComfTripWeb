@@ -256,23 +256,6 @@
   position: relative;
 }
 
-.modal-close {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: rgba(0,0,0,0.45);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 1.875rem;
-  height: 1.875rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  z-index: 10;
-}
-
 .modal-image {
   height: 16.25rem;
 }
@@ -288,6 +271,11 @@
 .modal-details {
   padding: 1.125rem;
 }
+.glass-details {
+    background-color: rgba(255,255,255,0.65);
+    backdrop-filter: blur(0.125rem); /* opcional, queda MUY lindo */
+}
+
 
 .modal-details h2 {
   margin-bottom: 0.5rem;
@@ -295,7 +283,7 @@
 }
 
 .modal-description {
-  color: var(--text-muted, #666666);
+  color:  #444444;
   margin-bottom: 0.75rem;
   line-height: 1.4;
 }

@@ -209,7 +209,7 @@ export default function EditTrip() {
 
             await apiPut(`/trips/${tripId}`, payload);
             alert(t('editTrip.updateSuccess'));
-            nav("/load-trip", { state: { tripId } });
+            nav(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Error editando viaje:", err);
             alert(err.message || t('editTrip.updateError'));
@@ -306,10 +306,13 @@ export default function EditTrip() {
                                             }
                                             disabled={isPast}
                                             style={{
-                                                borderTopLeftRadius: end || inRange ? "0" : "90px",
-                                                borderBottomLeftRadius: end || inRange ? "0" : "90px",
-                                                borderTopRightRadius: start || inRange? "0" : "90px",
-                                                borderBottomRightRadius: start || inRange ? "0" : "90px",
+                                                borderTopLeftRadius: (end || inRange) && !start ? "0" : "5.625rem",
+                                                borderBottomLeftRadius:
+                                                    (end || inRange) && !start ? "0" : "5.625rem",
+                                                borderTopRightRadius:
+                                                    (start || inRange) && !end ? "0" : "5.625rem",
+                                                borderBottomRightRadius:
+                                                    (start || inRange) && !end ? "0" : "5.625rem",
                                             }}
                                         >
                                             {day.date}

@@ -543,7 +543,7 @@ export default function Explore() {
         {selectedExperience && (
           <>
             <div className="modal-image">
-              {selectedExperience.imageLarge || selectedExperience.image ? (
+              {(selectedExperience.imageLarge || selectedExperience.image) &&(
                 <img
                   src={selectedExperience.imageLarge ?? selectedExperience.image}
                   alt={selectedExperience.title}
@@ -551,10 +551,9 @@ export default function Explore() {
                   sizes={selectedExperience.imageSrcSet ? defaultModalSizes : undefined}
                   style={{ width: "100%", height: "auto", borderRadius: 8 }}
                 />
-              ) : null}
+              )}
             </div>
-
-            <div className="modal-details">
+            <div className="modal-details  glass-details">
               <h2>{selectedExperience.title}</h2>
               <p className="modal-description">{selectedExperience.description}</p>
               <div className="modal-actions">

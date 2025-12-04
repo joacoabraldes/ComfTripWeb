@@ -1,29 +1,42 @@
-// src/services/flightsApiAmadeus.js
-// Combined: Amadeus for flight offers (corrected request body), OurAirports CSV for airports (IATA-only)
+// src/services/flightsApi.js
+// OurAirports CSV for airports + AeroDataBox (RapidAPI) for flights
 
-const PROXY_BASE = process.env.REACT_APP_API_PROXY || '';
-const CLIENT_ID = process.env.REACT_APP_AMADEUS_CLIENT_ID || 'Urt92w3G17hRECySlIsH5pyZHXDzcUr9';
-const CLIENT_SECRET = process.env.REACT_APP_AMADEUS_CLIENT_SECRET || '13l2GscINoAUMiA0';
-const AMADEUS_AUTH_URL = 'https://test.api.amadeus.com/v1/security/oauth2/token';
-const AMADEUS_BASE = 'https://test.api.amadeus.com';
+const PROXY_BASE = process.env.REACT_APP_API_PROXY || "";
 
-const OURAIRPORTS_PRIMARY = 'https://ourairports.com/airports.csv';
-const OURAIRPORTS_FALLBACK = 'https://davidmegginson.github.io/ourairports-data/airports.csv';
+// OurAirports CSV hosts
+const OURAIRPORTS_PRIMARY = "https://ourairports.com/airports.csv";
+const OURAIRPORTS_FALLBACK =
+  "https://davidmegginson.github.io/ourairports-data/airports.csv";
+
+// AeroDataBox (RapidAPI) config
+const AERODATABOX_BASE = "https://aerodatabox.p.rapidapi.com";
+const AERODATABOX_KEY =
+  process.env.REACT_APP_AERODATABOX_KEY ||
+  "1541aaadf9msh6c5432cdbe45d17p183a95jsn94566509c5fd";
+const AERODATABOX_HOST =
+  process.env.REACT_APP_AERODATABOX_HOST || "aerodatabox.p.rapidapi.com";
+
+/* -------------------------------------------------
+   Generic helpers + proxy handling
+   ------------------------------------------------- */
 
 function shouldUseProxy() {
   if (!PROXY_BASE) return false;
-  if (typeof window !== 'undefined' && PROXY_BASE.startsWith('http')) {
+  if (typeof window !== "undefined" && PROXY_BASE.startsWith("http")) {
     try {
       const pOrigin = new URL(PROXY_BASE).origin;
       const wOrigin = window.location.origin;
       if (pOrigin === wOrigin) {
         console.warn(
-          `[flightsApiAmadeus] Ignoring proxy because REACT_APP_API_PROXY (${PROXY_BASE}) points to same origin as frontend (${wOrigin}). Falling back to direct Amadeus calls.`
+          `[flightsApi] Ignoring proxy because REACT_APP_API_PROXY (${PROXY_BASE}) points to same origin as frontend (${wOrigin}).`
         );
         return false;
       }
     } catch (err) {
-      console.warn('[flightsApiAmadeus] Could not parse REACT_APP_API_PROXY; ignoring proxy.', err);
+      console.warn(
+        "[flightsApi] Could not parse REACT_APP_API_PROXY; ignoring proxy.",
+        err
+      );
       return false;
     }
   }
@@ -31,10 +44,10 @@ function shouldUseProxy() {
 }
 const USE_PROXY = shouldUseProxy();
 
-// --- Shared fetch helper
+// Shared fetch helper (JSON)
 async function safeFetchJson(url, opts = {}) {
   const res = await fetch(url, opts);
-  const text = await res.text().catch(() => '');
+  const text = await res.text().catch(() => "");
   let parsed = null;
   try {
     parsed = text ? JSON.parse(text) : null;
@@ -64,99 +77,14 @@ async function safeFetchJson(url, opts = {}) {
 }
 
 function buildProxyUrl(path, params = {}) {
-  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  const cleanPath = path.startsWith("/") ? path : "/" + path;
   const qs = new URLSearchParams(params).toString();
-  return `${PROXY_BASE}${cleanPath}${qs ? '?' + qs : ''}`;
+  return `${PROXY_BASE}${cleanPath}${qs ? "?" + qs : ""}`;
 }
 
-// --- Amadeus auth + internalGet/internalPost
-let cachedToken = null;
-
-async function getAccessTokenFrontend() {
-  const now = Date.now();
-  if (cachedToken && cachedToken.expires_at && cachedToken.expires_at > now + 5000) {
-    return cachedToken.access_token;
-  }
-
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    throw new Error(
-      'Amadeus CLIENT_ID/CLIENT_SECRET missing. Set REACT_APP_AMADEUS_CLIENT_ID and REACT_APP_AMADEUS_CLIENT_SECRET in your frontend .env (dev only), or configure a server proxy and set REACT_APP_API_PROXY.'
-    );
-  }
-
-  const body = new URLSearchParams();
-  body.append('grant_type', 'client_credentials');
-  body.append('client_id', CLIENT_ID);
-  body.append('client_secret', CLIENT_SECRET);
-
-  const data = await safeFetchJson(AMADEUS_AUTH_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString()
-  });
-
-  const expires_at = Date.now() + (data.expires_in || 1800) * 1000;
-  cachedToken = { access_token: data.access_token, expires_at };
-  return data.access_token;
-}
-
-async function internalGet(path, params = {}) {
-  const safeParams = {};
-  Object.entries(params || {}).forEach(([k, v]) => {
-    if (v === undefined || v === null) return;
-    if (typeof v === 'object' && !(v instanceof String)) {
-      try {
-        safeParams[k] = JSON.stringify(v);
-      } catch {
-        safeParams[k] = String(v);
-      }
-    } else {
-      safeParams[k] = String(v);
-    }
-  });
-
-  if (USE_PROXY) {
-    const url = buildProxyUrl(path, safeParams);
-    return safeFetchJson(url, { method: 'GET', headers: { Accept: 'application/json' } });
-  }
-
-  const token = await getAccessTokenFrontend();
-  const qs = new URLSearchParams(safeParams).toString();
-  const url = `${AMADEUS_BASE}${path}${qs ? '?' + qs : ''}`;
-  return safeFetchJson(url, { method: 'GET', headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } });
-}
-
-/**
- * internalPost: handles POST requests (used for /v2/shopping/flight-offers)
- * If USE_PROXY -> proxy should accept POST at the same path and forward accordingly.
- * Otherwise attach Bearer token and POST to Amadeus.
- */
-async function internalPost(path, body = {}) {
-  if (USE_PROXY) {
-    const url = buildProxyUrl(path);
-    return safeFetchJson(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(body)
-    });
-  }
-
-  const token = await getAccessTokenFrontend();
-  const url = `${AMADEUS_BASE}${path}`;
-  return safeFetchJson(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(body)
-  });
-}
-
-/* -----------------------------
+/* -------------------------------------------------
    OurAirports CSV loader & helpers (IATA-only)
-   ----------------------------- */
+   ------------------------------------------------- */
 
 let _ourAirportsLoaded = false;
 let _ourAirportsList = [];
@@ -168,7 +96,7 @@ let _ourAirportsIndex = {
 
 function splitCsvLine(line) {
   const parts = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
-  return parts.map(p => {
+  return parts.map((p) => {
     const s = p.trim();
     if (s.startsWith('"') && s.endsWith('"')) {
       return s.slice(1, -1).replace(/""/g, '"');
@@ -180,79 +108,91 @@ function splitCsvLine(line) {
 async function fetchOurAirportsCsvText() {
   if (USE_PROXY) {
     try {
-      const url = buildProxyUrl('/ourairports/airports.csv');
-      const res = await fetch(url, { method: 'GET', headers: { Accept: 'text/csv' } });
+      const url = buildProxyUrl("/ourairports/airports.csv");
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "text/csv" }
+      });
       if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
       return await res.text();
     } catch (err) {
-      console.warn('fetchOurAirportsCsvText proxy failed, falling back to public hosts:', err);
+      console.warn(
+        "fetchOurAirportsCsvText proxy failed, falling back to public hosts:",
+        err
+      );
     }
   }
 
-  // Preferir hosts que suelen ser más fiables (fallback primero), y añadir raw.githubusercontent como alternativa
   const candidates = [
-    OURAIRPORTS_FALLBACK, // github.io mirror (más estable)
-    'https://raw.githubusercontent.com/davidmegginson/ourairports-data/master/airports.csv',
-    OURAIRPORTS_PRIMARY   // intento final (puede fallar por cert)
+    OURAIRPORTS_FALLBACK,
+    "https://raw.githubusercontent.com/davidmegginson/ourairports-data/master/airports.csv",
+    OURAIRPORTS_PRIMARY
   ];
 
   for (const u of candidates) {
     try {
-      // intentar fetch; el navegador ya bloqueará si hay error de certificado
-      const res = await fetch(u, { method: 'GET', headers: { Accept: 'text/csv' } });
+      const res = await fetch(u, {
+        method: "GET",
+        headers: { Accept: "text/csv" }
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status} from ${u}`);
       const text = await res.text();
       if (text && text.length > 100) return text;
-      console.warn(`fetchOurAirportsCsvText: fetched ${u} but content too small`);
+      console.warn(
+        `fetchOurAirportsCsvText: fetched ${u} but content too small`
+      );
     } catch (err) {
       console.warn(`fetchOurAirportsCsvText: failed to fetch ${u}:`, err);
-      // si el error fue ERR_CERT_DATE_INVALID lo verás en la consola del navegador; aquí simplemente seguimos
     }
   }
 
-  throw new Error('Could not fetch OurAirports CSV from proxy or public hosts (CORS, cert or network issue). Use PROXY_BASE to fetch/cache the CSV server-side.');
+  throw new Error(
+    "Could not fetch OurAirports CSV from proxy or public hosts (CORS, cert or network issue)."
+  );
 }
 
-
 function normalizeHeaderKey(k) {
-  return String(k || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  return String(k || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
 }
 
 async function loadOurAirportsCsv(force = false) {
   if (_ourAirportsLoaded && !force) return _ourAirportsList;
 
   const txt = await fetchOurAirportsCsvText();
-  const lines = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
+  const lines = txt.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (!lines || lines.length < 2) {
     _ourAirportsLoaded = false;
     _ourAirportsList = [];
-    throw new Error('OurAirports CSV appears empty or malformed');
+    throw new Error("OurAirports CSV appears empty or malformed");
   }
 
   const headerParts = splitCsvLine(lines.shift());
   const headers = headerParts.map(normalizeHeaderKey);
 
-  const parsed = lines.map(line => {
+  const parsed = lines.map((line) => {
     const cols = splitCsvLine(line);
     const obj = {};
     headers.forEach((h, i) => {
-      obj[h] = cols[i] !== undefined ? cols[i] : '';
+      obj[h] = cols[i] !== undefined ? cols[i] : "";
     });
     return obj;
   });
 
-  // keep only rows with non-empty 1-3 char IATA
-  const filtered = parsed.filter(row => {
-    const iataCandidates = (row.iata_code || row.iata || '').trim();
+  const filtered = parsed.filter((row) => {
+    const iataCandidates = (row.iata_code || row.iata || "").trim();
     return !!iataCandidates && /^[A-Za-z0-9]{1,3}$/.test(iataCandidates);
   });
 
   _ourAirportsList = filtered;
 
   _ourAirportsIndex = { byIata: new Map(), byCity: new Map(), byName: [] };
-  filtered.forEach(a => {
-    const iata = (a.iata || a.iata_code || '').toUpperCase();
-    const city = (a.municipality || a.city || '').toLowerCase();
+  filtered.forEach((a) => {
+    const iata = (a.iata || a.iata_code || "").toUpperCase();
+    const city = (a.municipality || a.city || "").toLowerCase();
     if (iata) _ourAirportsIndex.byIata.set(iata, a);
     if (city) {
       const arr = _ourAirportsIndex.byCity.get(city) || [];
@@ -266,43 +206,64 @@ async function loadOurAirportsCsv(force = false) {
   return _ourAirportsList;
 }
 
-/* -----------------------------
-   Airport search & helpers (OurAirports-backed)
-   ----------------------------- */
-
 function mapOurAirportRowToResp(row) {
-  const lat = parseFloat(row.latitude_deg || row.latitude || '') || null;
-  const lon = parseFloat(row.longitude_deg || row.longitude || '') || null;
-  const iata = (row.iata || row.iata_code || '').trim();
-  const municipality = row.municipality || row.city || '';
-  const country = row.iso_country || row.country || '';
+  const lat = parseFloat(row.latitude_deg || row.latitude || "") || null;
+  const lon = parseFloat(row.longitude_deg || row.longitude || "") || null;
+  const iata = (row.iata || row.iata_code || "").trim();
+  const municipality = row.municipality || row.city || "";
+  const country = row.iso_country || row.country || "";
 
   return {
-    id: row.id || row.ident || `${iata || (row.name || '')}`.trim(),
-    type: row.type || 'airport',
-    name: row.name || '',
+    id: row.id || row.ident || `${iata || (row.name || "")}`.trim(),
+    type: row.type || "airport",
+    name: row.name || "",
     iata: iata,
-    cityName: municipality || '',
-    countryName: country || '',
-    geoCode: (lat && lon) ? { latitude: lat, longitude: lon } : null,
+    cityName: municipality || "",
+    countryName: country || "",
+    geoCode: lat && lon ? { latitude: lat, longitude: lon } : null,
     raw: row
   };
 }
 
-export async function searchAirportsByCity(keywordOrObj, limit = 20, countryCode) {
-  let keyword = '';
+async function getAirportRowByIata(iataCode) {
+  if (!iataCode) return null;
+  try {
+    await loadOurAirportsCsv();
+  } catch (err) {
+    console.error("getAirportRowByIata: failed to load CSV", err);
+    return null;
+  }
+  return (
+    _ourAirportsIndex.byIata.get(String(iataCode).toUpperCase()) || null
+  );
+}
+
+/* -------------------------------------------------
+   Airports public API (used by FlightFinder)
+   ------------------------------------------------- */
+
+export async function searchAirportsByCity(
+  keywordOrObj,
+  limit = 20,
+  countryCode
+) {
+  let keyword = "";
   if (!keywordOrObj) return [];
-  if (typeof keywordOrObj === 'string') keyword = keywordOrObj;
-  else if (typeof keywordOrObj === 'object' && keywordOrObj.keyword) keyword = keywordOrObj.keyword;
+  if (typeof keywordOrObj === "string") keyword = keywordOrObj;
+  else if (typeof keywordOrObj === "object" && keywordOrObj.keyword)
+    keyword = keywordOrObj.keyword;
   else keyword = String(keywordOrObj);
 
-  keyword = keyword.replace(/[(),]/g, ' ').replace(/\s+/g, ' ').trim();
+  keyword = keyword.replace(/[(),]/g, " ").replace(/\s+/g, " ").trim();
   if (!keyword || keyword.length < 1) return [];
 
   try {
     await loadOurAirportsCsv();
   } catch (err) {
-    console.error('searchAirportsByCity: failed to load OurAirports CSV:', err);
+    console.error(
+      "searchAirportsByCity: failed to load OurAirports CSV:",
+      err
+    );
     return [];
   }
 
@@ -314,7 +275,7 @@ export async function searchAirportsByCity(keywordOrObj, limit = 20, countryCode
     if (row) {
       if (countryCode) {
         const ccUpper = String(countryCode).toUpperCase();
-        if ((row.iso_country || '').toUpperCase() !== ccUpper) {
+        if ((row.iso_country || "").toUpperCase() !== ccUpper) {
           // continue to broad search
         } else {
           return [mapOurAirportRowToResp(row)];
@@ -329,15 +290,21 @@ export async function searchAirportsByCity(keywordOrObj, limit = 20, countryCode
   const max = Math.max(5, Math.min(limit || 20, 200));
   for (const row of _ourAirportsIndex.byName) {
     if (results.length >= max) break;
-    const iata = ((row.iata || row.iata_code || '') + '').toLowerCase();
-    const name = (row.name || '').toLowerCase();
-    const city = (row.municipality || row.city || '').toLowerCase();
-    const ident = (row.ident || row.local_code || '').toLowerCase();
-    const country = (row.iso_country || row.country || '').toLowerCase();
+    const iata = ((row.iata || row.iata_code || "") + "").toLowerCase();
+    const name = (row.name || "").toLowerCase();
+    const city = (row.municipality || row.city || "").toLowerCase();
+    const ident = (row.ident || row.local_code || "").toLowerCase();
+    const country = (row.iso_country || row.country || "").toLowerCase();
 
-    if (countryCode && String(countryCode || '').trim().length > 0) {
+    if (countryCode && String(countryCode || "").trim().length > 0) {
       const cc = String(countryCode).toLowerCase();
-      if (!(country === cc || (row.country && String(row.country).toLowerCase().includes(cc)))) {
+      if (
+        !(
+          country === cc ||
+          (row.country &&
+            String(row.country).toLowerCase().includes(cc))
+        )
+      ) {
         continue;
       }
     }
@@ -347,7 +314,7 @@ export async function searchAirportsByCity(keywordOrObj, limit = 20, countryCode
       name.includes(q) ||
       city.includes(q) ||
       ident.includes(q) ||
-      (row.keywords || '').toLowerCase().includes(q)
+      (row.keywords || "").toLowerCase().includes(q)
     ) {
       results.push(mapOurAirportRowToResp(row));
     }
@@ -356,27 +323,31 @@ export async function searchAirportsByCity(keywordOrObj, limit = 20, countryCode
   return results.slice(0, limit);
 }
 
-export async function getAirportsByCountry(countryCode, cityName = '', limit = 50) {
+export async function getAirportsByCountry(
+  countryCode,
+  cityName = "",
+  limit = 50
+) {
   if (!countryCode) return [];
 
   try {
     await loadOurAirportsCsv();
   } catch (err) {
-    console.error('getAirportsByCountry: failed to load OurAirports CSV:', err);
+    console.error("getAirportsByCountry: failed to load OurAirports CSV:", err);
     return [];
   }
 
   const cc = String(countryCode).toUpperCase();
-  const cityQ = String(cityName || '').toLowerCase().trim();
+  const cityQ = String(cityName || "").toLowerCase().trim();
   const max = Math.max(5, Math.min(limit || 50, 1000));
 
   const out = [];
   for (const row of _ourAirportsList) {
     if (out.length >= max) break;
-    const iso = (row.iso_country || row.country || '').toUpperCase();
+    const iso = (row.iso_country || row.country || "").toUpperCase();
     if (iso !== cc) continue;
     if (cityQ) {
-      const city = (row.municipality || row.city || '').toLowerCase();
+      const city = (row.municipality || row.city || "").toLowerCase();
       if (!city.includes(cityQ)) continue;
     }
     out.push(mapOurAirportRowToResp(row));
@@ -385,284 +356,234 @@ export async function getAirportsByCountry(countryCode, cityName = '', limit = 5
   return out;
 }
 
-export async function getAirportOptionsForSelect(keyword, limit = 20, countryCode, cityName) {
+export async function getAirportOptionsForSelect(
+  keyword,
+  limit = 20,
+  countryCode,
+  cityName
+) {
   if (countryCode) {
     try {
-      const items = await getAirportsByCountry(countryCode, cityName || keyword || '', limit);
-      return items.map(a => ({
+      const items = await getAirportsByCountry(
+        countryCode,
+        cityName || keyword || "",
+        limit
+      );
+      return items.map((a) => ({
         value: a.iata || a.id,
-        label: `${a.iata ? a.iata + ' — ' : ''}${a.name || ''}${a.cityName ? ` (${a.cityName}${a.countryName ? ', ' + a.countryName : ''})` : ''}`,
+        label: `${a.iata ? a.iata + " — " : ""}${a.name || ""}${
+          a.cityName
+            ? ` (${a.cityName}${
+                a.countryName ? ", " + a.countryName : ""
+              })`
+            : ""
+        }`,
         meta: a
       }));
     } catch (err) {
-      console.warn('getAirportOptionsForSelect: getAirportsByCountry failed, falling back to search', err);
+      console.warn(
+        "getAirportOptionsForSelect: getAirportsByCountry failed, falling back to search",
+        err
+      );
     }
   }
 
   const items = await searchAirportsByCity(keyword, limit, countryCode);
-  return items.map(a => ({
+  return items.map((a) => ({
     value: a.iata || a.id,
-    label: `${a.iata ? a.iata + ' — ' : ''}${a.name || ''}${a.cityName ? ` (${a.cityName}${a.countryName ? ', ' + a.countryName : ''})` : ''}`,
+    label: `${a.iata ? a.iata + " — " : ""}${a.name || ""}${
+      a.cityName
+        ? ` (${a.cityName}${a.countryName ? ", " + a.countryName : ""})`
+        : ""
+    }`,
     meta: a
   }));
 }
 
-/* -----------------------------
-   Amadeus flight search (proper POST body, fixed)
-   ----------------------------- */
+/* -------------------------------------------------
+   AeroDataBox flight search (RapidAPI)
+   ------------------------------------------------- */
 
-export async function searchFlights({
-  originLocationCode,
-  destinationLocationCode,
-  departureDate,
-  returnDate,
-  adults = 1,
-  travelClass = 'ECONOMY',
-  max = 10
-} = {}) {
-  if (!originLocationCode || !destinationLocationCode || !departureDate) {
-    throw new Error('originLocationCode, destinationLocationCode and departureDate are required');
+// Formato fecha -> YYYY-MM-DD
+function fmtDate(d) {
+  if (!d) return undefined;
+  if (d instanceof Date) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  const s = String(d);
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : s;
+}
+
+async function callAeroDataBox(path, query = {}) {
+  if (!AERODATABOX_KEY) {
+    throw new Error(
+      "Falta REACT_APP_AERODATABOX_KEY en tu .env para usar AeroDataBox (RapidAPI)."
+    );
   }
 
-  const fmt = (d) => {
-    if (!d) return undefined;
-    if (d instanceof Date) {
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
+  const url = new URL(AERODATABOX_BASE + path);
+  Object.entries(query || {}).forEach(([k, v]) => {
+    if (v === undefined || v === null || v === "") return;
+    url.searchParams.set(k, String(v));
+  });
+
+  return safeFetchJson(url.toString(), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "X-RapidAPI-Key": AERODATABOX_KEY,
+      "X-RapidAPI-Host": AERODATABOX_HOST
     }
-    const s = String(d);
-    const match = s.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (match) return match[1];
-    return s;
-  };
-
-  const depDate = fmt(departureDate);
-  const retDate = returnDate ? fmt(returnDate) : null;
-
-  // Build Amadeus v2 flight-offers request body
-  // NOTE: Amadeus requires departureDateTimeRange (or arrivalDateTimeRange) and when
-  // using cabinRestrictions you must include originDestinationIds referencing the originDestinations' ids.
-  const originDestinations = [
-    {
-      id: '1',
-      originLocationCode: originLocationCode,
-      destinationLocationCode: destinationLocationCode,
-      // use departureDateTimeRange with a date (Amadeus accepts { date: 'YYYY-MM-DD' })
-      departureDateTimeRange: { date: depDate }
-    }
-  ];
-
-  if (retDate) {
-    originDestinations.push({
-      id: '2',
-      originLocationCode: destinationLocationCode,
-      destinationLocationCode: originLocationCode,
-      departureDateTimeRange: { date: retDate }
-    });
-  }
-
-  // travelers array: create ADULT travelers based on 'adults'
-  const travelers = [];
-  const nAdults = Math.max(1, parseInt(adults || 1, 10));
-  for (let i = 1; i <= nAdults; i++) {
-    travelers.push({ id: String(i), travelerType: 'ADULT' });
-  }
-
-  // searchCriteria: include maxFlightOffers
-  const searchCriteria = {
-    maxFlightOffers: Math.max(1, Math.min(parseInt(max || 10, 10), 250))
-  };
-
-  // optional: add cabin restrictions only if travelClass provided.
-  // Must include originDestinationIds referencing originDestinations[].id
-  if (travelClass) {
-    const cabin = String(travelClass).toUpperCase();
-    searchCriteria.flightFilters = {
-      cabinRestrictions: [
-        {
-          cabin,
-          coverage: 'MOST_SEGMENTS',
-          originDestinationIds: originDestinations.map(od => od.id) // e.g. ['1'] or ['1','2']
-        }
-      ]
-    };
-  }
-
-  const body = {
-    originDestinations,
-    travelers,
-    sources: ['GDS'], // sandbox generally requires sources
-    searchCriteria
-  };
-
-  // debug printing if you set DEBUG_AMADEUS=true in env (helpful for dev only)
-  try {
-    if (typeof process !== 'undefined' && process.env && process.env.DEBUG_AMADEUS === 'true') {
-      // eslint-disable-next-line no-console
-      console.debug('[Amadeus] flight-offers request body:', JSON.stringify(body, null, 2));
-    }
-  } catch (e) {
-    // ignore
-  }
-
-  try {
-    const raw = await internalPost('/v2/shopping/flight-offers', body);
-    return raw;
-  } catch (err) {
-    // if Amadeus returned structured body in err.body, include it to make debugging easier
-    if (err && err.body && err.body.errors) {
-      // preserve thrown error (but include full body as string)
-      throw new Error(`Amadeus flight search failed: ${JSON.stringify(err.body.errors)}`);
-    }
-    throw err;
-  }
+  });
 }
 
 /**
- * Try to fetch a single flight "offer" by its id.
+ * Helper: trae salidas en una ventana de tiempo (máx 12 horas).
+ */
+async function fetchDeparturesWindow(originIcao, fromIso, toIso) {
+  const json = await callAeroDataBox(
+    `/flights/airports/icao/${encodeURIComponent(originIcao)}/${fromIso}/${toIso}`,
+    {
+      direction: "Departure",
+      withLocation: "false",
+      withAircraftImage: "false"
+    }
+  );
+
+  return Array.isArray(json?.departures) ? json.departures : [];
+}
+
+/**
+ * Buscar vuelos por ruta (usado para "availableFlights").
+ * Implementado con AeroDataBox:
+ *  - Resuelve IATA -> ICAO con OurAirports
+ *  - Llama dos veces a /flights/airports/icao/... en ventanas de 12h
+ *    (00:00–11:59 y 12:00–23:59) para respetar el límite de 12 horas.
+ *  - Filtra por aeropuerto destino.
  *
- * Strategy:
- * 1) If a proxy/ backend is configured (USE_PROXY or PROXY_BASE), call the backend:
- *    GET ${PROXY_BASE}/flights/:flight_id/offer  (proxy should forward to server)
- * 2) Else attempt to call Amadeus directly. Amadeus doesn't always expose a stable
- *    GET-by-id for v2 flight-offers, so this is a best-effort fallback.
- *
- * Returns the raw offer object (same shape as items returned by searchFlights()) or null if not found.
+ * Devuelve { data: [ flights[] ] }.
+ */
+export async function searchFlights({
+  originLocationCode,
+  destinationLocationCode,
+  departureDate
+} = {}) {
+  if (!originLocationCode || !destinationLocationCode || !departureDate) {
+    throw new Error(
+      "originLocationCode, destinationLocationCode y departureDate son requeridos"
+    );
+  }
+
+  const originRow = await getAirportRowByIata(originLocationCode);
+  if (!originRow) {
+    console.warn(
+      "[searchFlights] No pude resolver ICAO para origen",
+      originLocationCode
+    );
+    return { data: [] };
+  }
+
+  const originIcao =
+    (originRow.ident || originRow.gps_code || "").toUpperCase();
+  if (!originIcao) {
+    console.warn(
+      "[searchFlights] Origen sin ICAO en OurAirports",
+      originLocationCode,
+      originRow
+    );
+    return { data: [] };
+  }
+
+  const dateStr = fmtDate(departureDate);
+
+  // Dos ventanas de <= 12h para evitar el error de la API
+  const fromIso1 = `${dateStr}T00:00`;
+  const toIso1 = `${dateStr}T11:59`;
+  const fromIso2 = `${dateStr}T12:00`;
+  const toIso2 = `${dateStr}T23:59`;
+
+  // 👉 Sequential calls instead of Promise.all to be nicer with rate limits
+  const deps1 = await fetchDeparturesWindow(originIcao, fromIso1, toIso1);
+  const deps2 = await fetchDeparturesWindow(originIcao, fromIso2, toIso2);
+
+  const departures = [...deps1, ...deps2];
+
+  const destIataUpper = String(destinationLocationCode).toUpperCase();
+
+  const flights = departures.filter((f) => {
+    const arrAirport = f?.movement?.airport || {};
+    const arrIata =
+      (arrAirport.iata ||
+        arrAirport.iataCode ||
+        arrAirport.iata_code ||
+        "") + "";
+    return arrIata.toUpperCase() === destIataUpper;
+  });
+
+  return { data: flights };
+}
+
+/**
+ * Buscar vuelo por código IATA (ej: "AA123") y opcional fecha.
+ * Usa /flights/number/{flightNumber}/{date}.
+ * Devuelve un array de vuelos raw de AeroDataBox.
+ */
+export async function searchFlightByCode(flightCode, flightDate) {
+  if (!flightCode) return [];
+  const cleanCode = String(flightCode).replace(/\s+/g, "").toUpperCase();
+  const dateStr = fmtDate(flightDate) || fmtDate(new Date());
+
+  const json = await callAeroDataBox(
+    `/flights/number/${encodeURIComponent(cleanCode)}/${encodeURIComponent(
+      dateStr
+    )}`,
+    {
+      withLocation: "false",
+      withAircraftImage: "false"
+    }
+  );
+
+  // La API puede devolver directamente un array o un objeto con alguna propiedad tipo data/flights
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json?.flights)) return json.flights;
+  if (Array.isArray(json?.data)) return json.data;
+  return [];
+}
+
+/**
+ * getOfferById: reconstruye datos a partir de tu flight_id tipo "AA123|2024-05-10"
+ * Rebusca el vuelo en AeroDataBox.
  */
 export async function getOfferById(flightId) {
   if (!flightId) return null;
   const fid = String(flightId).trim();
 
-  // Helpers
-  const todayIso = () => new Date().toISOString().split('T')[0];
-  const safeDateFromMatch = (m) => (m && m[0]) ? m[0] : null;
+  let codeMatch = fid.match(/^([A-Za-z]{2,3}\d{1,4})/);
+  if (!codeMatch) {
+    codeMatch = fid.match(/([A-Za-z]{2,3}\d{1,4})/);
+  }
+  if (!codeMatch) return null;
+  const code = codeMatch[1].toUpperCase();
 
-  // 1) try to detect a date token yyyy-mm-dd anywhere in the id
   const dateMatch = fid.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
-  let scheduledDepartureDate = safeDateFromMatch(dateMatch);
+  const date = dateMatch ? dateMatch[1] : undefined;
 
-  // 2) try to parse carrier + flightNumber from common formats:
-  //    - "TP487"
-  //    - "TP487_2023-08-01"
-  //    - "TP|487|2023-08-01"
-  //    - "TP-487" or "TP 487"
-  let carrier = null;
-  let flightNumber = null;
-
-  // attempt: leading letters then digits (e.g. TP487)
-  let m = fid.match(/^([A-Za-z]{2,3})(\d{1,4})/);
-  if (!m) {
-    // attempt other separators (TP|487, TP-487, "TP 487")
-    m = fid.match(/([A-Za-z]{2,3})\D+?(\d{1,4})/);
-  }
-  if (m) {
-    carrier = (m[1] || "").toUpperCase();
-    flightNumber = String(m[2] || "");
-  } else {
-    // as last resort, if fid is like "487" alone (unlikely) return null
-    return null;
-  }
-
-  // If no parsed date, try tokens split by '|' or '_' etc to find a yyyy-mm-dd token
-  if (!scheduledDepartureDate) {
-    const tokens = fid.split(/[\|_\s\-]+/).map(t => t.trim()).filter(Boolean);
-    for (const t of tokens) {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
-        scheduledDepartureDate = t;
-        break;
-      }
-    }
-  }
-
-  // fallback to today if still no date (Amadeus requires scheduledDepartureDate)
-  if (!scheduledDepartureDate) scheduledDepartureDate = todayIso();
-
-  // Build schedule endpoint URL (call Amadeus directly — do not use internalGet/proxy here)
-  const path = `/v2/schedule/flights?carrierCode=${encodeURIComponent(carrier)}&flightNumber=${encodeURIComponent(flightNumber)}&scheduledDepartureDate=${encodeURIComponent(scheduledDepartureDate)}`;
-  const url = `${AMADEUS_BASE}${path}`;
-
-  try {
-    // Get token and call Amadeus directly (ensures we are calling Amadeus only)
-    const token = await getAccessTokenFrontend();
-    const raw = await safeFetchJson(url, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
-    }).catch(() => null);
-
-    if (!raw) return null;
-
-    // Amadeus returns { meta:..., data: [ DatedFlight, ... ] }
-    const df = (raw.data && Array.isArray(raw.data) && raw.data.length) ? raw.data[0] : (Array.isArray(raw) && raw.length ? raw[0] : raw);
-    if (!df) return null;
-
-    // Build a map of flightPoints (iataCode -> flightPoint) for quick lookup of timings
-    const fpMap = {};
-    if (Array.isArray(df.flightPoints)) {
-      df.flightPoints.forEach(fp => {
-        if (fp && fp.iataCode) fpMap[String(fp.iataCode).toUpperCase()] = fp;
-      });
-    }
-
-    // Convert schedule segments into itineraries[0].segments[] with departure.at / arrival.at etc.
-    const segments = (Array.isArray(df.segments) ? df.segments : []).map(seg => {
-      const board = seg.boardPointIataCode || seg.boardPoint || null;
-      const off = seg.offPointIataCode || seg.offPoint || null;
-      const depFP = board ? fpMap[String(board).toUpperCase()] : null;
-      const arrFP = off ? fpMap[String(off).toUpperCase()] : null;
-
-      // Prefer STD/STA qualifier timings, otherwise pick first timing value
-      const depTime = depFP?.departure?.timings?.find(t => String(t.qualifier || '').toUpperCase() === 'STD')?.value
-        || depFP?.departure?.timings?.[0]?.value
-        || null;
-      const arrTime = arrFP?.arrival?.timings?.find(t => String(t.qualifier || '').toUpperCase() === 'STA')?.value
-        || arrFP?.arrival?.timings?.[0]?.value
-        || null;
-
-      // operating flight if present
-      const operating = seg.partnership?.operatingFlight || seg.operating || null;
-      const carrierCode = operating?.carrierCode || df.flightDesignator?.carrierCode || null;
-      const flightNumberOper = operating?.flightNumber || df.flightDesignator?.flightNumber || null;
-
-      return {
-        carrierCode,
-        number: flightNumberOper,
-        departure: { iataCode: board || (depFP && depFP.iataCode) || null, at: depTime },
-        arrival: { iataCode: off || (arrFP && arrFP.iataCode) || null, at: arrTime },
-        duration: seg.scheduledSegmentDuration || seg.scheduledLegDuration || null,
-        raw: seg
-      };
-    });
-
-    const itineraries = [{ segments }];
-
-    // Create an offer-like object so existing front-end mapping can consume it (shows times, airports)
-    const offerLike = {
-      id: `${carrier}${flightNumber}_${scheduledDepartureDate}`,
-      itineraries,
-      segments, // convenience
-      raw: df,
-      meta: {
-        flightCode: `${carrier}${flightNumber}`,
-        scheduledDepartureDate
-      }
-    };
-
-    return offerLike;
-  } catch (err) {
-    console.warn('[flightsApi] getOfferById schedule call failed', err);
-    return null;
-  }
+  const flights = await searchFlightByCode(code, date);
+  if (!flights || flights.length === 0) return null;
+  return flights[0];
 }
 
-
-
-
-export default {
+const flightsApi = {
   searchAirportsByCity,
   getAirportOptionsForSelect,
   getAirportsByCountry,
   searchFlights,
+  searchFlightByCode,
   getOfferById
 };
+
+export default flightsApi;

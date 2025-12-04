@@ -476,6 +476,7 @@ const en = {
     addPlaceError: 'Error adding place',
     flightDisassociated: 'Flight disassociated.',
     disassociateFlightError: 'Error disassociating flight.',
+    flight: 'Flight',
     flights: 'Flights',
     originCountry: 'Origin country',
     typeMin2Letters: 'Type at least 2 letters to search city',

@@ -475,6 +475,7 @@
     addPlaceError: 'Error al agregar lugar',
     flightDisassociated: 'Vuelo desasociado.',
     disassociateFlightError: 'Error al desasociar vuelo.',
+    flight: 'Vuelo',
     flights: 'Vuelos',
     originCountry: 'País de origen',
     typeMin2Letters: 'Escribe mínimo 2 letras para buscar ciudad',

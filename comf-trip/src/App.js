@@ -19,6 +19,7 @@ import InterestsPage from "./pages/Interests"; // add this import
 import Explore from "./pages/Explore";
 import Community from "./pages/Community";
 import FriendProfile from "./pages/friendProfile";
+import SocialFeedPage from "./pages/SocialFeedPage";
 
 // ... inside <Routes>
 
@@ -111,6 +112,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout><TripItinerary /></Layout>
+              </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/social"
+            element={
+              <ProtectedRoute>
+                <Layout><SocialFeedPage /></Layout>
               </ProtectedRoute>
             }
           />

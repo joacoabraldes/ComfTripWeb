@@ -1,112 +1,116 @@
 // src/services/socialService.js
 
-const RAW_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000/api";
-const API_BASE_URL = RAW_BASE_URL.replace(/\/$/, "");
+// Si tenés REACT_APP_API_URL en .env, lo usamos; si no, usamos '/api' y CRA hace proxy.
+const API_BASE =
+  (process.env.REACT_APP_API_URL || '/api').replace(/\/$/, ''); // sin barra final
 
-function getAuthHeaders() {
-  const token = localStorage.getItem("token");
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : undefined,
-  };
+function getAuthHeaders({ isFormData = false } = {}) {
+  const headers = {};
+  try {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch {
+    // ignoramos errores de localStorage
+  }
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  return headers;
 }
 
-export async function fetchSocialFeed({ limit = 20, offset = 0 } = {}) {
-  const url = `${API_BASE_URL}/social/feed?limit=${limit}&offset=${offset}`;
-  const res = await fetch(url, {
-    method: "GET",
+function buildUrl(path) {
+  // path ya incluye /social/..., API_BASE ya incluye /api
+  return `${API_BASE}${path}`;
+}
+
+async function handleJsonResponse(res, defaultError) {
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(text || defaultError);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(text || defaultError);
+  }
+}
+
+// -------- FEED --------
+export async function fetchSocialFeed() {
+  const res = await fetch(buildUrl('/social/feed'), {
+    method: 'GET',
     headers: getAuthHeaders(),
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(
-      `Error al cargar el feed (${res.status}): ${
-        text || res.statusText || "Error desconocido"
-      }`
-    );
-  }
-
-  return res.json();
+  return handleJsonResponse(res, 'Error cargando el feed');
 }
 
-export async function createSocialPost({ content, tripId, locationId, images }) {
-  const body = {
-    content,
-    trip_id: tripId || null,
-    location_id: locationId || null,
-    images: images || null,
-  };
+// -------- CREAR POST (texto + opcional imagen) --------
+export async function createSocialPost({ content, files }) {
+  const trimmed = (content || '').trim();
+  const hasFiles = Array.isArray(files) && files.length > 0;
 
-  const res = await fetch(`${API_BASE_URL}/social/posts`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(body),
+  // Solo texto -> JSON normal
+  if (!hasFiles) {
+    const res = await fetch(buildUrl('/social/posts'), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ content: trimmed }),
+    });
+
+    return handleJsonResponse(res, 'Error al crear el post');
+  }
+
+  // Texto + imagen (o solo imagen) -> FormData
+  const formData = new FormData();
+  formData.append('content', trimmed); // puede ir vacío
+
+  const file = files[0];
+  if (file) {
+    formData.append('image', file);
+  }
+
+  const res = await fetch(buildUrl('/social/posts'), {
+    method: 'POST',
+    headers: getAuthHeaders({ isFormData: true }), // sin Content-Type manual
+    body: formData,
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(
-      `Error al crear el post (${res.status}): ${
-        text || res.statusText || "Error desconocido"
-      }`
-    );
-  }
-
-  return res.json();
+  return handleJsonResponse(res, 'Error al crear el post');
 }
 
+// -------- LIKE / UNLIKE --------
 export async function togglePostLike(postId) {
-  const res = await fetch(`${API_BASE_URL}/social/posts/${postId}/like`, {
-    method: "POST",
+  const res = await fetch(buildUrl(`/social/posts/${postId}/like`), {
+    method: 'POST',
     headers: getAuthHeaders(),
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(
-      `Error al cambiar el like (${res.status}): ${
-        text || res.statusText || "Error desconocido"
-      }`
-    );
-  }
-
-  return res.json();
+  return handleJsonResponse(res, 'Error cambiando like');
 }
 
+// -------- COMENTARIOS --------
 export async function fetchPostComments(postId) {
-  const res = await fetch(`${API_BASE_URL}/social/posts/${postId}/comments`, {
-    method: "GET",
+  const res = await fetch(buildUrl(`/social/posts/${postId}/comments`), {
+    method: 'GET',
     headers: getAuthHeaders(),
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(
-      `Error al cargar comentarios (${res.status}): ${
-        text || res.statusText || "Error desconocido"
-      }`
-    );
-  }
-
-  return res.json();
+  return handleJsonResponse(res, 'Error cargando comentarios');
 }
 
 export async function addPostComment(postId, content) {
-  const res = await fetch(`${API_BASE_URL}/social/posts/${postId}/comments`, {
-    method: "POST",
+  const res = await fetch(buildUrl(`/social/posts/${postId}/comments`), {
+    method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ content }),
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(
-      `Error al crear comentario (${res.status}): ${
-        text || res.statusText || "Error desconocido"
-      }`
-    );
-  }
-
-  return res.json();
+  return handleJsonResponse(res, 'Error agregando comentario');
 }

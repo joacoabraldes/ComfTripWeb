@@ -1,7 +1,7 @@
 // src/pages/Community.js
 import React, { useEffect, useState } from 'react';
 import '../styles/community.css';
-import { FaCheck, FaTimes, FaUser, FaShare, FaTrash } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaUser, FaShare, FaTrash, FaImage } from 'react-icons/fa';
 import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
@@ -52,6 +52,7 @@ export default function Community() {
   const [commentText, setCommentText] = useState({});
   const [loadingPostId, setLoadingPostId] = useState(null);
   const [commentsByPost, setCommentsByPost] = useState({});
+  const [attachedFiles, setAttachedFiles] = useState([]);
 
   // ---------- carga inicial ----------
   useEffect(() => {
@@ -124,35 +125,36 @@ export default function Community() {
   }
 
   // ---------- FEED: crear post ----------
-  async function handleCreatePost(e) {
-    e.preventDefault();
-    if (!newPost.trim()) return;
+   async function handleCreatePost(e) {
+  e.preventDefault();
 
-    try {
-      setLoadingPostId('new');
-      const res = await createSocialPost({ content: newPost.trim() });
+  if (!newPost.trim() && attachedFiles.length === 0) return;
 
-      const created =
-        res.post || {
-          id: res.id,
-          content: res.content,
-          user_id: res.user_id,
-          created_at: res.created_at,
-          like_count: 0,
-          comment_count: 0,
-          liked_by_me: false,
-          author_username: res.author_username || null,
-          author_name: res.author_name || null,
-        };
+  try {
+    setLoadingPostId('new');
+    const res = await createSocialPost({
+      content: newPost.trim(),
+      files: attachedFiles,
+    });
 
-      setPosts((prev) => [created, ...prev]);
-      setNewPost('');
-    } catch (err) {
-      console.error(err);
-      alert(err.message || 'Error al crear el post');
-    } finally {
-      setLoadingPostId(null);
-    }
+    const created = res.post || res;
+
+    setPosts((prev) => [created, ...prev]);
+    setNewPost('');
+    setAttachedFiles([]);
+  } catch (err) {
+    console.error(err);
+    alert(err.message || 'Error al crear el post');
+  } finally {
+    setLoadingPostId(null);
+  }
+}
+
+
+
+  function handleFilesChange(e) {
+    const files = Array.from(e.target.files || []);
+    setAttachedFiles(files);
   }
 
   // ---------- FEED: like / unlike ----------
@@ -341,6 +343,21 @@ export default function Community() {
     loadAll();
   }
 
+  // helper para parsear imágenes del post
+  function getPostImages(post) {
+    if (!post || post.images == null) return [];
+    if (Array.isArray(post.images)) return post.images;
+    if (typeof post.images === 'string') {
+      try {
+        const parsed = JSON.parse(post.images);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+
   // ---------- UI ----------
   if (loading) {
     return <LoadingSpinner message={t('community.loading')} fullScreen />;
@@ -517,6 +534,37 @@ export default function Community() {
                     value={newPost}
                     onChange={(e) => setNewPost(e.target.value)}
                   />
+
+                  <div className="feed-attachments">
+                    <label className="btn ghost small file-upload-btn">
+                      <FaImage size={14} style={{ marginRight: 6 }} />
+                      Agregar foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        capture="environment"
+                        onChange={handleFilesChange}
+                      />
+                    </label>
+
+                    {attachedFiles.length > 0 && (
+                      <div className="feed-preview-row">
+                        {attachedFiles.map((file) => (
+                          <div
+                            key={file.name + file.lastModified}
+                            className="feed-preview-thumb"
+                          >
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="feed-new-post-footer">
                     <span className="feed-hint">
                       Tus amigos verán tus publicaciones en orden cronológico.
@@ -544,100 +592,125 @@ export default function Community() {
                 )}
 
                 <div className="feed-posts">
-                  {posts.map((post) => (
-                    <article key={post.id} className="feed-post">
-                      <header className="feed-post-header">
-                        <div className="avatar">
-                          {(post.author_username ||
-                            post.author_name ||
-                            'U')
-                            .toString()
-                            .split(' ')
-                            .map((s) => s[0])
-                            .slice(0, 2)
-                            .join('')
-                            .toUpperCase()}
-                        </div>
-                        <div className="feed-author">
-                          {/* username como principal */}
-                          <div className="feed-author-name">
-                            {post.author_username
-                              ? `@${post.author_username}`
-                              : post.author_name || 'Usuario'}
+                  {posts.map((post) => {
+                    const images = getPostImages(post);
+                    return (
+                      <article key={post.id} className="feed-post">
+                        <header className="feed-post-header">
+                          <div className="avatar">
+                            {(post.author_username ||
+                              post.author_name ||
+                              'U')
+                              .toString()
+                              .split(' ')
+                              .map((s) => s[0])
+                              .slice(0, 2)
+                              .join('')
+                              .toUpperCase()}
                           </div>
-                          {/* debajo, si existe name y username, mostramos el nombre “humano” */}
-                          {post.author_username && post.author_name && (
-                            <div className="feed-author-username">
-                              {post.author_name}
+                          <div className="feed-author">
+                            {/* username como principal */}
+                            <div className="feed-author-name">
+                              {post.author_username
+                                ? `@${post.author_username}`
+                                : post.author_name || 'Usuario'}
                             </div>
-                          )}
-                          {post.created_at && (
-                            <div className="feed-meta">
-                              {new Date(post.created_at).toLocaleString()}
-                            </div>
-                          )}
+                            {/* debajo, si existe name y username, mostramos el nombre “humano” */}
+                            {post.author_username && post.author_name && (
+                              <div className="feed-author-username">
+                                {post.author_name}
+                              </div>
+                            )}
+                            {post.created_at && (
+                              <div className="feed-meta">
+                                {new Date(post.created_at).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        </header>
+
+                        <div className="feed-post-content">
+                          {post.content}
                         </div>
-                      </header>
 
-                      <div className="feed-post-content">{post.content}</div>
+                        {images.length > 0 && (
+                          <div className="feed-images">
+                            {images.map((url, idx) => (
+                              <div key={idx} className="feed-image-wrapper">
+                                <img src={url} alt={`post-${post.id}-${idx}`} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
-                      <div className="feed-post-actions">
-                        <button
-                          type="button"
-                          disabled={loadingPostId === post.id}
-                          onClick={() => handleToggleLike(post.id)}
-                          className={`btn small ${
-                            post.liked_by_me ? 'btn-like-active' : 'btn-like'
-                          }`}
-                        >
-                          {post.liked_by_me ? '💙' : '🤍'} {post.like_count || 0} likes
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleLoadComments(post.id)}
-                          className="btn ghost small"
-                        >
-                          Ver comentarios
-                          {post.comment_count > 0 ? ` (${post.comment_count})` : ''}
-                        </button>
-                      </div>
-
-                      {commentsByPost[post.id] && (
-                        <div className="feed-comments">
-                          {commentsByPost[post.id].length === 0 && (
-                            <p className="muted">No hay comentarios todavía.</p>
-                          )}
-                          {commentsByPost[post.id].map((c) => (
-                            <div key={c.id} className="feed-comment-item">
-                              <strong>{c.author_name || 'Usuario'}</strong>: {c.content}
-                            </div>
-                          ))}
-
-                          <form
-                            onSubmit={(e) => handleAddComment(e, post.id)}
-                            className="feed-comment-form"
+                        <div className="feed-post-actions">
+                          <button
+                            type="button"
+                            disabled={loadingPostId === post.id}
+                            onClick={() => handleToggleLike(post.id)}
+                            className={`btn small ${
+                              post.liked_by_me ? 'btn-like-active' : 'btn-like'
+                            }`}
                           >
-                            <input
-                              type="text"
-                              className="feed-comment-input"
-                              placeholder="Escribir un comentario..."
-                              value={commentText[post.id] || ''}
-                              onChange={(e) =>
-                                setCommentText((prev) => ({
-                                  ...prev,
-                                  [post.id]: e.target.value,
-                                }))
-                              }
-                            />
-                            <button type="submit" className="btn small">
-                              Enviar
-                            </button>
-                          </form>
+                            {post.liked_by_me ? '💙' : '🤍'}{' '}
+                            {post.like_count || 0} likes
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleLoadComments(post.id)}
+                            className="btn ghost small"
+                          >
+                            Ver comentarios
+                            {post.comment_count > 0
+                              ? ` (${post.comment_count})`
+                              : ''}
+                          </button>
                         </div>
-                      )}
-                    </article>
-                  ))}
+
+                        {commentsByPost[post.id] && (
+                          <div className="feed-comments">
+                            {commentsByPost[post.id].length === 0 && (
+                              <p className="muted">
+                                No hay comentarios todavía.
+                              </p>
+                            )}
+                            {commentsByPost[post.id].map((c) => (
+                              <div key={c.id} className="feed-comment-item">
+                                <strong>
+                                  {c.author_username
+                                    ? `@${c.author_username}`
+                                    : c.author_name || 'Usuario'}
+                                </strong>{' '}
+                                : {c.content}
+                              </div>
+                            ))}
+
+                            <form
+                              onSubmit={(e) => handleAddComment(e, post.id)}
+                              className="feed-comment-form"
+                            >
+                              <input
+                                type="text"
+                                className="feed-comment-input"
+                                placeholder="Escribir un comentario..."
+                                value={commentText[post.id] || ''}
+                                onChange={(e) =>
+                                  setCommentText((prev) => ({
+                                    ...prev,
+                                    [post.id]: e.target.value,
+                                  }))
+                                }
+                              />
+                              <button type="submit" className="btn small">
+                                Enviar
+                              </button>
+                            </form>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             </section>

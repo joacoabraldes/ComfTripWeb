@@ -49,6 +49,9 @@ const InputField = forwardRef((props, ref) => {
     ? `${containerClassName}-label` 
     : "input-field-label";
 
+  // Separar type de inputProps para evitar conflictos
+  const { type: _ignoredType, ...restInputProps } = inputProps;
+
   return (
     <div className={containerClass}>
       {label && (
@@ -59,7 +62,7 @@ const InputField = forwardRef((props, ref) => {
       <div className={`input-field-wrapper ${showPasswordToggle ? "input-field-wrapper--password" : ""}`}>
         <input
           ref={ref}
-          {...inputProps}
+          {...restInputProps}
           type={inputType}
           className={`input-field ${className}`}
         />

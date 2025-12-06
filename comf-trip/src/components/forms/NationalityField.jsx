@@ -1,8 +1,9 @@
 // src/components/forms/NationalityField.jsx
 import React, { useMemo } from "react";
-import Select from "react-select";
+import Select, { components } from "react-select";
 import countryList from "react-select-country-list";
 import { useTranslation } from "../../i18n";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import "../../styles/nationality-field.css";
 
 export default function NationalityField({
@@ -29,6 +30,19 @@ export default function NationalityField({
 
   const defaultPlaceholder = placeholder || t("auth.register.selectNationality");
 
+  // Custom DropdownIndicator component with chevron icons
+  const DropdownIndicator = (props) => {
+    return (
+      <components.DropdownIndicator {...props}>
+        {props.selectProps.menuIsOpen ? (
+          <FaChevronUp size={12} />
+        ) : (
+          <FaChevronDown size={12} />
+        )}
+      </components.DropdownIndicator>
+    );
+  };
+
   return (
     <div className={`nationality-field-container ${containerClassName}`}>
       {label && (
@@ -47,6 +61,7 @@ export default function NationalityField({
         isDisabled={disabled}
         isSearchable
         isClearable={false}
+        components={{ DropdownIndicator }}
       />
       {error && <div className="nationality-field-error">{error}</div>}
     </div>

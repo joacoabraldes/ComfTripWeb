@@ -457,10 +457,20 @@
 
 .filter-select .react-select__dropdown-indicator {
     transition: color 0.2s;
+    color: var(--color-text-muted-dark);
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-select .react-select__dropdown-indicator svg {
+    width: 0.75rem;
+    height: 0.75rem;
 }
 
 .filter-select .react-select__control--is-disabled,
-.react-select__dropdown-indicator {
+.filter-select .react-select__control--is-disabled .react-select__dropdown-indicator {
     color: var(--color-text-disabled);  /* gris clarito */
 }
 

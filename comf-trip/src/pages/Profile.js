@@ -156,16 +156,16 @@ export default function ProfilePage() {
           {/* Row with Edit Profile and Change Password */}
           <div className="text-button-row">
             <button onClick={() => navigate("/edit-profile")} className="btn-text">
-              {t('profile.editProfile')}
+              <FaEdit /> {t('profile.editProfile')}
             </button>
             <button onClick={() => navigate("/change-password")} className="btn-text">
-              {t('profile.changePassword')}
+              <FaLock /> {t('profile.changePassword')}
             </button>
           </div>
 
           {/* Logout Button */}
           <button onClick={handleLogout} className="btn-primary">
-            {t('profile.logout')}
+            <FaSignOutAlt /> {t('profile.logout')}
           </button>
         </div>
       </div>
@@ -271,13 +271,13 @@ export default function ProfilePage() {
 
               <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm text-muted-foreground">
                 <button onClick={() => navigate("/edit-profile")} className="btn-edit">
-                  ✏️ Editar datos
+                  <FaEdit /> {t('profile.editProfile')}
                 </button>
                 <button onClick={() => navigate("/change-password")} className="btn-change">
-                  🔑 Cambiar contraseña
+                  <FaLock /> {t('profile.changePassword')}
                 </button>
                 <button onClick={handleLogout} className="btn-logout">
-                  🚪 Cerrar sesión
+                  <FaSignOutAlt /> {t('profile.logout')}
                 </button>
               </div>
             </div>

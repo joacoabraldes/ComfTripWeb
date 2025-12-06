@@ -285,7 +285,7 @@ export default function Home() {
             .replace(/[\u0300-\u036f]/g, "")
             .trim();
 
-        console.log("🌍 Buscando coordenadas para:", cityRaw, countryRaw);
+        console.log("Buscando coordenadas para:", cityRaw, countryRaw);
 
         // Buscar país (tolerante a diferencias de nombre)
         const country = Country.getAllCountries().find(
@@ -296,11 +296,11 @@ export default function Home() {
         );
 
         if (!country) {
-          console.warn("❌ País no encontrado:", countryRaw);
+          console.warn("País no encontrado:", countryRaw);
           return;
         }
 
-        console.log("✅ País encontrado:", country.name, country.isoCode);
+        console.log("País encontrado:", country.name, country.isoCode);
 
         const cities = City.getCitiesOfCountry(country.isoCode);
         const match = cities.find(
@@ -311,12 +311,12 @@ export default function Home() {
         );
 
         if (!match) {
-          console.warn(`❌ Ciudad "${cityRaw}" no encontrada en ${country.name}`);
+          console.warn(`Ciudad "${cityRaw}" no encontrada en ${country.name}`);
           console.log("Ejemplos:", cities.slice(0, 10).map((c) => c.name));
           return;
         }
 
-        console.log("✅ Ciudad encontrada:", match.name, match.latitude, match.longitude);
+        console.log("Ciudad encontrada:", match.name, match.latitude, match.longitude);
 
         setViewState({
           latitude: Number(match.latitude),
@@ -496,7 +496,7 @@ export default function Home() {
                             });
                           } else {
                             console.warn(
-                              "⚠️ Coordenadas inválidas en nextPlace:",
+                              "Coordenadas inválidas en nextPlace:",
                               currentPlace.location
                             );
                           }
@@ -607,7 +607,7 @@ export default function Home() {
                             });
                           } else {
                             console.warn(
-                              "⚠️ Coordenadas inválidas en nextPlace:",
+                              "Coordenadas inválidas en nextPlace:",
                               nextPlace.location
                             );
                           }

@@ -596,7 +596,7 @@
     budget: 'Presupuesto (opcional)',
     tripWillBe: 'Tu viaje a {province}, {country} será del {startDate} al {endDate}',
     loadError: 'No se pudo cargar el viaje.',
-    updateSuccess: 'Viaje actualizado ✅',
+    updateSuccess: 'Viaje actualizado',
     updateError: 'Ocurrió un error al editar el viaje.',
     saving: 'Guardando...',
     saveChanges: 'Guardar Cambios',

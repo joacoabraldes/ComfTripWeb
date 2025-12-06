@@ -37,6 +37,16 @@
   font-family: inherit;
 }
 
+/* Ocultar el icono nativo de mostrar/ocultar contraseña del navegador */
+.input-field[type="password"]::-ms-reveal,
+.input-field[type="password"]::-ms-clear {
+  display: none;
+}
+
+.input-field-wrapper--password .input-field[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
 .input-field:focus {
   border-color: var(--color-primary);
   box-shadow: var(--shadow-focus);

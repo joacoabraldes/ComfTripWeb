@@ -37,8 +37,15 @@
 }
 
 .code-arrow {
-  font-size: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-text-secondary);
+}
+
+.code-arrow svg {
+  width: 0.625rem;
+  height: 0.625rem;
 }
 
 .phone-divider {

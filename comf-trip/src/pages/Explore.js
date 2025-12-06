@@ -10,6 +10,18 @@ import ActionButton from "../components/ActionButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import FilterSelect from "../components/FilterSelect";
 import { translateCategory, translateCategoryDescription } from "../helpers/categoryTranslations";
+import { 
+  FaTheaterMasks, 
+  FaTree, 
+  FaUtensils, 
+  FaShoppingBag, 
+  FaBirthdayCake, 
+  FaFutbol, 
+  FaOm, 
+  FaUsers,
+  FaGlobe,
+  FaMapMarkerAlt
+} from "react-icons/fa";
 
 /**
  * Normalize many image shapes into an array of URL strings
@@ -34,16 +46,16 @@ const safeParseImages = (im) => {
   return [];
 };
 
-// map slug -> emoji icon
+// map slug -> React icon component
 const categoryIcons = {
-  cultura: "🎭",
-  naturaleza: "🌲",
-  gastronomia: "🍽️",
-  compras: "🛍️",
-  fiestas: "🎉",
-  deportes: "⚽",
-  relax: "🧘",
-  familia: "👨‍👩👧‍👦",
+  cultura: FaTheaterMasks,
+  naturaleza: FaTree,
+  gastronomia: FaUtensils,
+  compras: FaShoppingBag,
+  fiestas: FaBirthdayCake,
+  deportes: FaFutbol,
+  relax: FaOm,
+  familia: FaUsers,
 };
 
 function sortByRelevanceDesc(arr) {
@@ -350,12 +362,12 @@ export default function Explore() {
                 className={`category-card ${selectedCategorySlug === "todo" ? "active" : ""}`}
                 onClick={() => onCategoryClick("todo")}
               >
-                <div className="category-icon">🌍</div>
+                <div className="category-icon"><FaGlobe /></div>
                 <div className="category-name">{t('explore.all')}</div>
               </div>
 
               {categories.map((cat) => {
-                const icon = categoryIcons[cat.slug] || "📍";
+                const IconComponent = categoryIcons[cat.slug] || FaMapMarkerAlt;
                 const slug = cat.slug ?? String(cat.id ?? "");
                 const translatedTitle = translateCategory(t, slug, cat.title);
                 return (
@@ -364,7 +376,7 @@ export default function Explore() {
                     className={`category-card ${selectedCategorySlug === cat.slug ? "active" : ""}`}
                     onClick={() => onCategoryClick(cat)}
                   >
-                    <div className="category-icon">{icon}</div>
+                    <div className="category-icon"><IconComponent /></div>
                     <div className="category-name">{translatedTitle}</div>
                   </div>
                 );

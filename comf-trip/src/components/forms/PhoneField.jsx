@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import '../../styles/phone-field.css';
 import { useTranslation } from '../../i18n';
 import countries from 'world-countries';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 // Common country codes (fallback if world-countries is not available)
 const COMMON_COUNTRY_CODES = [
@@ -117,7 +118,9 @@ export default function PhoneField({
           onClick={() => setShowCodePicker(!showCodePicker)}
         >
           <span className="code-text">{code}</span>
-          <span className="code-arrow">{showCodePicker ? '▲' : '▼'}</span>
+          <span className="code-arrow">
+            {showCodePicker ? <FaChevronUp /> : <FaChevronDown />}
+          </span>
         </button>
         <div className="phone-divider" />
         <input

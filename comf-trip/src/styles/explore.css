@@ -58,6 +58,14 @@
 .category-icon {
   font-size: 1.6rem;
   margin-bottom: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-icon svg {
+  width: 1.6rem;
+  height: 1.6rem;
 }
 
 .category-name {

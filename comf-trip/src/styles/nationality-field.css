@@ -62,10 +62,19 @@
 .nationality-select .react-select__dropdown-indicator {
   color: var(--color-text-muted-dark);
   transition: color 0.2s;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nationality-select .react-select__dropdown-indicator svg {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .nationality-select .react-select__dropdown-indicator:disabled {
-  color: var(--color-text-disabled) !important;
+  color: var(--color-text-disabled);
 }
 
 .nationality-select .react-select__dropdown-indicator:hover {

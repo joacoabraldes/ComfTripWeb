@@ -598,7 +598,7 @@ const en = {
     budget: 'Budget (optional)',
     tripWillBe: 'Your trip to {province}, {country} will be from {startDate} to {endDate}',
     loadError: 'Could not load trip.',
-    updateSuccess: 'Trip updated ✅',
+    updateSuccess: 'Trip updated',
     updateError: 'An error occurred while editing the trip.',
     saving: 'Saving...',
     saveChanges: 'Save Changes',

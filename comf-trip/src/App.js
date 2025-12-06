@@ -40,7 +40,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/register" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Public routes */}
           <Route path="/login" element={<Login />} />

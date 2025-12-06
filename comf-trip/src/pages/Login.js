@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
@@ -16,6 +16,13 @@ export default function Login() {
   const { t } = useTranslation();
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  // Validar que los campos estén completos
+  const isFormValid = useMemo(() => {
+    const identifier = (form.email || "").trim();
+    const password = (form.password || "").trim();
+    return identifier.length > 0 && password.length > 0;
+  }, [form.email, form.password]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -76,7 +83,7 @@ export default function Login() {
               {t('auth.login.forgotPassword')}
             </button>
 
-            <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading}>
+            <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading || !isFormValid}>
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
             <div className="footer-cta">

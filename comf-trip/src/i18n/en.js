@@ -58,6 +58,8 @@ const en = {
       step2: 'Preferences',
       name: 'Name',
       namePlaceholder: 'Name',
+      username: 'Username',
+      usernamePlaceholder: 'Username',
       email: 'Email',
       emailPlaceholder: 'your.email@example.com',
       phone: 'Phone number',

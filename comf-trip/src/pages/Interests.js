@@ -3,9 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost } from "./api";
 import "../styles/interests.css";
-import Sidebar from "../components/Sidebar";
-import { FaBars, FaUser } from "react-icons/fa";
 import { useTranslation } from "../i18n";
+import { translateCategory, translateCategoryDescription } from "../helpers/categoryTranslations";
 import OptimizedImage from "../components/OptimizedImage";
 import LoadingSpinner from "../components/LoadingSpinner";
 
@@ -59,7 +58,6 @@ const PLACEHOLDER =
 export default function InterestsPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]=useState(false)
   const [interests, setInterests] = useState([]);
@@ -82,7 +80,7 @@ export default function InterestsPage() {
       }
     })();
     return () => { mounted = false; };
-  }, []);
+  }, [t]);
 
   function toggle(id) {
     setSelected((s) => {
@@ -134,7 +132,7 @@ export default function InterestsPage() {
     <div className="interests-root">
 
       <main className="interests-container">
-        <h2 className="interests-title">Seleccione sus intereses</h2>
+        <h2 className="interests-title">{t('auth.interests.title')}</h2>
 
         <div className="interests-grid">
           {interests.map((it, idx) => {
@@ -142,6 +140,8 @@ export default function InterestsPage() {
             // try slug first (recommended), fallback to id or title
             const slug = it.slug ?? String(it.id ?? it.title ?? "");
             const src = imagesMap[slug] || imagesMap[slug.toLowerCase?.()] || PLACEHOLDER;
+            const translatedTitle = translateCategory(t, slug, it.title);
+            const translatedDescription = translateCategoryDescription(t, slug, it.description);
 
             return (
               <button
@@ -155,7 +155,7 @@ export default function InterestsPage() {
                   {/*<div className="interest-image" aria-hidden>
                   <img
                     src={src}
-                    alt={it.title || slug}
+                    alt={translatedTitle || slug}
                     onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
                     style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }}
                   /></div>*/}
@@ -164,7 +164,7 @@ export default function InterestsPage() {
 
                           <OptimizedImage
                               src={src}
-                              alt={it.title || slug}
+                              alt={translatedTitle || slug}
                               width={400}
                               height={400}
                               scrollRoot={scrollRoot}
@@ -173,8 +173,8 @@ export default function InterestsPage() {
                   </div>
 
                 <div className="interest-info">
-                  <div className="interest-title">{it.title}</div>
-                  <div className="interest-desc">{it.description}</div>
+                  <div className="interest-title">{translatedTitle}</div>
+                  <div className="interest-desc">{translatedDescription || it.description}</div>
                 </div>
               </button>
             );
@@ -183,7 +183,7 @@ export default function InterestsPage() {
 
         <div className="interests-actions">
           <button className="start-btn-primary" onClick={submitInterests} disabled={loading}>
-            {saving ? "Guardando…" : "Comenzar con ComfTrip"}
+            {saving ? t('auth.interests.saving') : t('auth.interests.completeButton')}
           </button>
         </div>
       </main>

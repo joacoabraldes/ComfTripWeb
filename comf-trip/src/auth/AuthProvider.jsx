@@ -131,27 +131,53 @@ export const AuthProvider = ({ children }) => {
    * REGISTER
    * Accepts payload and forwards to /auth/register.
    * Normalizes email to lower-case if present and forwards username if provided.
+   * Backend expects: { name, username, email, phone, password, nationality, birthdate }
+   * - name is required (use username as fallback if not provided)
+   * - username is optional but recommended
    */
   const register = async (payload) => {
     if (!payload || !payload.password) {
       throw new Error("Missing registration payload");
     }
 
+    if (!payload.email && !payload.username) {
+      throw new Error("Email o username requerido");
+    }
+
     // normalize email if present
     const normalized = {
       ...payload,
-      email: payload.email ? String(payload.email).trim().toLowerCase() : undefined,
-      username: payload.username ? String(payload.username).trim() : undefined,
+      // Use username as name if name is not provided (backend requires name)
+      name: payload.name || payload.username || null,
+      email: payload.email ? String(payload.email).trim().toLowerCase() : null,
+      username: payload.username ? String(payload.username).trim() : null,
+      phone: payload.phone || null,
+      nationality: payload.nationality || null,
+      birthdate: payload.birthdate || null,
     };
 
-    const res = await apiPost("/auth/register", normalized);
+    // Remove undefined values to avoid sending them
+    Object.keys(normalized).forEach(key => {
+      if (normalized[key] === undefined) {
+        delete normalized[key];
+      }
+    });
 
-    if (res?.token) {
+    try {
+      const res = await apiPost("/auth/register", normalized);
+
+      if (!res || !res.token) {
+        throw new Error(res?.message || "Invalid registration response");
+      }
+
       setToken(res.token);
       setUser(res.user ? { ...res.user } : null);
+      return res;
+    } catch (err) {
+      // Improve error message handling
+      const errorMessage = err?.message || err?.error || "Error del servidor";
+      throw new Error(errorMessage);
     }
-
-    return res;
   };
 
   const logout = () => {

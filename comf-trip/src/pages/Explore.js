@@ -9,7 +9,7 @@ import Modal from "../components/Modal";
 import ActionButton from "../components/ActionButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import FilterSelect from "../components/FilterSelect";
-import { translateCategory, translateCategoryDescription } from "../helpers/categoryTranslations";
+import { translateCategory } from "../helpers/categoryTranslations";
 import { 
   FaTheaterMasks, 
   FaTree, 
@@ -228,7 +228,7 @@ export default function Explore() {
 
     loadInitial();
     return () => (mounted = false);
-  }, []);
+  }, [t]);
 
   // when category changes, fetch filtered locations — only update the grid (don't block full page)
   useEffect(() => {

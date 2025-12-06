@@ -127,7 +127,11 @@ export default function PhoneField({
           type="tel"
           className="phone-number-input"
           value={value}
-          onChange={(e) => onNumberChange?.(e.target.value)}
+          onChange={(e) => {
+            // Solo permitir números
+            const numericValue = e.target.value.replace(/\D/g, '');
+            onNumberChange?.(numericValue);
+          }}
           placeholder={defaultPlaceholder}
           onFocus={() => setShowCodePicker(false)}
         />

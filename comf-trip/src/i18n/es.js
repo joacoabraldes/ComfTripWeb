@@ -58,6 +58,8 @@
       step2: 'Preferencias',
       name: 'Usuario',
       namePlaceholder: 'Usuario',
+      username: 'Nombre de usuario',
+      usernamePlaceholder: 'Nombre de usuario',
       email: 'Correo electrónico',
       emailPlaceholder: 'tu.email@ejemplo.com',
       phone: 'Número de teléfono',

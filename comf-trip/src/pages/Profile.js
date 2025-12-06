@@ -26,14 +26,6 @@ export default function ProfilePage() {
     photo: ""
   });
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    nationality: "",
-    birthdate: ""
-  });
-
   useEffect(() => {
     if(!hydrated) return;
     if (!token || !user) {
@@ -64,14 +56,6 @@ export default function ProfilePage() {
           birthdate: u.birthdate ? u.birthdate.split("T")[0] : "",
           photo: u.photo || ""
         });
-
-        setForm({
-          name: u.name || "",
-          email: u.email || "",
-          phone: u.phone || "",
-          nationality: u.nationality || "",
-          birthdate: u.birthdate ? u.birthdate.split("T")[0] : ""
-        });
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err && (err.message === "No token" || err.message === "Token inválido" || err.status === 401 || err.status === 403)) {
@@ -85,11 +69,6 @@ export default function ProfilePage() {
       }
     })();
   }, [user, token, hydrated, navigate, setUser]);
-
-  function handleFormChange(e) {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
-  }
 
   function handleLogout() {
     logout();

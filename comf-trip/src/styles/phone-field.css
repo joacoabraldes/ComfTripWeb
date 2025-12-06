@@ -1,0 +1,137 @@
+.phone-field-container {
+  width: 100%;
+  position: relative;
+}
+
+.phone-input-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: var(--color-bg-input-muted);
+  border-radius: 0.625rem;
+  overflow: hidden;
+}
+
+.code-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 0.75rem;
+  height: 100%;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.code-button:hover {
+  background-color: var(--color-bg-primary-alpha-10);
+}
+
+.code-text {
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  margin-right: 0.25rem;
+  font-weight: 500;
+}
+
+.code-arrow {
+  font-size: 0.625rem;
+  color: var(--color-text-secondary);
+}
+
+.phone-divider {
+  width: 1px;
+  height: 60%;
+  background-color: var(--color-border-default);
+}
+
+.phone-number-input {
+  flex: 1;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  padding: 0 0.75rem;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+}
+
+.phone-number-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.code-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.625rem;
+  margin-top: 0.25rem;
+  max-height: 18.75rem;
+  z-index: 1000;
+  box-shadow: var(--shadow-dropdown);
+}
+
+.code-search-container {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.code-search-input {
+  width: 100%;
+  background-color: var(--color-bg-input-muted);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  border: none;
+  outline: none;
+}
+
+.code-search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.code-list {
+  max-height: 15.625rem;
+  overflow-y: auto;
+}
+
+.code-item {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-bg-primary);
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.code-item:hover {
+  background-color: var(--color-primary-light);
+}
+
+.code-item.selected {
+  background-color: var(--color-primary-light);
+}
+
+.code-item-text {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.code-no-results {
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+.code-no-results-text {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+

@@ -1,0 +1,85 @@
+.progress-indicator {
+  margin-bottom: 1.5rem;
+}
+
+.progress-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.step-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.step-circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: var(--color-bg-tertiary);
+  border: 2px solid var(--color-border-default);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.step-circle.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.step-circle.current {
+  border-width: 3px;
+}
+
+.step-number {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: color 0.2s;
+}
+
+.step-number.active {
+  color: var(--color-text-white);
+}
+
+.step-line {
+  width: 6.25rem;
+  height: 2px;
+  background-color: var(--color-border-default);
+  margin: 0 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.step-line.active {
+  background-color: var(--color-primary);
+}
+
+.labels-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 0 1.25rem;
+}
+
+.step-label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.step-label.active {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.step-label.completed {
+  color: var(--color-text-primary);
+}
+

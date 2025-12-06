@@ -2,18 +2,18 @@
 
 
 :root{
-    --accent: #FF3951;       /* main accent (changed from blue to your page color) */
-    --accent-strong: #e03446;
-    --muted: #666;
-    --muted-2: #999;
-    --bg: #ffffff;
-    --card-shadow: 0 0.5rem 1.25rem rgba(12,13,14,0.06);
+    --accent: var(--color-primary);       /* main accent (changed from blue to your page color) */
+    --accent-strong: var(--color-primary-dark);
+    --muted: var(--color-text-secondary);
+    --muted-2: var(--color-text-muted-dark);
+    --bg: var(--color-bg-primary);
+    --card-shadow: var(--shadow-card);
 }
 
 .trip-it-root {
     height: calc(100vh - var(--header-height, 5rem));
-    background: #f6f7f9;
-    color: #1d1b20;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
     font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     box-sizing: border-box;
     position: relative;
@@ -72,7 +72,7 @@
 }
 
 /* small metadata rows */
-.trip-detail-row { margin: 0.375rem 0; color: #555; }
+.trip-detail-row { margin: 0.375rem 0; color: var(--color-text-primary); }
 .trip-it-created { font-size: 0.75rem; color: var(--muted-2); margin-top: 0.5rem; }
 
 .places-list { width: 100%;
@@ -91,30 +91,30 @@
     align-items: center;
     padding: 0.625rem 0.875rem;
     border-radius: 0.625rem;
-    box-shadow: 0 0.25rem 0.875rem rgba(12,13,14,0.04);
+    box-shadow: var(--shadow-card);
 }
 .place-item {
     gap: 0.75rem;
     width: 100%;
     border-radius: 0.5rem;
-    border: 0.0625rem solid #f1f1f1;
-    background: #fff;
+    border: 0.0625rem solid var(--color-border-light);
+    background: var(--color-bg-primary);
     margin-bottom: 0.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     text-align: left;
     padding: 1.25rem;
-    box-shadow: 0 0.25rem 0.875rem rgba(12,13,14,0.04);
+    box-shadow: var(--shadow-card);
 }
 
 .place-title { font-weight: 600; }
 .place-meta { font-size: 0.8125rem; color: var(--muted); margin-top: 0.375rem; }
-.place-notes { margin-top: 0.375rem; color: #444; font-size: 0.8125rem; }
+.place-notes { margin-top: 0.375rem; color: var(--color-text-primary); font-size: 0.8125rem; }
 
 .btn-link {
     background: none;
-    border: 0.0625rem solid #ddd;
+    border: 0.0625rem solid var(--color-border-light);
     padding: 0.375rem 0.5rem;
     border-radius: 0.375rem;
     cursor: pointer;
@@ -124,7 +124,7 @@
 
 .map-panel { border-radius: 0.5rem; overflow: hidden; }
 
-.error { color: #b00020; margin-top: 0.375rem; font-size: 0.875rem; }
+.error { color: var(--color-error); margin-top: 0.375rem; font-size: 0.875rem; }
 @media (max-width: 61.25rem) {
   .trip-it-main { grid-template-columns: 1fr; padding: 0.75rem; }
   .map-panel { height: 20rem; }
@@ -169,12 +169,12 @@
     top: 100%;   /* appears below the button */
     right: 0;    /* aligned to right edge of wrapper */
     margin-top: 0.375rem;
-    background-color: #f1f1f1;
+    background-color: var(--color-bg-tertiary);
     border-radius: 0.75rem;
     padding: 0.375rem 0.625rem;
     display: flex;
     gap: 0.625rem;
-    box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-dropdown);
     z-index: 1000;
 }
 
@@ -197,7 +197,7 @@
     justify-content: center;
     padding: 0.375rem;
 }
-.trip-it-menu-btn:hover { background-color: #ffe5e8; }
+.trip-it-menu-btn:hover { background-color: var(--color-primary-light); }
 
 /* === day header and separator (more visually distinct) === */
 .day-header {
@@ -210,11 +210,11 @@
 
 .day-separator {
     height: 0.625rem; /* slightly taller for clearer separation */
-    background: linear-gradient(90deg, rgba(249,245,246,1) 0%, rgba(243,241,243,1) 100%);
+    background: linear-gradient(90deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
     border-radius: 0.5rem;
     margin-top: 0.625rem;
-    box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,0.6);
-    border: 0.0625rem solid rgba(0,0,0,0.02);
+    box-shadow: var(--shadow-inset);
+    border: 0.0625rem solid var(--color-border-alpha-02);
 }
 
 /* === buttons used inside the day header (accent instead of blue) === */
@@ -234,17 +234,17 @@
     transition: background .12s ease, transform .06s ease, color .12s ease;
 }
 .btn-outline svg { margin-right: 0.5rem; display: inline-block; vertical-align: middle; }
-.btn-outline:hover { background: rgba(255,57,81,0.06); }
+.btn-outline:hover { background: var(--color-bg-primary-alpha-06); }
 .btn-outline.active {
     background: var(--accent);
-    color: #fff;
-    border-color: rgba(255,255,255,0.12);
+    color: var(--color-text-white);
+    border-color: var(--color-border-white-alpha-12);
 }
 
 /* smaller primary button for + Añadir */
 .btn-small {
     background: var(--accent);
-    color: #fff;
+    color: var(--color-text-white);
     padding: 0.375rem 0.75rem;
     border-radius: 0.5rem;
     border: none;
@@ -259,7 +259,7 @@
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 50%;
-    border: 0.1875rem solid rgba(0,0,0,0.06);
+    border: 0.1875rem solid var(--color-border-spinner);
     border-top-color: var(--accent);
     animation: spin 1s linear infinite;
 }

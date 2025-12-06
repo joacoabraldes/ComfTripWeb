@@ -4,8 +4,8 @@
     left: -31.25rem; /* completamente fuera de la pantalla */
     width: 15.625rem;
     height: 100%;
-    background: #ff3b58;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-text-white);
     padding: 1.25rem;
     transition: left 0.3s ease;
     z-index: 1000;
@@ -37,6 +37,6 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: white;
+    color: var(--color-text-white);
     transform: rotate(180deg); /* apunta hacia la derecha */
 }

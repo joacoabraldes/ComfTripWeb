@@ -25,8 +25,8 @@
   min-height: 2.5rem;
   max-width: 2.5rem;
   max-height: 2.5rem;
-  border: 0.25rem solid #f3f3f3;
-  border-top: 0.25rem solid #ff3951;
+  border: 0.25rem solid var(--color-bg-tertiary);
+  border-top: 0.25rem solid var(--color-primary);
   border-radius: 50%;
   box-sizing: border-box;
   animation: spin 1s linear infinite;
@@ -50,7 +50,7 @@
 }
 
 .loading-message {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 1.5625rem;
   text-align: center;
 }

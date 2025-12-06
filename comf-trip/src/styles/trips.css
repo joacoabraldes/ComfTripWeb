@@ -1,7 +1,7 @@
 .trips-root {
-    height: calc(100vh - var(--header-height, 5rem));
-  background: #ffffff;
-  color: #1d1b20;
+  height: calc(100vh - var(--header-height, 5rem));
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   box-sizing: border-box;
   position: relative;
@@ -36,21 +36,21 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-text-muted);
   font-size: 1.75rem;
   font-weight: 500;
   line-height: 2.25rem;
   letter-spacing: 0.0125rem;
   font-family: Roboto, Inter, Arial, sans-serif;
   border-radius: 0.5rem;
-  background: #fff;
-  border: 0.0625rem solid #f1f1f1;
+  background: var(--color-bg-primary);
+  border: 0.0625rem solid var(--color-border-light);
 }
 
 .filter-card{
-    box-shadow: 0 0.25rem 0.875rem rgba(12,13,14,0.04);
+    box-shadow: var(--shadow-card);
     border-radius: 0.5rem;
-    background-color: white;
+    background-color: var(--color-bg-primary);
     padding: 1.25rem;
 }
 
@@ -77,8 +77,8 @@
   width: 100%;
   padding: 1.25rem;
   border-radius: 0.5rem;
-  border: 0.0625rem solid #f1f1f1;
-  background: #fff;
+  border: 0.0625rem solid var(--color-border-light);
+  background: var(--color-bg-primary);
   margin-bottom: 0.375rem;
   display: flex;
   justify-content: space-between; /* texto a izq, bandera a der */
@@ -90,12 +90,12 @@
 
 .trips-list-item:hover {
   transform: translateY(-0.125rem);
-  box-shadow: 0 0.5rem 1.25rem rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .trips-list-item.active {
-  background: #fff6f7;
-  border-color: rgba(255,57,81,0.25);
+  background: var(--color-primary-lighter);
+  border-color: var(--color-border-primary-alpha-25);
 }
 
 .trip-item-main {
@@ -113,17 +113,17 @@
 
 .trip-dates {
   font-size: 0.8125rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .trip-detail-row {
   margin: 0.375rem 0;
-  color: #555;
+  color: var(--color-text-primary);
 }
 
 .trip-created {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--color-text-muted-dark);
   margin-top: 0.5rem;
 }
 
@@ -132,12 +132,12 @@
   top: 100%;   /* aparece debajo del botón */
   right: 0;    /* alineado al borde derecho */
   margin-top: 0.375rem;
-  background-color: #f1f1f1;
+  background-color: var(--color-bg-tertiary);
   border-radius: 0.75rem;
   padding: 0.375rem 0.625rem;
   display: flex;
   gap: 0.625rem;
-  box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.15);
+  box-shadow: var(--shadow-dropdown);
   z-index: 10;
 }
 
@@ -160,7 +160,7 @@
 }
 
 .trip-menu-btn:hover{
-  background-color: #ffe5e8;
+  background-color: var(--color-primary-light);
 }
 
 
@@ -219,8 +219,8 @@
 .btn-newtrip {
   width: 22.5rem;
   height: 4rem;
-  background: #FF3951;
-  color: #FFF7F7;
+  background: var(--color-primary);
+  color: var(--color-text-white);
   border: none;
   border-radius: 0.5rem;
   font-size: 1.4375rem;
@@ -243,9 +243,9 @@
 
 .trips-filters select {
     padding: 0.5rem 0.75rem;
-    border: 0.0625rem solid #ddd;
+    border: 0.0625rem solid var(--color-border-light);
     border-radius: 0.5rem;
-    background: #fff;
+    background: var(--color-bg-primary);
     font-size: 0.875rem;
     font-family: Inter, Arial, sans-serif;
     cursor: pointer;

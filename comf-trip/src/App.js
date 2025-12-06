@@ -1,9 +1,11 @@
 // src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import "./styles/colors.css"; // Variables CSS centralizadas
 
 import Login from "./pages/Login";
 import RegisterPage from "./pages/Register";
+import RecoverPassword from "./pages/RecoverPassword";
 import Trips from "./pages/Trips";
 import AddTrip from "./pages/AddTrip";
 import EditTrip from "./pages/EditTrip";
@@ -43,6 +45,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/recover-password" element={<RecoverPassword />} />
 
 
           {/* Protected routes - require authentication */}

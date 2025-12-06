@@ -10,18 +10,18 @@
 
 .empty-state-icon {
   font-size: 3rem;
-  color: #ccc;
+  color: var(--color-text-light);
   margin-bottom: 1rem;
 }
 
 .empty-state-message {
   font-size: 1.125rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-bottom: 0.5rem;
 }
 
 .empty-state-subtitle {
   font-size: 0.9375rem;
-  color: #999;
+  color: var(--color-text-muted-dark);
 }
 

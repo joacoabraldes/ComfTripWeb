@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { useTranslation } from "../i18n";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { translateCategory } from "../helpers/categoryTranslations";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 const API_URL_RAW = (process.env.REACT_APP_API_URL || "").replace(/\/$/, ""); // user-provided base
@@ -269,20 +270,30 @@ export default function MapPage() {
                 className="dropdown-select"
                 classNamePrefix="react-select"
                 options={[{value: "", label: t('map.all')},
-                    ...interests.map(it => ({
+                    ...interests.map(it => {
+                    const slug = it.slug ?? String(it.id ?? "");
+                    const translatedTitle = translateCategory(t, slug, it.title);
+                    return {
                     value: it.slug ?? it.id ?? it.title,
-                    label: it.title ?? it.slug ?? it.id
-                }))]}
+                    label: translatedTitle
+                }})]}
                 value={
                     selectedInterest
                         ? {
                             value: selectedInterest,
                             label:
-                                interests.find(i =>
-                                    i.slug === selectedInterest ||
-                                    i.id === selectedInterest ||
-                                    i.title === selectedInterest
-                                )?.title || selectedInterest
+                                (() => {
+                                    const found = interests.find(i =>
+                                        i.slug === selectedInterest ||
+                                        i.id === selectedInterest ||
+                                        i.title === selectedInterest
+                                    );
+                                    if (found) {
+                                        const slug = found.slug ?? String(found.id ?? "");
+                                        return translateCategory(t, slug, found.title);
+                                    }
+                                    return selectedInterest;
+                                })()
                         }:{value: "", label: t('map.all')}
                 }
                 onChange={(option) => setSelectedInterest(option.value)}

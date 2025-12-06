@@ -8,7 +8,7 @@
   justify-content: center;
   align-items: center;
     height: calc(100vh - var(--header-height, 5rem));
-  background-color: #f8f8f8;
+  background-color: var(--color-bg-tertiary);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   box-sizing: border-box;
   position: relative;
@@ -20,7 +20,7 @@
   display: flex;
   width: 100%;
   height: 100%;
-  background-color: white;
+  background-color: var(--color-bg-primary);
   overflow: hidden;
 }
 
@@ -40,7 +40,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-{/*background-color: #ffe5e8;*/}
+  /* background-color: var(--color-primary-lighter); */
   padding: 1.5rem;
 }
 
@@ -62,7 +62,7 @@
 .brand-t {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #ff3951;
+  color: var(--color-primary);
   text-align: center;
   margin-top: 1.125rem;
 }
@@ -71,14 +71,14 @@
 .add-trip-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-primary);
   margin-bottom: 0.625rem;
   text-align: center;
 }
 
 .add-trip-subtitle {
   font-size: 0.875rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin: 0.5rem 0 1rem;
   text-align: center;
 }
@@ -102,8 +102,8 @@
   min-height: 7.5rem;
   resize: vertical;
   padding: 0.75rem;
-  border: 0.0625rem solid #e8d1d1;
-  background: #fcf7f7;
+  border: 0.0625rem solid var(--color-border-light);
+  background: var(--color-bg-secondary);
   border-radius: 0.5rem;
   font-size: 0.875rem;
   outline: none;
@@ -112,7 +112,7 @@
 }
 
 .textarea:focus {
-  border-color: #ff3951;
+  border-color: var(--color-primary);
 }
 
 /* Card helper around sections */
@@ -120,13 +120,13 @@
   margin-bottom: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: #fbfbfb;
+  background: var(--color-bg-tertiary);
   box-sizing: border-box;
 }
 
 /* When a section needs white background (e.g. flights) you can add .card--white if needed */
 .card.card--white {
-  background: #fff;
+  background: var(--color-bg-primary);
 }
 
 /* Calendar & date picker */
@@ -140,7 +140,7 @@
 .month-year {
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .arrows {
@@ -152,13 +152,13 @@
   background: none;
   border: none;
   font-size: 1.25rem;
-  color: #ff3951;
+  color: var(--color-primary);
   cursor: pointer;
   padding: 0.375rem;
 }
 
 .arrow:hover {
-  color: #e0223a;
+  color: var(--color-primary-dark);
 }
 
 .calendar {
@@ -172,7 +172,7 @@
 }
 
 .week-day {
-  color: #999;
+  color: var(--color-text-muted-dark);
   font-size: 0.75rem;
   width: 14.28%;
   text-align: center;
@@ -201,7 +201,7 @@
 }
 
 .day:hover {
-  background-color: #f3f3f3;
+  background-color: var(--color-bg-hover);
   border-radius: 5.625rem;
 }
 .day:hover:disabled{
@@ -211,28 +211,28 @@
 }
 
 .selected-day {
-  background-color: #ffe5e8;
-  color: #ff3951;
+  background-color: var(--color-primary-lighter);
+  color: var(--color-primary);
   border-radius: 0.375rem;
 }
 
 .former-day {
-  background-color: #ff3951;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-text-white);
   border-radius: 0.375rem;
 }
 
 .date-range {
   text-align: center;
   margin-top: 0.75rem;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.8125rem;
 }
 
 /* Buttons */
 .btn-primary {
-  background-color: #ff3951;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-text-white);
   border: none;
   border-radius: 0.625rem;
   font-size: 1.125rem;
@@ -244,21 +244,21 @@
 }
 
 .btn-primary:disabled {
-  background-color: #ff6b7a;
+  background-color: var(--color-primary-light);
   opacity: 0.8;
   cursor: not-allowed;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #e0223a;
+  background-color: var(--color-primary-dark);
 }
 
 .btn-secondary {
-  background: white;
-  border: 0.0625rem solid #ddd;
+  background: var(--color-bg-primary);
+  border: 0.0625rem solid var(--color-border-light);
   border-radius: 0.625rem;
   font-size: 1rem;
-  color: #666;
+  color: var(--color-text-secondary);
   cursor: pointer;
     height: 3.125rem;
     font-weight: 600;
@@ -311,7 +311,7 @@
   margin-bottom: 0.375rem;
   font-weight: 600;
   font-size: 0.8125rem;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 /* small helper spacing */

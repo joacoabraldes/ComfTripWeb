@@ -11,7 +11,7 @@
 
 .confirm-dialog p {
   margin: 0 0 1.5rem 0;
-  color: #666;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 

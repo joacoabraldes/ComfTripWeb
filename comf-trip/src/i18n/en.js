@@ -49,7 +49,7 @@ const en = {
       submit: 'Sign In',
       submitting: 'Signing in...',
       notRegistered: 'Not registered?',
-      register: 'Register',
+      register: 'Sign up',
     },
     register: {
       title: 'Create account',

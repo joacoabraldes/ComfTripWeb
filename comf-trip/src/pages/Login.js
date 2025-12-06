@@ -6,6 +6,7 @@ import LogoSvg from "../components/LogoSvg";
 import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "../i18n";
 import InputField from "../components/forms/InputField";
+import FilterSelect from "../components/FilterSelect";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" }); // 'email' here is the identifier (username or email)
@@ -13,7 +14,7 @@ export default function Login() {
   const { login} = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -48,7 +49,20 @@ export default function Login() {
     <div className="auth-root">
       <div className="auth-container">
         <div className="auth-left">
-          <h1 className="auth-title">{t('auth.login.title')}</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h1 className="auth-title" style={{ margin: 0 }}>{t('auth.login.title')}</h1>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px' }}>
+              <FilterSelect
+                value={language}
+                onChange={setLanguage}
+                options={[
+                  { value: 'es', label: t('profile.spanish') },
+                  { value: 'en', label: t('profile.english') },
+                ]}
+                isClearable={false}
+              />
+            </div>
+          </div>
 
           <form className="auth-form">
             <InputField

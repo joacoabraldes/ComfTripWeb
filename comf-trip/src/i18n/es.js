@@ -48,8 +48,8 @@
       forgotPassword: '¿Olvidaste tu contraseña?',
       submit: 'Iniciar',
       submitting: 'Entrando...',
-      notRegistered: 'Not registered?',
-      register: 'Register',
+      notRegistered: '¿No tienes una cuenta?',
+      register: 'Registrarse',
     },
     register: {
       title: 'Crear cuenta',

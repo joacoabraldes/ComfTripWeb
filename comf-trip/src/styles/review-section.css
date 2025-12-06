@@ -1,0 +1,117 @@
+/* src/styles/review-section.css */
+
+.review-section-container {
+  width: 100%;
+  background: var(--color-bg-primary);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-md);
+}
+
+.review-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.review-section-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.review-section-edit-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.review-section-edit-button:hover {
+  opacity: 0.7;
+}
+
+.review-section-edit-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.review-section-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.review-section-display {
+  margin-top: 0.5rem;
+}
+
+.review-section-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.review-section-rating svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke: var(--color-black);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.review-section-rating svg.review-section-star-filled {
+  color: #FFD700;
+  fill: #FFD700;
+  stroke: var(--color-black);
+}
+
+.review-section-rating svg.review-section-star-empty {
+  color: var(--color-white);
+  fill: var(--color-white);
+  stroke: var(--color-black);
+}
+
+.review-section-rating-text {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.review-section-title-text {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.review-section-comment {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.review-section-no-review {
+  font-size: 0.875rem;
+  color: var(--color-text-muted-dark);
+  font-style: italic;
+  text-align: center;
+  padding: 1.25rem 0;
+}
+

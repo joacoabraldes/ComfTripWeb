@@ -589,6 +589,35 @@
     notAvailable: 'N/A',
   },
 
+  // Review
+  review: {
+    title: 'Tu Reseña',
+    rating: 'Calificación',
+    titleLabel: 'Título',
+    commentLabel: 'Comentario (opcional)',
+    ratingRequired: 'Por favor selecciona una calificación.',
+    titleRequired: 'Por favor ingresa un título para tu reseña.',
+    saving: 'Guardando...',
+    saveButton: 'Guardar Reseña',
+    updateButton: 'Actualizar Reseña',
+    saveSuccess: 'Reseña guardada correctamente.',
+    updateSuccess: 'Reseña actualizada correctamente.',
+    saveError: 'No se pudo guardar la reseña.',
+    loadingReview: 'Cargando reseña...',
+    noReview: 'Aún no has agregado una reseña para este viaje.',
+    placeholder: {
+      title: 'Escribe un título para tu reseña',
+      comment: 'Comparte tu experiencia...',
+    },
+    ratings: {
+      excellent: 'Excelente',
+      veryGood: 'Muy Bueno',
+      good: 'Bueno',
+      fair: 'Regular',
+      poor: 'Pobre',
+    },
+  },
+
   // Edit Trip
   editTrip: {
     loading: 'Cargando…',

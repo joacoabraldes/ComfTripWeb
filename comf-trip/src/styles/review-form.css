@@ -1,0 +1,214 @@
+/* src/styles/review-form.css */
+
+.review-form-container {
+  width: 100%;
+  background: var(--color-bg-primary);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-md);
+}
+
+.review-form-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.review-form-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin-bottom: 1.25rem;
+}
+
+.review-form-rating-container {
+  margin-bottom: 1.25rem;
+}
+
+.review-form-label {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.review-form-stars {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.review-form-star-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.review-form-star-button:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.review-form-star-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.review-form-star-button svg {
+  width: 2rem;
+  height: 2rem;
+  stroke: var(--color-black);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.review-form-star-button svg.review-form-star-filled {
+  color: #FFD700;
+  fill: #FFD700;
+  stroke: var(--color-black);
+}
+
+.review-form-star-button svg.review-form-star-empty {
+  color: var(--color-white);
+  fill: var(--color-white);
+  stroke: var(--color-black);
+}
+
+.review-form-rating-text {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.review-form-input-container {
+  margin-bottom: 1rem;
+}
+
+.review-form-input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  background: var(--color-primary-lighter);
+  border: 0.0625rem solid var(--color-border-light);
+  border-radius: 0.625rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.review-form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.review-form-input:disabled {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.review-form-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  background: var(--color-primary-lighter);
+  border: 0.0625rem solid var(--color-border-light);
+  border-radius: 0.625rem;
+  outline: none;
+  resize: vertical;
+  min-height: 6.25rem;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.review-form-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.review-form-textarea:disabled {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.review-form-char-count {
+  font-size: 0.75rem;
+  color: var(--color-text-muted-dark);
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.review-form-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.review-form-cancel-button {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+  border: 0.0625rem solid var(--color-border-light);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.review-form-cancel-button:hover:not(:disabled) {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border);
+}
+
+.review-form-cancel-button:active:not(:disabled) {
+  transform: translateY(0.0625rem);
+}
+
+.review-form-cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.review-form-save-button {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.review-form-save-button:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-0.0625rem);
+  box-shadow: var(--shadow-button-hover);
+}
+
+.review-form-save-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-button-active);
+}
+
+.review-form-save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

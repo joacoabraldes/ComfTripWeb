@@ -1,5 +1,5 @@
 // src/pages/TripItinerary.jsx
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Map, {
   Marker,
@@ -18,19 +18,27 @@ import { useTranslation } from "../i18n";
 import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
 import IconButton from "../components/IconButton";
 import LoadingSpinner from "../components/LoadingSpinner";
-import ConfirmDialog from "../components/ConfirmDialog";
-import { normalizeDate, getTripStatus, isTripPast } from "../utils/dateUtils";
+import { normalizeDate, isTripPast } from "../utils/dateUtils";
 import FlightFinderItinerary from "../components/FlightFinderItinerary";
+import ReviewSection from "../components/trip/ReviewSection";
 
 // NEW: summary + finder components
 import TripFlightSummary, {
   buildSummaryFromBackendDetails,
 } from "../components/TripFlightSummary";
-import FlightFinder from "../components/FlightFinder";
 
 const MAPBOX_TOKEN =
   process.env.REACT_APP_MAPBOX_TOKEN ||
   "pk.eyJ1IjoibWFuZHJhY2EiLCJhIjoiY21mZnE1dmI0MDlubjJpcG5rYmw3ZnRiZiJ9.RwdRSwXlP1PX_7j7cwUsMA";
+
+// small fallback map for a few countries (keeps compatibility with older labels)
+const FALLBACK_NAME_TO_ISO = {
+  Spain: "ES",
+  Argentina: "AR",
+  Italy: "IT",
+  Germany: "DE",
+  France: "FR",
+};
 
 export default function TripItinerary() {
   const params = useParams();
@@ -68,7 +76,6 @@ export default function TripItinerary() {
   // flight/backend state (backend association + enriched details)
   const [backendFlight, setBackendFlight] = useState(null);
   const [backendFlightDetails, setBackendFlightDetails] = useState(null);
-  const [loadingFlight, setLoadingFlight] = useState(false);
   const [flightMessage, setFlightMessage] = useState(null);
 
   // ---- locations picker (only for the trip's city) ----
@@ -79,7 +86,6 @@ export default function TripItinerary() {
   const [addLocationMessage, setAddLocationMessage] = useState(null);
 
   // Primary color handling (read from CSS var --primary-color or fallback to old blue)
-  const [primaryColor, setPrimaryColor] = useState("#FF7485"); // fallback
   const [primaryLight, setPrimaryLight] = useState("#FF7485");
   const [primaryRgb, setPrimaryRgb] = useState({ r: 25, g: 120, b: 200 });
 
@@ -96,14 +102,14 @@ export default function TripItinerary() {
     const num = parseInt(h, 16);
     return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
   };
-  const lightenHex = (hex, percent) => {
+  const lightenHex = useCallback((hex, percent) => {
     const rgb = hexToRgb(hex);
     const r = Math.round(rgb.r + (255 - rgb.r) * percent);
     const g = Math.round(rgb.g + (255 - rgb.g) * percent);
     const b = Math.round(rgb.b + (255 - rgb.b) * percent);
     const toHex = (v) => v.toString(16).padStart(2, "0");
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-  };
+  }, []);
 
   useEffect(() => {
     try {
@@ -113,24 +119,13 @@ export default function TripItinerary() {
         ) || "";
       const prim = cssVal.trim() || "#FF7485";
       const light = lightenHex(prim, 0.28);
-      setPrimaryColor(prim);
       setPrimaryLight(light);
       setPrimaryRgb(hexToRgb(light));
     } catch (e) {
-      setPrimaryColor("#FF7485");
       setPrimaryLight("#FF7485");
       setPrimaryRgb({ r: 25, g: 120, b: 200 });
     }
-  }, []);
-
-  // small fallback map for a few countries (keeps compatibility with older labels)
-  const FALLBACK_NAME_TO_ISO = {
-    Spain: "ES",
-    Argentina: "AR",
-    Italy: "IT",
-    Germany: "DE",
-    France: "FR",
-  };
+  }, [lightenHex]);
 
   // helper: map a flight-offer / raw offer into the shape we feed into TripFlightSummary
   const mapOfferToSelectOption = (offer, idx = 0) => {
@@ -175,7 +170,7 @@ export default function TripItinerary() {
   };
 
   // try to resolve an ISO2 code from a country name using country-state-city data, fallback to small map
-  const getIsoFromCountryName = (countryName) => {
+  const getIsoFromCountryName = useCallback((countryName) => {
     if (!countryName) return undefined;
     try {
       const all = Country.getAllCountries() || [];
@@ -190,7 +185,7 @@ export default function TripItinerary() {
     if (FALLBACK_NAME_TO_ISO[countryName])
       return FALLBACK_NAME_TO_ISO[countryName];
     return undefined;
-  };
+  }, []);
 
   const countryIntlDisplay = useMemo(() => {
     try {
@@ -221,7 +216,6 @@ export default function TripItinerary() {
 
   // utility: refresh backend flight association and enrich it via flightsApi
   async function refreshBackendFlight() {
-    setLoadingFlight(true);
     try {
       const flightsList = await apiGet(
         `/flights?trip_id=${encodeURIComponent(tripId)}`
@@ -263,7 +257,6 @@ export default function TripItinerary() {
       console.warn("Error refreshing flight for trip:", err);
       setFlightMessage(t("tripItinerary.refreshError"));
     } finally {
-      setLoadingFlight(false);
       window.setTimeout(() => setFlightMessage(null), 3000);
     }
   }
@@ -365,7 +358,7 @@ export default function TripItinerary() {
     return city
       ? city + (countryLabel ? `, ${countryLabel}` : "")
       : trip.destination;
-  }, [trip, countryIntlDisplay]);
+  }, [trip, countryIntlDisplay, getIsoFromCountryName]);
 
   /**
    * Fetch locations by country and filter to the trip city.
@@ -665,13 +658,6 @@ export default function TripItinerary() {
     }
     return normalizeDate(d) < today;
   };
-
-  const coordsToLngLat = (p) => [
-    Number(
-      p.location?.longitude ?? p.location?.longitud ?? p.location?.lng ?? 0
-    ),
-    Number(p.location?.latitude ?? p.location?.lat ?? p.location?.latitud ?? 0),
-  ];
   const computeCenterAndZoom = (lnglats) => {
     if (!lnglats || lnglats.length === 0)
       return { center: viewState, zoom: viewState.zoom };
@@ -809,7 +795,7 @@ export default function TripItinerary() {
         imgObj.onerror = null;
       }
     };
-  }, [selectedLocationOnMap?.imageUrl, selectedLocationOnMap?.loadImage]);
+  }, [selectedLocationOnMap]);
 
   if (loading) {
     return (
@@ -910,6 +896,10 @@ export default function TripItinerary() {
       )}
     </section>
   );
+
+  // Determine trip status (needed before addLocationCard)
+  const isPast = trip ? isTripPast(trip.end_date) : false;
+  const isReadOnly = isPast; // Disable editing for past trips
 
   // ---------- Add location (only from trip's city) ----------
   const addLocationCard = (
@@ -1014,166 +1004,11 @@ export default function TripItinerary() {
   );
 
   // ---------- Right-hand place detail component ----------
-  const PlaceDetail = ({ p }) => {
-    const loc = p.location || {};
-    const image =
-      (loc.imagenes && loc.imagenes[0]) ||
-      (loc.images && loc.images[0]) ||
-      (p.images && p.images[0]) ||
-      null;
-    const website = getWebsiteFor(p) || getWebsiteFor(loc);
-    return (
-      <div
-        className="place-detail"
-        style={{
-          padding: 16,
-          borderRadius: 12,
-          background: "#fff",
-          boxShadow: "0 0.5rem 1.875rem rgba(12,13,14,0.06)",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-          {image ? (
-            <img
-              src={image}
-              alt={t("tripItinerary.place")}
-              style={{
-                width: 220,
-                height: 140,
-                objectFit: "cover",
-                borderRadius: 10,
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 220,
-                height: 140,
-                borderRadius: 10,
-                background: "#f3f3f3",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#999",
-              }}
-            >
-              {t("tripItinerary.noImage")}
-            </div>
-          )}
-          <div style={{ flex: 1 }}>
-            <h2 style={{ margin: 0, fontSize: 22 }}>
-              {loc.titulo ?? p.title ?? `Lugar #${p.fk_location}`}
-            </h2>
-            <div style={{ color: "#666", marginTop: 6 }}>
-              {fmtDate(p.date)}{" "}
-              {p.start_hour
-                ? `· ${String(p.start_hour).slice(0, 5)}${p.end_hour
-                  ? ` — ${String(p.end_hour).slice(0, 5)}`
-                  : ""
-                }`
-                : ""}
-            </div>
-            {website && (
-              <div style={{ marginTop: 10 }}>
-                <a
-                  href={
-                    website.startsWith("http") ? website : `https://${website}`
-                  }
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: primaryLight }}
-                >
-                  {t("tripItinerary.viewSite")}
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div style={{ marginTop: "1rem", flex: 1 }}>
-          <h4 style={{ margin: "0 0 0.5rem 0" }}>
-            {t("tripItinerary.notes")}
-          </h4>
-          <div style={{ color: "#333", lineHeight: 1.5 }}>
-            {p.notes || "-"}
-          </div>
-
-          <div style={{ marginTop: "1.125rem" }}>
-            <h4 style={{ margin: "0 0 8px 0" }}>
-              {t("tripItinerary.location")}
-            </h4>
-            <div style={{ color: "#333" }}>
-              {loc.titulo || loc.address || t("tripItinerary.noAddress")}
-            </div>
-            {Number.isFinite(Number(loc.latitude)) &&
-              Number.isFinite(Number(loc.longitude)) && (
-                <div style={{ marginTop: 10 }}>
-                  <button
-                    className="btn-secondary"
-                    style={{ marginTop: 15 }}
-                    onClick={() => {
-                      setViewState((v) => ({
-                        ...v,
-                        latitude: Number(loc.latitude ?? loc.latitud),
-                        longitude: Number(loc.longitude ?? loc.longitud),
-                        zoom: 16,
-                      }));
-                    }}
-                  >
-                    {t("tripItinerary.viewOnMap")}
-                  </button>
-                </div>
-              )}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            justifyContent: "flex-end",
-            marginTop: 12,
-          }}
-        >
-          <button
-            className="btn-secondary"
-            onClick={() =>
-              navigate(
-                `/edit-place/${trip.id}?placeIndex=${(
-                  trip.places || []
-                ).findIndex((pp) => pp.id === p.id)}`
-              )
-            }
-          >
-            {t("tripItinerary.edit")}
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={() => {
-              if (window.confirm(t("tripItinerary.deleteConfirm")))
-                apiDelete(`/trips/${tripId}/places/${p.id}`).then(() =>
-                  apiGet(`/trips/${tripId}`).then(setTrip)
-                );
-            }}
-          >
-            {t("tripItinerary.delete")}
-          </button>
-        </div>
-      </div>
-    );
-  };
+  // PlaceDetail component removed - not used
 
   const { groups: groupedPlaces, keys: groupKeys } = groupPlacesByDate(
     trip.places || []
   );
-
-  // Determine trip status
-  const tripStatus = getTripStatus(trip.start_date, trip.end_date);
-  const isPast = isTripPast(trip.end_date);
-  const isReadOnly = isPast; // Disable editing for past trips
 
   return (
     <div className="trip-it-root">
@@ -1234,11 +1069,14 @@ export default function TripItinerary() {
           </div>
 
           <section style={{ overflowY: "auto", paddingRight: 20 }}>
-            {/* Flight card */}
+            {/* Flight card - show for all trips */}
             {flightCard}
 
-            {/* Add location from city card */}
-            {addLocationCard}
+            {/* Review Section for completed trips */}
+            {isPast && <ReviewSection tripId={tripId} trip={trip} />}
+
+            {/* Add location from city card - only for current/upcoming trips */}
+            {!isPast && addLocationCard}
 
             <h3 style={{ marginTop: 18, marginBottom: 8 }}>
               {t("tripItinerary.itineraryByDay")}
@@ -1338,18 +1176,20 @@ export default function TripItinerary() {
                             </button>
                           )}
 
-                          <button
-                            className="btn-small"
-                            onClick={(ev) => {
-                              ev.stopPropagation();
-                              navigate(
-                                `/add_place/${tripId}?date=${dateKey}`
-                              );
-                            }}
-                            title={t("tripItinerary.addPointToDay")}
-                          >
-                            + {t("tripItinerary.add")}
-                          </button>
+                          {!isPast && (
+                            <button
+                              className="btn-small"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                navigate(
+                                  `/add_place/${tripId}?date=${dateKey}`
+                                );
+                              }}
+                              title={t("tripItinerary.addPointToDay")}
+                            >
+                              + {t("tripItinerary.add")}
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -1532,66 +1372,68 @@ export default function TripItinerary() {
                                   </svg>
                                 </div>
 
-                                <div
-                                  className="trip-it-menu-wrapper"
-                                  style={{ position: "relative" }}
-                                  ref={menuContainerRef}
-                                >
-                                  <button
-                                    className="trip-it-menu-btn"
-                                    onClick={(ev) =>
-                                      togglePlaceMenu(ev, p.id)
-                                    }
-                                    aria-haspopup="true"
-                                    aria-expanded={menuOpen === p.id}
+                                {!isPast && (
+                                  <div
+                                    className="trip-it-menu-wrapper"
+                                    style={{ position: "relative" }}
+                                    ref={menuContainerRef}
                                   >
-                                    ⋮
-                                  </button>
-
-                                  {menuOpen === p.id && (
-                                    <div
-                                      className="trip-it-menu"
-                                      onClick={(e) => e.stopPropagation()}
-                                      style={{
-                                        position:
-                                          "absolute",
-                                        top: "calc(100% + 0.375rem)",
-                                        right: 0,
-                                        zIndex: 30,
-                                      }}
+                                    <button
+                                      className="trip-it-menu-btn"
+                                      onClick={(ev) =>
+                                        togglePlaceMenu(ev, p.id)
+                                      }
+                                      aria-haspopup="true"
+                                      aria-expanded={menuOpen === p.id}
                                     >
-                                      <IconButton
-                                        icon={<FaEdit size={18} />}
-                                        onClick={(ev) => {
-                                          ev.stopPropagation();
-                                          navigate(
-                                            `/edit-place/${trip.id}?placeIndex=${(
-                                              trip.places || []
-                                            ).findIndex(
-                                              (pp) => pp.id === p.id
-                                            )}`
-                                          );
-                                          setMenuOpen(null);
-                                        }}
-                                        title={t(
-                                          "tripItinerary.editPoint"
-                                        )}
-                                        variant="menu"
-                                      />
+                                      ⋮
+                                    </button>
 
-                                      <IconButton
-                                        icon={<FaTrash size={18} />}
-                                        onClick={(ev) =>
-                                          handleDeletePlace(ev, p)
-                                        }
-                                        title={t(
-                                          "tripItinerary.deletePoint"
-                                        )}
-                                        variant="menu"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
+                                    {menuOpen === p.id && (
+                                      <div
+                                        className="trip-it-menu"
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{
+                                          position:
+                                            "absolute",
+                                          top: "calc(100% + 0.375rem)",
+                                          right: 0,
+                                          zIndex: 30,
+                                        }}
+                                      >
+                                        <IconButton
+                                          icon={<FaEdit size={18} />}
+                                          onClick={(ev) => {
+                                            ev.stopPropagation();
+                                            navigate(
+                                              `/edit-place/${trip.id}?placeIndex=${(
+                                                trip.places || []
+                                              ).findIndex(
+                                                (pp) => pp.id === p.id
+                                              )}`
+                                            );
+                                            setMenuOpen(null);
+                                          }}
+                                          title={t(
+                                            "tripItinerary.editPoint"
+                                          )}
+                                          variant="menu"
+                                        />
+
+                                        <IconButton
+                                          icon={<FaTrash size={18} />}
+                                          onClick={(ev) =>
+                                            handleDeletePlace(ev, p)
+                                          }
+                                          title={t(
+                                            "tripItinerary.deletePoint"
+                                          )}
+                                          variant="menu"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
@@ -1603,14 +1445,16 @@ export default function TripItinerary() {
               )}
             </div>
 
-            <div style={{ marginTop: 10 }}>
-              <button
-                onClick={() => navigate(`/add_place/${tripId}`)}
-                className="btn-primary"
-              >
-                {t("tripItinerary.addToItineraryButton")}
-              </button>
-            </div>
+            {!isPast && (
+              <div style={{ marginTop: 10 }}>
+                <button
+                  onClick={() => navigate(`/add_place/${tripId}`)}
+                  className="btn-primary"
+                >
+                  {t("tripItinerary.addToItineraryButton")}
+                </button>
+              </div>
+            )}
           </section>
         </section>
 

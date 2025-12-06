@@ -590,6 +590,35 @@ const en = {
     notAvailable: 'N/A',
   },
 
+  // Review
+  review: {
+    title: 'Your Review',
+    rating: 'Rating',
+    titleLabel: 'Title',
+    commentLabel: 'Comment (optional)',
+    ratingRequired: 'Please select a rating.',
+    titleRequired: 'Please enter a title for your review.',
+    saving: 'Saving...',
+    saveButton: 'Save Review',
+    updateButton: 'Update Review',
+    saveSuccess: 'Review saved successfully.',
+    updateSuccess: 'Review updated successfully.',
+    saveError: 'Could not save review.',
+    loadingReview: 'Loading review...',
+    noReview: 'You have not added a review for this trip yet.',
+    placeholder: {
+      title: 'Write a title for your review',
+      comment: 'Share your experience...',
+    },
+    ratings: {
+      excellent: 'Excellent',
+      veryGood: 'Very Good',
+      good: 'Good',
+      fair: 'Fair',
+      poor: 'Poor',
+    },
+  },
+
   // Edit Trip
   editTrip: {
     loading: 'Loading…',

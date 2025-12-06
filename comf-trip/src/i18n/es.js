@@ -90,6 +90,8 @@
       acceptTerms: 'Debe aceptar los términos y condiciones',
       attention: 'Atención',
       noNationalitiesFound: 'No se encontraron nacionalidades',
+      showPassword: 'Mostrar contraseña',
+      hidePassword: 'Ocultar contraseña',
     },
     recoverPassword: {
       title: 'Recuperar contraseña',

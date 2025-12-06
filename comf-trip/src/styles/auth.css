@@ -76,13 +76,50 @@
 .input{
     padding: 0.625rem 0.75rem;
     border: 0.0625rem solid var(--color-border-light);
-    background: var(--color-bg-secondary);
+    background: var(--color-primary-lighter);
     border-radius: 0.5rem;
     font-size: 1rem;
     outline: none;
     box-sizing: border-box;
     width: 100%;
     min-height: 3.5rem;
+}
+
+/* Password input wrapper */
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-input-wrapper .input {
+    padding-right: 3rem; /* espacio para el icono */
+}
+
+/* Password toggle button */
+.password-toggle-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    color: var(--color-text-secondary);
+    transition: color 0.2s;
+    font-size: 1rem;
+}
+
+.password-toggle-btn:hover {
+    color: var(--color-text-primary);
+}
+
+.password-toggle-btn:focus {
+    outline: none;
+    color: var(--color-primary);
 }
 
 .input:focus{
@@ -246,7 +283,7 @@
 
 /* Contenedor principal del select */
 .dropdown-select .react-select__control {
-  background: var(--color-bg-secondary);       /* mismo fondo que los inputs */
+  background: var(--color-primary-lighter);       /* mismo fondo que los inputs */
   border: 0.0625rem solid var(--color-border-light); /* mismo borde */
   border-radius: 0.5rem;
   min-height: 3.125rem;

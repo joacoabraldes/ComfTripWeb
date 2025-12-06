@@ -1,0 +1,91 @@
+/* src/styles/input-field.css */
+
+.input-field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+.input-field-label {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  font-weight: 300;
+  margin-left: 0.375rem;
+}
+
+.input-field-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-field-wrapper--password .input-field {
+  padding-right: 3rem; /* espacio para el icono */
+}
+
+.input-field {
+  padding: 0.625rem 0.75rem;
+  border: 0.0625rem solid var(--color-border-light);
+  background: var(--color-primary-lighter);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3.5rem;
+  color: var(--color-text-primary);
+  font-family: inherit;
+}
+
+.input-field:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.input-field::placeholder {
+  color: var(--color-text-muted-dark);
+}
+
+.input-field:disabled {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.input-field:disabled::placeholder {
+  color: var(--color-text-disabled);
+}
+
+.input-field-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  color: var(--color-text-secondary);
+  transition: color 0.2s;
+  font-size: 1rem;
+}
+
+.input-field-toggle-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.input-field-toggle-btn:focus {
+  outline: none;
+  color: var(--color-primary);
+}
+
+.input-field-error {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  margin-left: 0.375rem;
+}
+

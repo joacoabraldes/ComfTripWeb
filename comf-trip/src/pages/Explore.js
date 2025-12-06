@@ -9,6 +9,7 @@ import Modal from "../components/Modal";
 import ActionButton from "../components/ActionButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import FilterSelect from "../components/FilterSelect";
+import { translateCategory, translateCategoryDescription } from "../helpers/categoryTranslations";
 
 /**
  * Normalize many image shapes into an array of URL strings
@@ -261,9 +262,10 @@ export default function Explore() {
     const slug = category?.slug ?? String(category);
     const id = category?.id ?? null;
     const title = category?.title ?? category?.name ?? slug;
+    const translatedTitle = translateCategory(t, slug, title);
     setSelectedCategorySlug(slug);
     setSelectedCategoryId(id);
-    setSelectedCategoryTitle(title);
+    setSelectedCategoryTitle(translatedTitle);
   };
 
   const handleExperienceClick = (experience) => {
@@ -354,6 +356,8 @@ export default function Explore() {
 
               {categories.map((cat) => {
                 const icon = categoryIcons[cat.slug] || "📍";
+                const slug = cat.slug ?? String(cat.id ?? "");
+                const translatedTitle = translateCategory(t, slug, cat.title);
                 return (
                   <div
                     key={cat.slug ?? cat.id}
@@ -361,7 +365,7 @@ export default function Explore() {
                     onClick={() => onCategoryClick(cat)}
                   >
                     <div className="category-icon">{icon}</div>
-                    <div className="category-name">{cat.title}</div>
+                    <div className="category-name">{translatedTitle}</div>
                   </div>
                 );
               })}

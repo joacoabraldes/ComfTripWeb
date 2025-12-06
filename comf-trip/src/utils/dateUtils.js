@@ -100,3 +100,24 @@ export function isTripPast(endDate) {
   return today > end;
 }
 
+/**
+ * Get trip status: 'upcoming' | 'current' | 'past'
+ * @param {string} startDate - Start date ISO string
+ * @param {string} endDate - End date ISO string
+ * @returns {string} Trip status
+ */
+export function getTripStatus(startDate, endDate) {
+  if (!startDate || !endDate) return 'upcoming';
+  try {
+    const now = new Date();
+    const start = normalizeDate(startDate);
+    const end = normalizeDate(endDate);
+    
+    if (start > now) return 'upcoming';
+    if (start <= now && end >= now) return 'current';
+    return 'past';
+  } catch {
+    return 'upcoming';
+  }
+}
+

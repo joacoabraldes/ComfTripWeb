@@ -19,7 +19,7 @@ import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
 import IconButton from "../components/IconButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ConfirmDialog from "../components/ConfirmDialog";
-import { normalizeDate } from "../utils/dateUtils";
+import { normalizeDate, getTripStatus, isTripPast } from "../utils/dateUtils";
 import FlightFinderItinerary from "../components/FlightFinderItinerary";
 
 // NEW: summary + finder components
@@ -997,7 +997,7 @@ export default function TripItinerary() {
           className="btn-primary"
           style={{ marginTop: 15 }}
           onClick={handleAddLocationToItinerary}
-          disabled={addingLocation || !selectedLocationOption}
+          disabled={addingLocation || !selectedLocationOption || isReadOnly}
         >
           {addingLocation
             ? t("tripItinerary.adding")
@@ -1170,6 +1170,11 @@ export default function TripItinerary() {
     trip.places || []
   );
 
+  // Determine trip status
+  const tripStatus = getTripStatus(trip.start_date, trip.end_date);
+  const isPast = isTripPast(trip.end_date);
+  const isReadOnly = isPast; // Disable editing for past trips
+
   return (
     <div className="trip-it-root">
       <main className="trip-it-main">
@@ -1183,9 +1188,28 @@ export default function TripItinerary() {
             }}
           >
             <div>
-              <h2 style={{ marginTop: 8, marginBottom: 4 }}>
-                {displayTripDestination}
-              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                <h2 style={{ marginTop: 8, marginBottom: 4 }}>
+                  {displayTripDestination}
+                </h2>
+                {isPast && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      backgroundColor: "#E8F5E9",
+                      padding: "6px 12px",
+                      borderRadius: "16px",
+                      marginTop: "8px",
+                    }}
+                  >
+                    <span style={{ fontSize: "13px", fontWeight: "600", color: "#2E7D32" }}>
+                      {t("tripItinerary.completedTrip") || "Viaje Completado"}
+                    </span>
+                  </div>
+                )}
+              </div>
               <div style={{ color: "#666" }}>
                 {fmtDate(trip.start_date)} — {fmtDate(trip.end_date)}
               </div>

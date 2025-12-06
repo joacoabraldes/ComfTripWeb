@@ -7,6 +7,7 @@ import "../styles/header.css";
 import { useTranslation } from "../i18n";
 import { FaArrowLeft } from "react-icons/fa";
 import ActionButton from "../components/ActionButton";
+import InputField from "../components/forms/InputField";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -15,6 +16,9 @@ export default function ChangePassword() {
     newPassword: "",
     confirmPassword: ""
   });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
@@ -92,47 +96,47 @@ export default function ChangePassword() {
 
         <form className="change-form" onSubmit={handleSubmit}>
 
-          <label className="change-field">
-            <div className="change-field-label">{t('changePassword.currentPassword')}</div>
-            <input
-              type="password"
-              name="currentPassword"
-              className={"input"}
-              value={form.currentPassword}
-              onChange={handleChange}
-              placeholder={t('changePassword.currentPassword')}
-              required
-              disabled={loading}
-            />
-          </label>
+          <InputField
+            label={t('changePassword.currentPassword')}
+            name="currentPassword"
+            value={form.currentPassword}
+            onChange={handleChange}
+            placeholder={t('changePassword.currentPassword')}
+            showPasswordToggle
+            showPassword={showCurrentPassword}
+            onTogglePassword={() => setShowCurrentPassword(!showCurrentPassword)}
+            required
+            disabled={loading}
+            containerClassName="change-field"
+          />
 
-          <label className="change-field">
-            <div className="change-field-label">{t('changePassword.newPassword')}</div>
-            <input
-              type="password"
-              name="newPassword"
-              value={form.newPassword}
-              className={"input"}
-              onChange={handleChange}
-              placeholder={t('changePassword.newPassword')}
-              required
-              disabled={loading}
-            />
-          </label>
+          <InputField
+            label={t('changePassword.newPassword')}
+            name="newPassword"
+            value={form.newPassword}
+            onChange={handleChange}
+            placeholder={t('changePassword.newPassword')}
+            showPasswordToggle
+            showPassword={showNewPassword}
+            onTogglePassword={() => setShowNewPassword(!showNewPassword)}
+            required
+            disabled={loading}
+            containerClassName="change-field"
+          />
 
-          <label className="change-field">
-            <div className="change-field-label">{t('changePassword.confirmPassword')}</div>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={form.confirmPassword}
-              className={"input"}
-              onChange={handleChange}
-              placeholder={t('changePassword.confirmPassword')}
-              required
-              disabled={loading}
-            />
-          </label>
+          <InputField
+            label={t('changePassword.confirmPassword')}
+            name="confirmPassword"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            placeholder={t('changePassword.confirmPassword')}
+            showPasswordToggle
+            showPassword={showConfirmPassword}
+            onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+            required
+            disabled={loading}
+            containerClassName="change-field"
+          />
 
           <div className="form-actions">
             <ActionButton type="submit" variant="edit" disabled={loading}>

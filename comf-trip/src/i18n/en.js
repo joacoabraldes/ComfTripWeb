@@ -90,6 +90,8 @@ const en = {
       acceptTerms: 'You must accept the terms and conditions',
       attention: 'Attention',
       noNationalitiesFound: 'No nationalities found',
+      showPassword: 'Show password',
+      hidePassword: 'Hide password',
     },
     recoverPassword: {
       title: 'Recover password',

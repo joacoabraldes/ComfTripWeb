@@ -5,12 +5,14 @@ import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
 import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "../i18n";
+import InputField from "../components/forms/InputField";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" }); // 'email' here is the identifier (username or email)
   const nav = useNavigate();
   const { login} = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { t } = useTranslation();
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -42,36 +44,37 @@ export default function Login() {
           <h1 className="auth-title">{t('auth.login.title')}</h1>
 
           <form className="auth-form">
-            <label className="auth-field">
-              <span className="auth-field-label">{t('auth.login.usernameOrEmail')}</span>
-              <input
-                className="input"
-                name="email" // kept the same name to minimize other changes; this is the identifier
-                placeholder={t('auth.login.usernameOrEmail')}
-                onChange={handle}
-                type="text"         // <-- changed from "email" to "text"
-                autoComplete="username"
-                aria-label={t('auth.login.usernameOrEmail')}
-                required
-                disabled={loading}
-              />
-            </label>
+            <InputField
+              label={t('auth.login.usernameOrEmail')}
+              name="email"
+              placeholder={t('auth.login.usernameOrEmail')}
+              onChange={handle}
+              type="text"
+              autoComplete="username"
+              required
+              disabled={loading}
+            />
 
-            <label className="auth-field">
-              <span className="auth-field-label">{t('auth.login.password')}</span>
-              <input
-                className="input"
-                name="password"
-                placeholder={t('auth.login.password')}
-                type="password"
-                onChange={handle}
-                autoComplete="current-password"
-                required
-                disabled={loading}
-              />
-            </label>
+            <InputField
+              label={t('auth.login.password')}
+              name="password"
+              placeholder={t('auth.login.password')}
+              onChange={handle}
+              autoComplete="current-password"
+              showPasswordToggle
+              showPassword={showPassword}
+              onTogglePassword={() => setShowPassword(!showPassword)}
+              required
+              disabled={loading}
+            />
 
-            <button type="forgot" className="forgot">{t('auth.login.forgotPassword')}</button>
+            <button 
+              type="button" 
+              className="forgot"
+              onClick={() => nav("/recover-password")}
+            >
+              {t('auth.login.forgotPassword')}
+            </button>
 
             <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading}>
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}

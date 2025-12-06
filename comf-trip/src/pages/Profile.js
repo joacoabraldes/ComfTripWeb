@@ -153,16 +153,19 @@ export default function ProfilePage() {
         </div>
 
         <div className="profile-actions">
-          <button onClick={() => navigate("/edit-profile")} className="btn-edit">
-            <FaEdit size={30} color="#FF3951" /> {t('profile.editData')}
-          </button>
+          {/* Row with Edit Profile and Change Password */}
+          <div className="text-button-row">
+            <button onClick={() => navigate("/edit-profile")} className="btn-text">
+              {t('profile.editProfile')}
+            </button>
+            <button onClick={() => navigate("/change-password")} className="btn-text">
+              {t('profile.changePassword')}
+            </button>
+          </div>
 
-          <button onClick={() => navigate("/change-password")} className="btn-change">
-            <FaLock size={30} color="#FF3951" /> {t('profile.changePassword')}
-          </button>
-
-          <button onClick={handleLogout} className="btn-logout">
-            <FaSignOutAlt size={30} color="black" /> {t('profile.logout')}
+          {/* Logout Button */}
+          <button onClick={handleLogout} className="btn-primary">
+            {t('profile.logout')}
           </button>
         </div>
       </div>

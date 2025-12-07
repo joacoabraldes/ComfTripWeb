@@ -103,6 +103,7 @@ const en = {
       newPassword: 'New password',
       confirmPassword: 'Confirm password',
       sendButton: 'Send',
+        sendingButton: 'Sending...',
       resendIn: 'Resend ({seconds}s)',
       confirmButton: 'Confirm',
       backToLogin: 'Back to login',

@@ -8,6 +8,7 @@ import { useAuth } from "../auth/AuthProvider";
 import PhoneField from "../components/forms/PhoneField";
 import InputField from "../components/forms/InputField";
 import NationalityField from "../components/forms/NationalityField";
+import FilterSelect from "../components/FilterSelect";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -26,7 +27,7 @@ export default function Register() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { t } = useTranslation();
+    const { t, language, setLanguage } = useTranslation();
   const { register } = useAuth();
 
   const handleChange = (e) => {
@@ -91,7 +92,19 @@ export default function Register() {
       <div className="auth-container">
         {/* LEFT: form */}
         <div className="auth-left">
-          <h1 className="auth-title">{t("auth.register.title")}</h1>
+            <div className="auth-header">
+                <h1 className="auth-title" style={{ margin: 0 }}>{t("auth.register.title")}</h1>
+                <FilterSelect
+                    value={language}
+                    onChange={setLanguage}
+                    options={[
+                        { value: 'es', label: t('profile.spanish') },
+                        { value: 'en', label: t('profile.english') },
+                    ]}
+                    isClearable={false}
+                    disabled={loading}
+                />
+            </div>
           <p className="auth-sub">{t("auth.register.subtitle")}</p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
@@ -127,6 +140,7 @@ export default function Register() {
                 onNumberChange={(number) => setForm((f) => ({ ...f, phoneNumber: number }))}
                 placeholder={t("auth.register.phoneNumber")}
                 inputHeight={50}
+                disabled={loading}
               />
             </div>
 

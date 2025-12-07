@@ -103,6 +103,7 @@
       newPassword: 'Nueva contraseña',
       confirmPassword: 'Confirmar contraseña',
       sendButton: 'Enviar',
+        sendingButton: 'Eviando...',
       resendIn: 'Reenviar ({seconds}s)',
       confirmButton: 'Confirmar',
       backToLogin: 'Volver al login',

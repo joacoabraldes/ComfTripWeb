@@ -189,7 +189,12 @@ export default function Community() {
   async function handleLoadComments(postId) {
     if (commentsByPostOpen[postId]) {
         setCommentsByPostOpen(prev => ({ ...prev, [postId]: false }));
-        return; // ya cargados
+        return;
+    }
+
+    if(commentsByPost[postId]) {
+        setCommentsByPostOpen(prev => ({ ...prev, [postId]: true }));
+        return;
     }
 
     try {
@@ -210,14 +215,22 @@ export default function Community() {
 
     try {
         setSendCommentary((prev => ({ ...prev, [postId]: true })))
-      const res = await addPostComment(postId, text);
-      const newComment = res.comment || res;
+      const res =await addPostComment(postId, text);
+        /*const newComment = {
+            author_name: res.author_name || "",
+            author_username: res.author_username,
+            comment: res.comment || "",
+            created_at: res.created_at
+        };
 
-      const existing = commentsByPost[postId] || [];
+
+        const existing = commentsByPost[postId] || [];
       setCommentsByPost((prev) => ({
         ...prev,
         [postId]: [...existing, newComment],
-      }));
+      }));*/
+        const comments = await fetchPostComments(postId);
+        setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
 
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
     } catch (err) {
@@ -394,7 +407,7 @@ export default function Community() {
                     onClick={sendRequest}
                     disabled={sending}
                   >
-                    {t('community.send')}
+                      {sending ? t('community.sending') : t('community.send')}
                   </ActionButton>
                 </div>
                 <p className="hint">{t('community.hint')}</p>
@@ -684,39 +697,64 @@ export default function Community() {
 
                         {commentsByPost[post.id] && commentsByPostOpen[post.id] && (
                           <div className="feed-comments">
+                              <div className="feed-comments-list">
                             {commentsByPost[post.id].length === 0 && (
                               <p className="muted">
                                   {t('community.noCommentaries')}
                               </p>
                             )}
                             {commentsByPost[post.id].map((c) => (
-                              <div key={c.id} className="feed-comment-item">
-                                <strong>
-                                  {c.author_name
-                                    ? c.author_name
-                                    : `@${c.author_username}` || t('community.user')}
-                                </strong>{' '}
-                                : {c.content}
-                              </div>
-                            ))}
+                                <div key={c.id} className="feed-comment-item">
+                                    <div className="feed-comment-header">
+                                        <div style={{display: "flex", gap: "0.5rem"}}>
+                                            <div className="avatar">
+                                                {(c.author_name || c.author_username || "U")
+                                                    .toString()
+                                                    .split(" ")
+                                                    .map((s) => s[0])
+                                                    .slice(0, 2)
+                                                    .join("")
+                                                    .toUpperCase()}
+                                            </div>
+
+                                            <div className="feed-author">
+                                                <div className="feed-author-name">
+                                                    {c.author_name
+                                                        ? c.author_name
+                                                        : `@${c.author_username}` || t('community.user')}
+                                                </div>
+
+                                                {c.author_username && c.author_name && (
+                                                    <div className="feed-author-username">@{c.author_username}</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {c.created_at && (
+                                            <div className="feed-date">
+                                                {new Date(c.created_at).toLocaleString()}
+                                            </div>
+                                        )}</div>
+                                    <div className="feed-comment">{c.content}</div>
+                                </div>
+                            ))}</div>
 
                             <form
                               onSubmit={(e) => handleAddComment(e, post.id)}
                               className="feed-comment-form"
                             >
-                              <input
-                                type="text"
-                                className="feed-comment-input"
-                                placeholder={t('community.writeCommentary')}
-                                value={commentText[post.id] || ''}
-                                onChange={(e) =>
-                                  setCommentText((prev) => ({
-                                    ...prev,
-                                    [post.id]: e.target.value,
-                                  }))
-                                }
+                              <textarea
+                                  className="feed-comment-input"
+                                  rows={1}
+                                  value={commentText[post.id] || ''}
+                                  onChange={(e) => {
+                                      setCommentText((prev) => ({
+                                          ...prev,
+                                          [post.id]: e.target.value,
+                                      }));
+                                  }}
                               />
-                              <button type="submit" className="btn small">
+
+                                <button type="submit" className="btn small" disabled={sendCommentary[post.id]}>
                                   {!sendCommentary[post.id] ? t('community.send') : t('community.sending')}
                               </button>
                             </form>

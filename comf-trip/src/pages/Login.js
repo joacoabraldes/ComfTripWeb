@@ -49,9 +49,8 @@ export default function Login() {
     <div className="auth-root">
       <div className="auth-container">
         <div className="auth-left">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h1 className="auth-title" style={{ margin: 0 }}>{t('auth.login.title')}</h1>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px' }}>
+          <div className="auth-header">
+            <h1 className="auth-title" >{t('auth.login.title')}</h1>
               <FilterSelect
                 value={language}
                 onChange={setLanguage}
@@ -60,8 +59,8 @@ export default function Login() {
                   { value: 'en', label: t('profile.english') },
                 ]}
                 isClearable={false}
+                disabled={loading}
               />
-            </div>
           </div>
 
           <form className="auth-form">
@@ -93,6 +92,7 @@ export default function Login() {
               type="button" 
               className="forgot"
               onClick={() => nav("/recover-password")}
+              disabled={loading}
             >
               {t('auth.login.forgotPassword')}
             </button>

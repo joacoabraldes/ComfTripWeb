@@ -165,7 +165,7 @@ export default function RecoverPassword() {
                   maxLength={6}
                   style={{ flex: 1 }}
                   required
-                  disabled={loading}
+                  disabled={loading || sendingCode}
                 />
                 <button
                   type="button"
@@ -180,7 +180,7 @@ export default function RecoverPassword() {
                   }}
                 >
                   {sendingCode ? (
-                    t('common.loading') || 'Enviando...'
+                    t('auth.recoverPassword.sendingButton') || 'Enviando...'
                   ) : (
                     resendCooldown > 0
                       ? (t('auth.recoverPassword.resendIn') || 'Reenviar ({seconds}s)').replace('{seconds}', resendCooldown.toString())
@@ -199,7 +199,7 @@ export default function RecoverPassword() {
               showPassword={showNewPassword}
               onTogglePassword={() => setShowNewPassword(!showNewPassword)}
               required
-              disabled={loading}
+              disabled={loading || sendingCode}
             />
 
             <InputField
@@ -211,7 +211,7 @@ export default function RecoverPassword() {
               showPassword={showConfirmPassword}
               onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
               required
-              disabled={loading}
+              disabled={loading || sendingCode}
             />
 
             <button
@@ -231,7 +231,7 @@ export default function RecoverPassword() {
                 className="linkish"
                 onClick={() => navigate("/login")}
                 style={{ fontSize: "16px" }}
-                disabled={loading}
+                disabled={loading || sendingCode}
               >
                 {t('auth.recoverPassword.backToLogin')}
               </button>

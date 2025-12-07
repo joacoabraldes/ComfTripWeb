@@ -32,7 +32,13 @@
     width: 100%;
   display:flex;
   flex-direction:column;
-  gap:1.25rem;
+  gap:1rem;
+}
+
+.auth-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 /* Title */
@@ -279,6 +285,15 @@
 
 .forgot:hover{
   text-decoration: underline;
+}
+
+.forgot:disabled {
+    color: var(--color-primary-dark);
+    cursor: initial;
+}
+
+.forgot:hover:disabled{
+    text-decoration: none;
 }
 
 /* Contenedor principal del select */

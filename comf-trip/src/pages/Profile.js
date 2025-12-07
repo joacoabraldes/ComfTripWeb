@@ -90,7 +90,7 @@ export default function ProfilePage() {
               <div className="profile-photo">
                 {profile.photo ? <img src={profile.photo} alt={t('profile.photoAlt')} /> : <FaUser className="default-photo" />}
               </div>
-              <h2 className="profile-name">{profile.name || t('profile.noName')}</h2>
+              <h2 className="profile-name truncate-name" style={{maxWidth:"100%"}}>{profile.name || t('profile.noName')}</h2>
             </div>
 
             <div className="profile-right">

@@ -68,12 +68,19 @@
   color: var(--color-text-primary);
   margin: 0;
 }
-
+.truncate-name {
+    max-width: 140px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
 .profile-right {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+    min-width: 450px;
 }
 
 .profile-field {
@@ -169,7 +176,7 @@
 /* Responsive */
 @media (max-width: 48rem) {
   .profile-root {
-    padding-top: 0.5rem;
+    padding-top: 2rem;
     padding-left: 1rem;
     padding-right: 1rem;
   }
@@ -201,5 +208,8 @@
 
   .profile-card {
     padding: 1.5rem;
+  }
+  .profile-actions{
+      padding-bottom: 2rem;
   }
 }

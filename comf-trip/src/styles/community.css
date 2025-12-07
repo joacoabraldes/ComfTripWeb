@@ -1,7 +1,7 @@
 /* src/styles/community.css */
 
 .community-main {
-  padding: 0.5rem 2.5rem 1.5rem 2.5rem;
+  padding: 2.5rem 2.5rem 1.5rem 2.5rem;
   min-height: calc(100vh - var(--header-height, 5rem));
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
@@ -11,7 +11,7 @@
 
 .community-container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
 }
 
 .community-title {
@@ -29,7 +29,7 @@
 
 /* sidebar amigos */
 .community-sidebar {
-  width: 270px;
+  width: 380px;
   flex-shrink: 0;
   position: sticky;
   top: calc(var(--header-height, 5rem) + 0.75rem);
@@ -93,6 +93,7 @@
   border-radius: 0.625rem;
   background: linear-gradient(180deg, var(--color-bg-primary), var(--color-bg-primary));
   border: 0.0625rem solid var(--color-border-alpha-03);
+    gap: 0.5rem;
 }
 
 .list-item .info {
@@ -127,6 +128,14 @@
   font-size: 0.75rem;
   color: var(--color-text-muted-dark);
   margin-top: 0.375rem;
+}
+
+.truncate {
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 }
 
 /* actions area */
@@ -189,15 +198,16 @@
   border: 0.0625rem solid var(--color-border-light);
 }
 
-.btn-like {
-  background: var(--color-primary-lighter);
-  color: var(--color-primary);
-  border: 0.0625rem solid var(--color-border-primary-alpha-30);
+.btn.comments{
+    background: transparent;
+    color: var(--color-text-primary);
+    border: transparent;
 }
 
-.btn-like-active {
-  background: var(--color-primary);
-  color: var(--color-text-white);
+.btn.like {
+    background: transparent;
+    color: var(--color-text-primary);
+    border: transparent;
 }
 
 /* muted text */
@@ -333,6 +343,7 @@
   gap: 0.65rem;
   align-items: flex-start;
   margin-bottom: 0.35rem;
+    justify-content: space-between;
 }
 
 .feed-author {
@@ -352,9 +363,10 @@
   color: var(--color-text-secondary);
 }
 
-.feed-meta {
-  font-size: 0.75rem;
-  color: var(--color-text-muted-dark);
+.feed-date {
+    font-size: 0.78rem;
+    color: var(--color-text-muted-dark);
+    margin-left: auto;
 }
 
 .feed-post-content {
@@ -447,5 +459,11 @@
   .community-sidebar {
     position: static;
     width: 100%;
+  }
+  .community-feed{
+      width: 100%;
+  }
+  .truncate{
+      max-width: 800px;
   }
 }

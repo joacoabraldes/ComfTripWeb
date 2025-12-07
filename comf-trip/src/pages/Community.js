@@ -1,7 +1,7 @@
 // src/pages/Community.js
 import React, { useEffect, useState } from 'react';
 import '../styles/community.css';
-import { FaCheck, FaTimes, FaUser, FaShare, FaTrash, FaImage } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaUser, FaShare, FaTrash, FaImage, FaHeart, FaRegHeart, FaComment,  FaRegComment} from 'react-icons/fa';
 import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
@@ -31,6 +31,7 @@ export default function Community() {
   const [outgoing, setOutgoing] = useState([]);
   const [emailOrId, setEmailOrId] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendCommentary, setSendCommentary]=useState({})
 
   // share modal state
   const [showShareModal, setShowShareModal] = useState(false);
@@ -52,6 +53,7 @@ export default function Community() {
   const [commentText, setCommentText] = useState({});
   const [loadingPostId, setLoadingPostId] = useState(null);
   const [commentsByPost, setCommentsByPost] = useState({});
+    const [commentsByPostOpen, setCommentsByPostOpen] = useState({});
   const [attachedFiles, setAttachedFiles] = useState([]);
 
   // ---------- carga inicial ----------
@@ -117,7 +119,7 @@ export default function Community() {
       setPosts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      setFeedError(err.message || 'Error cargando el feed');
+      setFeedError(err.message || t('community.errorFeed'));
       setPosts([]);
     } finally {
       setLoadingFeed(false);
@@ -144,7 +146,7 @@ export default function Community() {
     setAttachedFiles([]);
   } catch (err) {
     console.error(err);
-    alert(err.message || 'Error al crear el post');
+    alert(err.message || t('community.errorCreatePost'));
   } finally {
     setLoadingPostId(null);
   }
@@ -177,7 +179,7 @@ export default function Community() {
       );
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Error cambiando like');
+      alert(err.message || t('community.errorLike'));
     } finally {
       setLoadingPostId(null);
     }
@@ -185,14 +187,18 @@ export default function Community() {
 
   // ---------- FEED: cargar comentarios ----------
   async function handleLoadComments(postId) {
-    if (commentsByPost[postId]) return; // ya cargados
+    if (commentsByPostOpen[postId]) {
+        setCommentsByPostOpen(prev => ({ ...prev, [postId]: false }));
+        return; // ya cargados
+    }
 
     try {
       const comments = await fetchPostComments(postId);
       setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
+        setCommentsByPostOpen((prev) => ({ ...prev, [postId]: true }));
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Error cargando comentarios');
+      alert(err.message || t('community.errorLoadingCom'));
     }
   }
 
@@ -203,6 +209,7 @@ export default function Community() {
     if (!text) return;
 
     try {
+        setSendCommentary((prev => ({ ...prev, [postId]: true })))
       const res = await addPostComment(postId, text);
       const newComment = res.comment || res;
 
@@ -215,7 +222,9 @@ export default function Community() {
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Error agregando comentario');
+      alert(err.message || t('community.errorAddingCon'));
+    } finally {
+        setSendCommentary((prev => ({ ...prev, [postId]: false })))
     }
   }
 
@@ -409,8 +418,8 @@ export default function Community() {
                               .toUpperCase()}
                           </div>
                           <div style={{ marginLeft: 12 }}>
-                            <div className="title">{f.name || f.email}</div>
-                            {f.name && <div className="subtitle">{f.email}</div>}
+                            <div className="title truncate">{f.name || f.email}</div>
+                            {f.name && <div className="subtitle truncate">{f.email}</div>}
                           </div>
                         </div>
                         <div className="actions">
@@ -460,11 +469,11 @@ export default function Community() {
                               .toUpperCase()}
                           </div>
                           <div style={{ marginLeft: 12 }}>
-                            <div className="title">
+                            <div className="title truncate">
                               {r.requester_name || r.requester_email}
                             </div>
                             {r.requester_name && (
-                              <div className="subtitle">{r.requester_email}</div>
+                              <div className="subtitle truncate" >{r.requester_email}</div>
                             )}
                           </div>
                         </div>
@@ -507,11 +516,11 @@ export default function Community() {
                               .toUpperCase()}
                           </div>
                           <div style={{ marginLeft: 12 }}>
-                            <div className="title">
+                            <div className="title truncate" >
                               {o.addressee_name || o.addressee_email}
                             </div>
                             {o.addressee_name && (
-                              <div className="subtitle">{o.addressee_email}</div>
+                              <div className="subtitle truncate">{o.addressee_email}</div>
                             )}
                           </div>
                         </div>
@@ -530,7 +539,7 @@ export default function Community() {
                   <textarea
                     className="feed-textarea"
                     rows={3}
-                    placeholder="¿Qué querés compartir con tus amigos sobre tus viajes?"
+                    placeholder={t('community.inputPost')}
                     value={newPost}
                     onChange={(e) => setNewPost(e.target.value)}
                   />
@@ -538,7 +547,7 @@ export default function Community() {
                   <div className="feed-attachments">
                     <label className="btn ghost small file-upload-btn">
                       <FaImage size={14} style={{ marginRight: 6 }} />
-                      Agregar foto
+                        {attachedFiles.length > 0 ? t('community.changePhoto') : t('community.addPhoto')}
                       <input
                         type="file"
                         accept="image/*"
@@ -567,27 +576,27 @@ export default function Community() {
 
                   <div className="feed-new-post-footer">
                     <span className="feed-hint">
-                      Tus amigos verán tus publicaciones en orden cronológico.
+                      {t('community.hintPost')}
                     </span>
                     <button
                       type="submit"
                       disabled={loadingPostId === 'new'}
                       className="btn"
                     >
-                      {loadingPostId === 'new' ? 'Publicando...' : 'Publicar'}
+                      {loadingPostId === 'new' ? t('community.publishing') : t('community.publish')}
                     </button>
                   </div>
                 </form>
               </section>
 
               <section className="card feed-card">
-                {loadingFeed && <div className="spinner">Cargando feed...</div>}
+                {loadingFeed && <div className="spinner">{t('community.loadingFeed')}</div>}
 
                 {feedError && <div className="error-text">{feedError}</div>}
 
                 {!loadingFeed && posts.length === 0 && !feedError && (
                   <div className="muted">
-                    No hay publicaciones todavía. Empezá creando tu primer post.
+                      {t('community.noPost')}
                   </div>
                 )}
 
@@ -596,44 +605,39 @@ export default function Community() {
                     const images = getPostImages(post);
                     return (
                       <article key={post.id} className="feed-post">
-                        <header className="feed-post-header">
-                          <div className="avatar">
-                            {(post.author_username ||
-                              post.author_name ||
-                              'U')
-                              .toString()
-                              .split(' ')
-                              .map((s) => s[0])
-                              .slice(0, 2)
-                              .join('')
-                              .toUpperCase()}
-                          </div>
-                          <div className="feed-author">
-                            {/* username como principal */}
-                            <div className="feed-author-name">
-                              {post.author_username
-                                ? `@${post.author_username}`
-                                : post.author_name || 'Usuario'}
-                            </div>
-                            {/* debajo, si existe name y username, mostramos el nombre “humano” */}
-                            {post.author_username && post.author_name && (
-                              <div className="feed-author-username">
-                                {post.author_name}
+                          <header className="feed-post-header">
+                              <div className="avatar">
+                                  {(post.author_name || post.author_username || "U")
+                                      .toString()
+                                      .split(" ")
+                                      .map((s) => s[0])
+                                      .slice(0, 2)
+                                      .join("")
+                                      .toUpperCase()}
                               </div>
-                            )}
-                            {post.created_at && (
-                              <div className="feed-meta">
-                                {new Date(post.created_at).toLocaleString()}
+
+                              <div className="feed-author">
+                                  <div className="feed-author-name">
+                                      {post.author_name
+                                          ? post.author_name
+                                          : `@${post.author_username}` || t('community.user')}
+                                  </div>
+
+                                  {post.author_username && post.author_name && (
+                                      <div className="feed-author-username">@{post.author_username}</div>
+                                  )}
                               </div>
-                            )}
-                          </div>
-                        </header>
 
-                        <div className="feed-post-content">
-                          {post.content}
-                        </div>
+                              {/* fecha arriba a la derecha */}
+                              {post.created_at && (
+                                  <div className="feed-date">
+                                      {new Date(post.created_at).toLocaleString()}
+                                  </div>
+                              )}
+                          </header>
 
-                        {images.length > 0 && (
+
+                          {images.length > 0 && (
                           <div className="feed-images">
                             {images.map((url, idx) => (
                               <div key={idx} className="feed-image-wrapper">
@@ -643,44 +647,54 @@ export default function Community() {
                           </div>
                         )}
 
+                          {post.content && <div className="feed-post-content" style={{display:"flex", gap:5, paddingLeft:5, paddingTop:5, paddingBottom:5}}>
+                              <div className="feed-author-name">
+                                  {post.author_name
+                                      ? post.author_name
+                                      : `@${post.author_username}` || t('community.user')}
+                              </div>
+                              {post.content}
+                          </div>}
+
                         <div className="feed-post-actions">
                           <button
                             type="button"
                             disabled={loadingPostId === post.id}
                             onClick={() => handleToggleLike(post.id)}
-                            className={`btn small ${
-                              post.liked_by_me ? 'btn-like-active' : 'btn-like'
-                            }`}
+                            className={'btn like small'}
                           >
-                            {post.liked_by_me ? '💙' : '🤍'}{' '}
-                            {post.like_count || 0} likes
+                              {post.liked_by_me ? (
+                                  <FaHeart size={20} color="var(--color-primary)" />   // corazón lleno rojo
+                              ) : (
+                                  <FaRegHeart size={20} color="var(--color-text-primary)" /> // corazón vacío gris
+                              )}{' '}
+                            {post.like_count || 0} Likes
                           </button>
 
                           <button
                             type="button"
                             onClick={() => handleLoadComments(post.id)}
-                            className="btn ghost small"
-                          >
-                            Ver comentarios
-                            {post.comment_count > 0
-                              ? ` (${post.comment_count})`
-                              : ''}
+                            className="btn comments small"
+                          >{
+                              commentsByPostOpen[post.id] ? <FaComment size={20} color={"var(--color-success)"}/> :
+                                  <FaRegComment size={20} color="var(--color-text-primary)"/>
+                          }{' '}{post.comment_count}{' '}{t('community.comment')}
                           </button>
                         </div>
 
-                        {commentsByPost[post.id] && (
+                        {commentsByPost[post.id] && commentsByPostOpen[post.id] && (
                           <div className="feed-comments">
                             {commentsByPost[post.id].length === 0 && (
                               <p className="muted">
-                                No hay comentarios todavía.
+                                  {t('community.noCommentaries')}
                               </p>
                             )}
                             {commentsByPost[post.id].map((c) => (
                               <div key={c.id} className="feed-comment-item">
                                 <strong>
-                                  {c.author_username
-                                    ? `@${c.author_username}`
-                                    : c.author_name || 'Usuario'}
+                                  {c.author_name
+                                    ? c.author_name
+                                    : `@${c.author_username}` || t('community.user')}
                                 </strong>{' '}
                                 : {c.content}
                               </div>
@@ -693,7 +707,7 @@ export default function Community() {
                               <input
                                 type="text"
                                 className="feed-comment-input"
-                                placeholder="Escribir un comentario..."
+                                placeholder={t('community.writeCommentary')}
                                 value={commentText[post.id] || ''}
                                 onChange={(e) =>
                                   setCommentText((prev) => ({
@@ -703,7 +717,7 @@ export default function Community() {
                                 }
                               />
                               <button type="submit" className="btn small">
-                                Enviar
+                                  {!sendCommentary[post.id] ? t('community.send') : t('community.sending')}
                               </button>
                             </form>
                           </div>

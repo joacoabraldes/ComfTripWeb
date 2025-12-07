@@ -27,6 +27,7 @@ export default function PhoneField({
   containerStyle,
   inputHeight = 50,
   placeholder,
+    disabled=false,
 }) {
   const { t } = useTranslation();
   const [showCodePicker, setShowCodePicker] = useState(false);
@@ -116,6 +117,7 @@ export default function PhoneField({
           type="button"
           className="code-button"
           onClick={() => setShowCodePicker(!showCodePicker)}
+          disabled={disabled}
         >
           <span className="code-text">{code}</span>
           <span className="code-arrow">
@@ -134,9 +136,10 @@ export default function PhoneField({
           }}
           placeholder={defaultPlaceholder}
           onFocus={() => setShowCodePicker(false)}
+          disabled={disabled}
         />
       </div>
-      {showCodePicker && (
+      {showCodePicker && !disabled && (
         <div className="code-dropdown">
           <div className="code-search-container">
             <input

@@ -1,17 +1,17 @@
 .edit-root {
-    min-height: 100vh;
+    height: calc(100vh - var(--header-height, 5rem));
     background: var(--color-bg-primary);
     color: var(--color-text-primary);
     font-family: "Spline Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
 .edit-container {
-    max-width: 43.75rem;
-    margin: 3.125rem auto;
-    padding: 1.25rem;
+    max-width: 100%;
+    padding: 4.25rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 
 .edit-title {

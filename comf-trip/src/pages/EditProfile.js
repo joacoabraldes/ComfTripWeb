@@ -216,6 +216,7 @@ export default function EditProfile() {
                             onNumberChange={(number) => setForm((f) => ({ ...f, phoneNumber: number }))}
                             placeholder={t('auth.register.phoneNumber')}
                             inputHeight={50}
+                            disabled={loading}
                         />
                     </div>
 

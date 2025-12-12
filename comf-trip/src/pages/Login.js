@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import React, { useState, useMemo } from "react";
+import React, {useState, useMemo, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
@@ -15,8 +15,21 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { t, language, setLanguage } = useTranslation();
+    const [message, setMessage] = useState("");
+    const [errorEmail, setErrorEmail]=useState(null)
+    const [errorPassword, setErrorPassword]=useState(null)
+    const [onEmail, setOnEmail]=useState(false)
+    const [onPassword, setOnPassword]=useState(false)
 
-  const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handle = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+      if(e.target.name==="password"){
+          setOnPassword(true)
+      }
+      if(e.target.name==="email"){
+          setOnEmail(true)
+      }
+  }
 
   // Validar que los campos estén completos
   const isFormValid = useMemo(() => {
@@ -24,9 +37,35 @@ export default function Login() {
     const password = (form.password || "").trim();
     return identifier.length > 0 && password.length > 0;
   }, [form.email, form.password]);
+    useEffect(() => {
+        if (onPassword) {
+            if (form.password.trim().length === 0) {
+                setErrorPassword(t("auth.errors.passwordRequired"))
+            }else {
+                setErrorPassword(null)
+            }
+        }
+        if (onEmail) {
+            if (form.email.trim().length === 0 && onEmail) {
+                setErrorEmail(t("auth.errors.emailRequired"))
+            } else {
+                setErrorEmail(null)
+            }
+        }
+    }, [form, t]);
 
   const submit = async (e) => {
     e.preventDefault();
+    if(!isFormValid) {
+        if (form.password.trim().length === 0) {
+            setErrorPassword(t("auth.errors.passwordRequired"))
+        }
+        if (form.email.trim().length === 0) {
+            setErrorEmail(t("auth.errors.emailRequired"))
+        }
+        setMessage(t("auth.register.completeFields"));
+        return
+    }
     setLoading(true);
     try {
       const identifier = (form.email || "").trim();
@@ -71,7 +110,7 @@ export default function Login() {
               onChange={handle}
               type="text"
               autoComplete="username"
-              required
+              error={errorEmail}
               disabled={loading}
             />
 
@@ -84,7 +123,7 @@ export default function Login() {
               showPasswordToggle
               showPassword={showPassword}
               onTogglePassword={() => setShowPassword(!showPassword)}
-              required
+              error={errorPassword}
               disabled={loading}
             />
 
@@ -97,9 +136,10 @@ export default function Login() {
               {t('auth.login.forgotPassword')}
             </button>
 
-            <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading || !isFormValid}>
+            <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading}>
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
+              {message && <div className="message">{message}</div>}
             <div className="footer-cta">
               <span>{t('auth.login.notRegistered')}</span>
               <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>{t('auth.login.register')}</button>

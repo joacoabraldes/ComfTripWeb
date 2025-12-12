@@ -140,6 +140,15 @@
       saving: 'Guardando…',
       completeButton: 'Comenzar con ComfTrip',
     },
+      errors: {
+          usernameRequired: 'Ingrese nombre de usuario',
+          emailRequired: 'Ingrese el mail de usuario',
+          passwordRequired: 'Ingrese la contraseña',
+          passwordMinLength: 'La contraseña debe tener mínimo 6 caracteres',
+          confirmPasswordRequired: 'Ingrese confirmación de contraseña',
+          passwordsNotMatch: 'Las contraseñas no coinciden',
+          invalidEmail: 'Ingrese un email válido'
+      }
   },
 
   // Trips

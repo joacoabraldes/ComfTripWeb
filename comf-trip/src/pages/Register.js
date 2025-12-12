@@ -1,5 +1,5 @@
 // src/pages/Register.jsx
-import React, { useState, useMemo } from "react";
+import React, {useState, useMemo, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
@@ -29,15 +29,77 @@ export default function Register() {
   const navigate = useNavigate();
     const { t, language, setLanguage } = useTranslation();
   const { register } = useAuth();
+  const [errorName, setErrorName]=useState(null)
+    const [errorEmail, setErrorEmail]=useState(null)
+    const [errorPassword, setErrorPassword]=useState(null)
+    const [errorConfirmPassword, setErrorConfirmPassword]=useState(null)
+    const [onName, setOnName]=useState(false)
+    const [onEmail, setOnEmail]=useState(false)
+    const [onPassword, setOnPassword]=useState(false)
+    const [onConfirmPassword, setOnConfirmPassword]=useState(false)
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
+      if(name==="password"){
+          setOnPassword(true)
+      }
+      if(name==="confirmPassword"){
+          setOnConfirmPassword(true)
+      }
+      if(name==="username"){
+          setOnName(true)
+      }
+      if(name==="email"){
+          setOnEmail(true)
+      }
   };
 
   function handleNationalityChange(nationality) {
     setForm((f) => ({ ...f, nationality }));
   }
+
+    useEffect(() => {
+        if (onPassword) {
+            if (form.password.trim().length === 0) {
+                setErrorPassword(t("auth.errors.passwordRequired"))
+            } else if (form.password.trim().length < 6) {
+                setErrorPassword(t("auth.errors.passwordMinLength"))
+            } else {
+                setErrorPassword(null)
+            }
+        }
+        if (onConfirmPassword) {
+            if (form.password !== form.confirmPassword) {
+                if (form.confirmPassword.trim().length === 0) {
+                    setErrorConfirmPassword(t("auth.errors.confirmPasswordRequired"))
+                } else {
+                    setErrorConfirmPassword(t("auth.errors.passwordsNotMatch"))
+                }
+            } else {
+                setErrorConfirmPassword(null)
+            }
+        }
+        if (onName) {
+
+            if (form.username.trim().length === 0) {
+                setErrorName(t("auth.errors.usernameRequired"))
+            } else {
+                setErrorName(null)
+            }
+        }
+        if (onEmail) {
+            if (form.email.trim().length === 0) {
+                setErrorEmail(t("auth.errors.emailRequired"))
+            } else if (!EMAIL_REGEX.test(form.email.trim())) {
+                setErrorEmail(t("auth.errors.invalidEmail"));
+            } else {
+                setErrorEmail(null)
+            }
+        }
+    }, [form, t]);
 
   const isFormValid = useMemo(() => {
     return (
@@ -45,20 +107,29 @@ export default function Register() {
       form.email.trim().length > 0 &&
       form.password.trim().length >= 6 &&
       form.confirmPassword.trim().length >= 6 &&
-      form.password === form.confirmPassword &&
-      form.agree
+      form.password === form.confirmPassword
     );
   }, [form]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.agree) return setMessage(t("auth.register.agreeTermsError"));
-    if (form.password !== form.confirmPassword) {
-      return setMessage(t("auth.register.passwordsDoNotMatch") || "Las contraseñas no coinciden");
-    }
     if (!isFormValid) {
-      return setMessage(t("auth.register.completeFields"));
+        if (form.password.trim().length === 0) {
+            setErrorPassword(t("auth.errors.passwordRequired"))
+        }
+        if (form.email.trim().length === 0) {
+            setErrorEmail(t("auth.errors.emailRequired"))
+        }
+        if (form.username.trim().length === 0) {
+            setErrorName(t("auth.errors.usernameRequired"))
+        }
+        if (form.confirmPassword.trim().length === 0) {
+            setErrorConfirmPassword(t("auth.errors.confirmPasswordRequired"))
+        }
+      setMessage(t("auth.register.completeFields"));
+      return
     }
+      if (!form.agree) return  setMessage(t("auth.register.agreeTermsError"));
     setLoading(true);
     setMessage("");
 
@@ -114,19 +185,19 @@ export default function Register() {
               value={form.username}
               onChange={handleChange}
               placeholder={t("auth.register.usernamePlaceholder")}
-              required
               disabled={loading}
+              error={errorName}
             />
 
             <InputField
               label={t("auth.register.email")}
               name="email"
-              type="email"
+              type="text"
               value={form.email}
               onChange={handleChange}
               placeholder={t("auth.register.emailPlaceholder")}
-              required
               disabled={loading}
+              error={errorEmail}
             />
 
             <div className="auth-field">
@@ -153,8 +224,8 @@ export default function Register() {
               showPasswordToggle
               showPassword={showPassword}
               onTogglePassword={() => setShowPassword(!showPassword)}
-              required
               disabled={loading}
+              error={errorPassword}
             />
 
             <InputField
@@ -166,8 +237,8 @@ export default function Register() {
               showPasswordToggle
               showPassword={showConfirmPassword}
               onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-              required
               disabled={loading}
+              error={errorConfirmPassword}
             />
 
             <div className="grid-2">
@@ -205,7 +276,7 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={loading || !isFormValid}
+              disabled={loading}
               className="auth-btn-primary"
             >
               {loading

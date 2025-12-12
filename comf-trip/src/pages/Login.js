@@ -47,7 +47,7 @@ export default function Login() {
         }
         if (onEmail) {
             if (form.email.trim().length === 0 && onEmail) {
-                setErrorEmail(t("auth.errors.emailRequired"))
+                setErrorEmail(t("auth.errors.identifierRequired"))
             } else {
                 setErrorEmail(null)
             }

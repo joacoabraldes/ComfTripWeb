@@ -141,6 +141,7 @@ const en = {
       completeButton: 'Start with ComfTrip',
     },
       errors: {
+          identifierRequired: 'Please enter a username or email address',
           usernameRequired: 'Please enter a username',
           emailRequired: 'Please enter an email address',
           passwordRequired: 'Please enter a password',

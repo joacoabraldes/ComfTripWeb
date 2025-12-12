@@ -141,6 +141,7 @@
       completeButton: 'Comenzar con ComfTrip',
     },
       errors: {
+          identifierRequired: "Ingresá tu email o usuario",
           usernameRequired: 'Ingrese nombre de usuario',
           emailRequired: 'Ingrese el mail de usuario',
           passwordRequired: 'Ingrese la contraseña',

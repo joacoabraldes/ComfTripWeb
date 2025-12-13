@@ -63,7 +63,7 @@ export default function Login() {
         if (form.email.trim().length === 0) {
             setErrorIdentifier("auth.errors.identifierRequired")
         }
-        setMessage(t("auth.register.completeFields"));
+        setMessage("auth.register.completeFields");
         return
     }
     setLoading(true);
@@ -139,7 +139,7 @@ export default function Login() {
             <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading}>
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
-              {message && <div className="message">{message}</div>}
+              {message && <div className="message">{t(message)}</div>}
             <div className="footer-cta">
               <span>{t('auth.login.notRegistered')}</span>
               <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>{t('auth.login.register')}</button>

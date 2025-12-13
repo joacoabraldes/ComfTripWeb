@@ -64,9 +64,9 @@ export default function Register() {
     useEffect(() => {
         if (onPassword) {
             if (form.password.trim().length === 0) {
-                setErrorPassword(t("auth.errors.passwordRequired"))
+                setErrorPassword("auth.errors.passwordRequired")
             } else if (form.password.trim().length < 6) {
-                setErrorPassword(t("auth.errors.passwordMinLength"))
+                setErrorPassword("auth.errors.passwordMinLength")
             } else {
                 setErrorPassword(null)
             }
@@ -74,9 +74,9 @@ export default function Register() {
         if (onConfirmPassword) {
             if (form.password !== form.confirmPassword) {
                 if (form.confirmPassword.trim().length === 0) {
-                    setErrorConfirmPassword(t("auth.errors.confirmPasswordRequired"))
+                    setErrorConfirmPassword("auth.errors.confirmPasswordRequired")
                 } else {
-                    setErrorConfirmPassword(t("auth.errors.passwordsNotMatch"))
+                    setErrorConfirmPassword("auth.errors.passwordsNotMatch")
                 }
             } else {
                 setErrorConfirmPassword(null)
@@ -84,21 +84,21 @@ export default function Register() {
         }
         if (onName) {
             if (form.username.trim().length === 0) {
-                setErrorName(t("auth.errors.usernameRequired"))
+                setErrorName("auth.errors.usernameRequired")
             } else {
                 setErrorName(null)
             }
         }
         if (onEmail) {
             if (form.email.trim().length === 0) {
-                setErrorEmail(t("auth.errors.emailRequired"))
+                setErrorEmail("auth.errors.emailRequired")
             } else if (!EMAIL_REGEX.test(form.email.trim())) {
-                setErrorEmail(t("auth.errors.invalidEmail"));
+                setErrorEmail("auth.errors.invalidEmail");
             } else {
                 setErrorEmail(null)
             }
         }
-    }, [form, t]);
+    }, [form]);
 
   const isFormValid = useMemo(() => {
     return (
@@ -118,25 +118,21 @@ export default function Register() {
     setErrorConfirmPassword(null)
     if (!isFormValid) {
         if (form.password.trim().length === 0) {
-            setErrorPassword(t("auth.errors.passwordRequired"))
-            setOnPassword(true)
+            setErrorPassword("auth.errors.passwordRequired")
         }
         if (form.email.trim().length === 0) {
-            setErrorEmail(t("auth.errors.emailRequired"))
-            setOnEmail(true)
+            setErrorEmail("auth.errors.emailRequired")
         }
         if (form.username.trim().length === 0) {
-            setErrorName(t("auth.errors.usernameRequired"))
-            setOnName(true)
+            setErrorName("auth.errors.usernameRequired")
         }
         if (form.confirmPassword.trim().length === 0) {
-            setErrorConfirmPassword(t("auth.errors.confirmPasswordRequired"))
-            setOnConfirmPassword(true)
+            setErrorConfirmPassword("auth.errors.confirmPasswordRequired")
         }
-      setMessage(t("auth.register.completeFields"));
+      setMessage("auth.register.completeFields");
       return
     }
-      if (!form.agree) return  setMessage(t("auth.register.agreeTermsError"));
+      if (!form.agree) return  setMessage("auth.register.agreeTermsError");
     setLoading(true);
     setMessage("");
 
@@ -159,7 +155,7 @@ export default function Register() {
     } catch (err) {
       const errMsg =
         err?.message || err?.error || (typeof err === "string" ? err : null);
-      setMessage(errMsg || t("auth.register.error"));
+      setMessage(errMsg || "auth.register.error");
     } finally {
       setLoading(false);
     }
@@ -193,7 +189,7 @@ export default function Register() {
               onChange={handleChange}
               placeholder={t("auth.register.usernamePlaceholder")}
               disabled={loading}
-              error={errorName}
+              error={errorName ? t(errorName) : null}
             />
 
             <InputField
@@ -204,7 +200,7 @@ export default function Register() {
               onChange={handleChange}
               placeholder={t("auth.register.emailPlaceholder")}
               disabled={loading}
-              error={errorEmail}
+              error={errorEmail ? t(errorEmail) : null}
             />
 
             <div className="auth-field">
@@ -232,7 +228,7 @@ export default function Register() {
               showPassword={showPassword}
               onTogglePassword={() => setShowPassword(!showPassword)}
               disabled={loading}
-              error={errorPassword}
+              error={errorPassword ? t(errorPassword) : null}
             />
 
             <InputField
@@ -245,7 +241,7 @@ export default function Register() {
               showPassword={showConfirmPassword}
               onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
               disabled={loading}
-              error={errorConfirmPassword}
+              error={errorConfirmPassword ? t(errorConfirmPassword) : null}
             />
 
             <div className="grid-2">
@@ -291,7 +287,7 @@ export default function Register() {
                 : t("auth.register.submit")}
             </button>
 
-            {message && <div className="message">{message}</div>}
+            {message && <div className="message">{t(message)}</div>}
             <div className="footer-cta">
               <span>{t("auth.register.alreadyMember")}</span>
               <button

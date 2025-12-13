@@ -16,7 +16,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { t, language, setLanguage } = useTranslation();
     const [message, setMessage] = useState("");
-    const [errorEmail, setErrorEmail]=useState(null)
+    const [errorIdentifier, setErrorIdentifier]=useState(null)
     const [errorPassword, setErrorPassword]=useState(null)
     const [onEmail, setOnEmail]=useState(false)
     const [onPassword, setOnPassword]=useState(false)
@@ -40,16 +40,16 @@ export default function Login() {
     useEffect(() => {
         if (onPassword) {
             if (form.password.trim().length === 0) {
-                setErrorPassword(t("auth.errors.passwordRequired"))
+                setErrorPassword("auth.errors.passwordRequired")
             }else {
                 setErrorPassword(null)
             }
         }
         if (onEmail) {
             if (form.email.trim().length === 0 && onEmail) {
-                setErrorEmail(t("auth.errors.identifierRequired"))
+                setErrorIdentifier("auth.errors.identifierRequired")
             } else {
-                setErrorEmail(null)
+                setErrorIdentifier(null)
             }
         }
     }, [form, t]);
@@ -58,12 +58,10 @@ export default function Login() {
     e.preventDefault();
     if(!isFormValid) {
         if (form.password.trim().length === 0) {
-            setErrorPassword(t("auth.errors.passwordRequired"))
-            setOnPassword(true)
+            setErrorPassword("auth.errors.passwordRequired")
         }
         if (form.email.trim().length === 0) {
-            setErrorEmail(t("auth.errors.emailRequired"))
-            setOnEmail(true)
+            setErrorIdentifier("auth.errors.identifierRequired")
         }
         setMessage(t("auth.register.completeFields"));
         return
@@ -112,7 +110,7 @@ export default function Login() {
               onChange={handle}
               type="text"
               autoComplete="username"
-              error={errorEmail}
+              error={errorIdentifier ? t(errorIdentifier) : null}
               disabled={loading}
             />
 
@@ -125,7 +123,7 @@ export default function Login() {
               showPasswordToggle
               showPassword={showPassword}
               onTogglePassword={() => setShowPassword(!showPassword)}
-              error={errorPassword}
+              error={errorPassword ? t(errorPassword) : null}
               disabled={loading}
             />
 

@@ -170,8 +170,6 @@ export default function RecoverPassword() {
                               else setErrorEmail(null)
                           }}
                           placeholder={t('auth.recoverPassword.emailPlaceholder') || 'Email'}
-                          maxLength={6}
-                          style={{ flex: 1 }}
                           disabled={loading || sendingCode}
                       />
                       <button
@@ -207,6 +205,8 @@ export default function RecoverPassword() {
                   if(!e.target.value.trim()) setErrorCode('auth.recoverPassword.enterCode')
                   else setErrorCode(null)
               }}
+              maxLength={6}
+              style={{ flex: 1 }}
               placeholder= {t('auth.recoverPassword.codePlaceholder') || 'Código de verificación'}
               disabled={loading || sendingCode}
               error={errorCode ? t(errorCode) : null }

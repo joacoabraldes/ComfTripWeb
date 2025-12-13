@@ -21,10 +21,15 @@ export default function RecoverPassword() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+    const [errorCode, setErrorCode]=useState(null)
+    const [errorEmail, setErrorEmail]=useState(null)
+    const [errorPassword, setErrorPassword]=useState(null)
+    const [errorConfirmPassword, setErrorConfirmPassword]=useState(null)
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   // Validate email format function
   const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return EMAIL_REGEX.test(email);
   };
 
   // Validate email format
@@ -56,12 +61,10 @@ export default function RecoverPassword() {
 
   const handleSendCode = async () => {
     if (!email.trim()) {
-      setMessage(t('auth.recoverPassword.enterEmail'));
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setMessage(t('auth.recoverPassword.invalidEmail'));
+        setErrorEmail('auth.recoverPassword.enterEmail')
+        return;
+    }else if (!validateEmail(email)) {
+        setErrorEmail('auth.recoverPassword.invalidEmail')
       return;
     }
 
@@ -88,25 +91,34 @@ export default function RecoverPassword() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
+
+      if (!email.trim()) {
+          setErrorEmail('auth.recoverPassword.enterEmail')
+      }else if (!validateEmail(email)) {
+          setErrorEmail('auth.recoverPassword.invalidEmail')
+      }
     if (!code.trim()) {
-      setMessage(t('auth.recoverPassword.enterCode') || 'Por favor ingresa el código de verificación');
-      return;
+        setErrorCode('auth.recoverPassword.enterCode')
     }
 
-    if (!newPassword.trim() || !confirmPassword.trim()) {
-      setMessage(t('auth.recoverPassword.completeAllFields') || 'Por favor completa todos los campos');
-      return;
-    }
+      if (!newPassword.trim()) {
+          setErrorPassword("auth.errors.passwordRequired")
+      } else if (newPassword.trim().length < 6) {
+          setErrorPassword('auth.recoverPassword.passwordTooShort')
+      } else {
+          setErrorPassword(null)
+      }
 
-    if (newPassword !== confirmPassword) {
-      setMessage(t('auth.recoverPassword.passwordsDoNotMatch') || 'Las contraseñas no coinciden');
-      return;
-    }
+      if(!confirmPassword.trim()){
+          setErrorConfirmPassword("auth.errors.confirmPasswordRequired")
+      }else if (newPassword !== confirmPassword) {
+          setErrorConfirmPassword('auth.recoverPassword.passwordsDoNotMatch')
+      }
 
-    if (newPassword.length < 6) {
-      setMessage(t('auth.recoverPassword.passwordTooShort') || 'La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
+      if(!isFormValid){
+          setMessage( 'auth.recoverPassword.completeAllFields' || 'Por favor completa todos los campos');
+          return
+      }
 
     setLoading(true);
     setMessage('');
@@ -140,83 +152,103 @@ export default function RecoverPassword() {
           <p className="auth-sub">{t('auth.recoverPassword.subtitle') || 'Ingresa tu email y te enviaremos un código de verificación'}</p>
 
           <form className="auth-form" onSubmit={handleResetPassword}>
-            <InputField
-              label={t('auth.recoverPassword.emailPlaceholder')}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('auth.recoverPassword.emailPlaceholder')}
-              required
-              disabled={loading || sendingCode}
-            />
 
-            {/* Code input with send/resend button */}
-            <label className="auth-field">
+              {/* Email input with send/resend button */}
+              <label className="auth-field">
               <span className="auth-field-label">
-                {t('auth.recoverPassword.codePlaceholder') || 'Código de verificación'}
+                {t('auth.recoverPassword.emailPlaceholder')|| 'Email'}
               </span>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
-                <input
-                  className="input"
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder={t('auth.recoverPassword.codePlaceholder') || 'Código de verificación'}
-                  maxLength={6}
-                  style={{ flex: 1 }}
-                  required
-                  disabled={loading || sendingCode}
-                />
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={resendCooldown > 0 || sendingCode || !isEmailValid}
-                  className="auth-btn-secondary"
-                  style={{
-                    padding: '0 16px',
-                    whiteSpace: 'nowrap',
-                    opacity: (resendCooldown > 0 || !isEmailValid) ? 0.5 : 1,
-                    cursor: (resendCooldown > 0 || sendingCode || !isEmailValid) ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {sendingCode ? (
-                    t('auth.recoverPassword.sendingButton') || 'Enviando...'
-                  ) : (
-                    resendCooldown > 0
-                      ? (t('auth.recoverPassword.resendIn') || 'Reenviar ({seconds}s)').replace('{seconds}', resendCooldown.toString())
-                      : t('auth.recoverPassword.sendButton') || 'Enviar'
-                  )}
-                </button>
-              </div>
-            </label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
+                      <input
+                          className="input"
+                          type="text"
+                          value={email}
+                          onChange={(e) => {
+                              setEmail(e.target.value)
+                              if(!e.target.value.trim()) setErrorEmail('auth.recoverPassword.enterEmail')
+                              else if (!validateEmail(e.target.value)) setErrorEmail('auth.recoverPassword.invalidEmail')
+                              else setErrorEmail(null)
+                          }}
+                          placeholder={t('auth.recoverPassword.emailPlaceholder') || 'Email'}
+                          maxLength={6}
+                          style={{ flex: 1 }}
+                          disabled={loading || sendingCode}
+                      />
+                      <button
+                          type="button"
+                          onClick={handleSendCode}
+                          disabled={resendCooldown > 0 || sendingCode || !isEmailValid}
+                          className="auth-btn-secondary"
+                          style={{
+                              padding: '0 16px',
+                              whiteSpace: 'nowrap',
+                              opacity: (resendCooldown > 0 || !isEmailValid) ? 0.5 : 1,
+                              cursor: (resendCooldown > 0 || sendingCode || !isEmailValid) ? 'not-allowed' : 'pointer',
+                          }}
+                      >
+                          {sendingCode ? (
+                              t('auth.recoverPassword.sendingButton') || 'Enviando...'
+                          ) : (
+                              resendCooldown > 0
+                                  ? (t('auth.recoverPassword.resendIn') || 'Reenviar ({seconds}s)').replace('{seconds}', resendCooldown.toString())
+                                  : t('auth.recoverPassword.sendButton') || 'Enviar'
+                          )}
+                      </button>
+                  </div>
+                  {errorEmail && <div className="input-field-error">{t(errorEmail)}</div>}
+              </label>
+
+            <InputField
+              label= {t('auth.recoverPassword.codePlaceholder') || 'Código de verificación'}
+              type="text"
+              value={code}
+              onChange={(e) => {
+                  setCode(e.target.value)
+                  if(!e.target.value.trim()) setErrorCode('auth.recoverPassword.enterCode')
+                  else setErrorCode(null)
+              }}
+              placeholder= {t('auth.recoverPassword.codePlaceholder') || 'Código de verificación'}
+              disabled={loading || sendingCode}
+              error={errorCode ? t(errorCode) : null }
+            />
 
             <InputField
               label={t('auth.recoverPassword.newPassword') || 'Nueva contraseña'}
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => {
+                  setNewPassword(e.target.value)
+                  if (!e.target.value.trim()) setErrorPassword("auth.errors.passwordRequired")
+                  else if (e.target.value.trim().length < 6) setErrorPassword('auth.recoverPassword.passwordTooShort')
+                  else setErrorPassword(null)
+                  }}
               placeholder={t('auth.recoverPassword.newPassword') || 'Nueva contraseña'}
               showPasswordToggle
               showPassword={showNewPassword}
               onTogglePassword={() => setShowNewPassword(!showNewPassword)}
-              required
               disabled={loading || sendingCode}
+              error={errorPassword ? t(errorPassword) : null}
             />
 
             <InputField
               label={t('auth.recoverPassword.confirmPassword') || 'Confirmar contraseña'}
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                  setConfirmPassword(e.target.value)
+                  if(!e.target.value.trim()) setErrorConfirmPassword("auth.errors.confirmPasswordRequired")
+                  else if (newPassword !== e.target.value) setErrorConfirmPassword('auth.recoverPassword.passwordsDoNotMatch')
+                  else setErrorConfirmPassword(null)
+              }}
               placeholder={t('auth.recoverPassword.confirmPassword') || 'Confirmar contraseña'}
               showPasswordToggle
               showPassword={showConfirmPassword}
               onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-              required
               disabled={loading || sendingCode}
+              error={errorConfirmPassword ? t(errorConfirmPassword) : null}
             />
 
             <button
               type="submit"
-              disabled={loading || !isFormValid}
+              disabled={loading || sendingCode}
               className="auth-btn-primary"
             >
               {loading
@@ -224,7 +256,7 @@ export default function RecoverPassword() {
                 : t('auth.recoverPassword.confirmButton') || 'Confirmar'}
             </button>
 
-            {message && <div className="message">{message}</div>}
+            {message && <div className="message">{t(message)}</div>}
             <div className="footer-cta">
               <button
                 type="button"

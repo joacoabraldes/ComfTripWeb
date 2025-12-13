@@ -275,7 +275,7 @@
 /* Forgot password small link (login screen) */
 .forgot {
   color: var(--accent);
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   text-align: left;
   background-color: transparent;
   border-color: transparent;

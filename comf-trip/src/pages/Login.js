@@ -59,9 +59,11 @@ export default function Login() {
     if(!isFormValid) {
         if (form.password.trim().length === 0) {
             setErrorPassword(t("auth.errors.passwordRequired"))
+            setOnPassword(true)
         }
         if (form.email.trim().length === 0) {
             setErrorEmail(t("auth.errors.emailRequired"))
+            setOnEmail(true)
         }
         setMessage(t("auth.register.completeFields"));
         return

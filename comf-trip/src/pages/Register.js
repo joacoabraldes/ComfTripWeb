@@ -83,7 +83,6 @@ export default function Register() {
             }
         }
         if (onName) {
-
             if (form.username.trim().length === 0) {
                 setErrorName(t("auth.errors.usernameRequired"))
             } else {
@@ -113,18 +112,26 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorName(null);
+    setErrorEmail(null);
+    setErrorPassword(null);
+    setErrorConfirmPassword(null)
     if (!isFormValid) {
         if (form.password.trim().length === 0) {
             setErrorPassword(t("auth.errors.passwordRequired"))
+            setOnPassword(true)
         }
         if (form.email.trim().length === 0) {
             setErrorEmail(t("auth.errors.emailRequired"))
+            setOnEmail(true)
         }
         if (form.username.trim().length === 0) {
             setErrorName(t("auth.errors.usernameRequired"))
+            setOnName(true)
         }
         if (form.confirmPassword.trim().length === 0) {
             setErrorConfirmPassword(t("auth.errors.confirmPasswordRequired"))
+            setOnConfirmPassword(true)
         }
       setMessage(t("auth.register.completeFields"));
       return

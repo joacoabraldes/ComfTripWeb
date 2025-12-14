@@ -12,7 +12,7 @@ const OURAIRPORTS_FALLBACK =
 const AERODATABOX_BASE = "https://aerodatabox.p.rapidapi.com";
 const AERODATABOX_KEY =
   process.env.REACT_APP_AERODATABOX_KEY ||
-  "1541aaadf9msh6c5432cdbe45d17p183a95jsn94566509c5fd";
+  "8da198473emsh9b4656b45d316fbp119aeejsn0f5084648752";
 const AERODATABOX_HOST =
   process.env.REACT_APP_AERODATABOX_HOST || "aerodatabox.p.rapidapi.com";
 

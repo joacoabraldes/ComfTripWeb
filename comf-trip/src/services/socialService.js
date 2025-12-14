@@ -85,6 +85,20 @@ export async function createSocialPost({ content, files }) {
   return handleJsonResponse(res, 'Error al crear el post');
 }
 
+// -------- ELIMINAR POST --------
+export async function deleteSocialPost(postId) {
+    if (!postId) {
+        throw new Error('postId es obligatorio');
+    }
+
+    const res = await fetch(buildUrl(`/social/posts/${postId}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+    });
+
+    return handleJsonResponse(res, 'Error al eliminar el post');
+}
+
 // -------- LIKE / UNLIKE --------
 export async function togglePostLike(postId) {
   const res = await fetch(buildUrl(`/social/posts/${postId}/like`), {

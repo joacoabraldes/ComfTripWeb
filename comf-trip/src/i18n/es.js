@@ -288,7 +288,10 @@
       errorAddingCom:'Error agregando comentario',
       noCommentaries: 'No hay comentarios todavía.',
       writeCommentary: 'Escribir un comentario…',
-      comment:'Comentarios'
+      comment:'Comentarios',
+      confirmDeletePost: "¿Eliminar este post?",
+      errorDeletePost: "No se pudo eliminar el post",
+      deletePost: "Eliminar post"
   },
 
   // Error

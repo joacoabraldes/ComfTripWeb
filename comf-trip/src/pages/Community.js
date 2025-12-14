@@ -18,6 +18,7 @@ import {
   togglePostLike,
   fetchPostComments,
   addPostComment,
+    deleteSocialPost,
 } from '../services/socialService';
 import {formatDateTime} from "../utils/dateUtils";
 
@@ -25,7 +26,9 @@ export default function Community() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // ---------- comunidad / amigos ----------
+    const [currentUserId, setCurrentUserId] = useState(null);
+
+    // ---------- comunidad / amigos ----------
   const [loading, setLoading] = useState(true);
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
@@ -85,6 +88,11 @@ export default function Community() {
   useEffect(() => {
     loadAll();
     loadFeed();
+
+      (async () => {
+          const id = await getCurrentUserId();
+          setCurrentUserId(Number(id));
+      })();
   }, []);
 
   async function loadAll() {
@@ -198,6 +206,25 @@ export default function Community() {
     setLoadingPostId(null);
   }
 }
+    async function handleDeletePost(postId) {
+        if (!postId) return;
+
+        const ok = window.confirm(t('community.confirmDeletePost'));
+        if (!ok) return;
+
+        try {
+            setLoadingPostId(postId);
+            await deleteSocialPost(postId);
+
+            setPosts((prev) => prev.filter((p) => p.id !== postId));
+        } catch (err) {
+            console.error(err);
+            alert(err.message || t('community.errorDeletePost'));
+        } finally {
+            setLoadingPostId(null);
+        }
+    }
+
 
     function handleRemoveFile(indexToRemove) {
         setAttachedFiles((prev) =>
@@ -711,6 +738,7 @@ export default function Community() {
                     return (
                       <article key={post.id} className="feed-post">
                           <header className="feed-post-header">
+                              <div style={{display:"flex"}}>
                               <div className="avatar">
                                   {(post.author_name || post.author_username || "U")
                                       .toString()
@@ -721,7 +749,7 @@ export default function Community() {
                                       .toUpperCase()}
                               </div>
 
-                              <div className="feed-author">
+                              <div className="feed-author" style={{paddingLeft: 10}}>
                                   <div className="feed-author-name">
                                       {post.author_name
                                           ? post.author_name
@@ -732,13 +760,25 @@ export default function Community() {
                                       <div className="feed-author-username">@{post.author_username}</div>
                                   )}
                               </div>
-
+                              </div>
+                              <div style={{textAlign: 'right'}}>
                               {/* fecha arriba a la derecha */}
                               {post.created_at && (
                                   <div className="feed-date">
                                       {formatDateTime(post.created_at)}
                                   </div>
                               )}
+                              {Number(post.user_id) === Number(currentUserId) && (
+                                  <button
+                                      className="btn icon danger small"
+                                      style={{marginTop:5}}
+                                      onClick={() => handleDeletePost(post.id)}
+                                      disabled={loadingPostId === post.id}
+                                      title={t('community.deletePost')}
+                                  >
+                                      <FaTrash size={12} />
+                                  </button>
+                              )}</div>
                           </header>
 
 

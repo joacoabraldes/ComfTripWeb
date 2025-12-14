@@ -288,7 +288,10 @@ const en = {
       errorAddingCom: 'Error adding comment',
       noCommentaries: 'No comments yet.',
       writeCommentary: 'Write a comment…',
-      comment: 'Comments'
+      comment: 'Comments',
+      confirmDeletePost: "Delete this post?",
+      errorDeletePost: "Could not delete the post",
+      deletePost: "Delete post"
   },
 
   // Error

@@ -1,7 +1,10 @@
 /* src/styles/friendProfile.css */
 
-.friend-main { padding: 1.125rem 2.25rem; min-height: calc(100vh - 4.5rem); background: var(--color-bg-primary); }
-.friend-container { max-width: 61.25rem; margin: 0 auto; }
+.friend-main { padding: 1.125rem 2.25rem; min-height: calc(100vh - 5rem); background: var(--color-bg-primary); }
+.friend-container { max-width: 61.25rem; margin: 0 auto; height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; }
 
 .friend-card { background: var(--color-bg-primary); padding: 1.125rem; border-radius: 0.75rem; box-shadow: var(--shadow-xl); border: 0.0625rem solid var(--color-border-alpha-03); }
 .friend-header { display: flex; gap: 0.875rem; align-items: center; }

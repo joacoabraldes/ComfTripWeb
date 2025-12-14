@@ -757,7 +757,7 @@ export default function Community() {
                   {posts.map((post) => {
                     const images = getPostImages(post);
                     return (
-                      <article key={post.id} className="feed-post">
+                      <article key={post.id} className="feed-post" style={{borderColor: Number(post.user_id) === Number(currentUserId) ? "var(--color-accent)": ""}}>
                         <header className="feed-post-header">
                           <div style={{ display: 'flex' }}>
                             <div className="avatar">

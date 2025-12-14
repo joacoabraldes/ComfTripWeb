@@ -17,6 +17,12 @@ export default function EditProfile() {
     const [loadingInfo, setLoadingInfo]=useState(true);
     const { t } = useTranslation();
 
+    const [errorName, setErrorName]=useState(null)
+    const [errorEmail, setErrorEmail]=useState(null)
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const [onName, setOnName]=useState(false)
+    const [onEmail, setOnEmail]=useState(false)
+
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -122,9 +128,34 @@ export default function EditProfile() {
         })();
     }, [navigate]);
 
+    useEffect(() => {
+        if (onName) {
+            if (form.name.trim().length === 0) {
+                setErrorName("auth.errors.usernameRequired")
+            } else {
+                setErrorName(null)
+            }
+        }
+        if (onEmail) {
+            if (form.email.trim().length === 0) {
+                setErrorEmail("auth.errors.emailRequired")
+            } else if (!EMAIL_REGEX.test(form.email.trim())) {
+                setErrorEmail("auth.errors.invalidEmail");
+            } else {
+                setErrorEmail(null)
+            }
+        }
+    }, [form]);
+
     function handleChange(e) {
         const { name, value } = e.target;
         setForm(f => ({ ...f, [name]: value }));
+        if(name==="name"){
+            setOnName(true)
+        }
+        if(name==="email"){
+            setOnEmail(true)
+        }
     }
 
     function handleNationalityChange(nationality) {
@@ -139,6 +170,23 @@ export default function EditProfile() {
             navigate("/login");
             return;
         }
+
+        setErrorName(null);
+        setErrorEmail(null);
+        let invalid=false
+
+        if (form.name.trim().length === 0) {
+            setErrorName("auth.errors.usernameRequired")
+            invalid=true
+        }
+        if (form.email.trim().length === 0) {
+            setErrorEmail("auth.errors.emailRequired")
+            invalid=true
+        } else if (!EMAIL_REGEX.test(form.email.trim())) {
+            setErrorEmail("auth.errors.invalidEmail");
+            invalid=true
+        }
+        if(invalid) return;
 
         setLoading(true);
         try {
@@ -192,20 +240,20 @@ export default function EditProfile() {
                         value={form.name}
                         onChange={handleChange}
                         placeholder={t('auth.register.name')}
-                        required
                         disabled={loading}
                         containerClassName="edit-field"
+                        error={errorName ? t(errorName) : null}
                     />
 
                     <InputField
                         name="email"
-                        type="email"
+                        type="text"
                         value={form.email}
                         onChange={handleChange}
                         placeholder={t('profile.email')}
-                        required
                         disabled={loading}
                         containerClassName="edit-field"
+                        error={errorEmail ? t(errorEmail) : null}
                     />
 
                     <div className="edit-field">

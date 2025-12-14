@@ -1,5 +1,5 @@
 // src/pages/ChangePassword.jsx
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 import { apiPut } from "./api";
 import "../styles/changePassword.css";
@@ -21,10 +21,55 @@ export default function ChangePassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+    const [errorCurrentPassword, setErrorCurrentPassword]=useState(null)
+    const [errorNewPassword, setErrorNewPassword]=useState(null)
+    const [errorConfirmPassword, setErrorConfirmPassword]=useState(null)
+    const [onCurrentPassword, setOnCurrentPassword]=useState(null)
+    const [onNewPassword, setOnNewPassword]=useState(false)
+    const [onConfirmPassword, setOnConfirmPassword]=useState(false)
+
+    useEffect(() => {
+        if (onCurrentPassword) {
+            if (form.currentPassword.trim().length === 0) {
+                setErrorCurrentPassword("auth.errors.passwordRequired")
+            } else {
+                setErrorCurrentPassword(null)
+            }
+        }
+        if (onNewPassword) {
+            if (form.newPassword.trim().length === 0) {
+                setErrorNewPassword("auth.errors.passwordRequired")
+            } else if (form.newPassword.trim().length < 6) {
+                setErrorNewPassword("auth.errors.passwordMinLength")
+            } else {
+                setErrorNewPassword(null)
+            }
+        }
+        if (onConfirmPassword) {
+            if (form.password !== form.confirmPassword) {
+                if (form.confirmPassword.trim().length === 0) {
+                    setErrorConfirmPassword("auth.errors.confirmPasswordRequired")
+                } else {
+                    setErrorConfirmPassword("changePassword.passwordsDontMatch")
+                }
+            } else {
+                setErrorConfirmPassword(null)
+            }
+        }
+    }, [form]);
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
+      if(name==="currentPassword"){
+          setOnCurrentPassword(true)
+      }
+      if(name==="newPassword"){
+          setOnNewPassword(true)
+      }
+      if(name==="confirmPassword"){
+          setOnConfirmPassword(true)
+      }
   }
 
   async function handleSubmit(e) {
@@ -37,17 +82,41 @@ export default function ChangePassword() {
       return;
     }
 
-    if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
-      alert(t('changePassword.fillAllFields'));
-      return;
-    }
+    setErrorCurrentPassword(null)
+      setErrorNewPassword(null);
+      setErrorConfirmPassword(null)
+    let invalid=false
+      if (form.currentPassword.trim().length === 0) {
+          setErrorCurrentPassword("auth.errors.passwordRequired")
+          invalid=true
+      }
+      if (form.newPassword.trim().length === 0) {
+          setErrorNewPassword("auth.errors.passwordRequired")
+          invalid=true
+      } else if (form.newPassword.trim().length < 6) {
+          setErrorNewPassword("auth.errors.passwordMinLength")
+          invalid=true
+      }
+      if (form.newPassword !== form.confirmPassword) {
+          if (form.confirmPassword.trim().length === 0) {
+              setErrorConfirmPassword("auth.errors.confirmPasswordRequired")
+          } else {
+              setErrorConfirmPassword("changePassword.passwordsDontMatch")
+          }
+          invalid=true
+      }
 
-    if (form.newPassword !== form.confirmPassword) {
-      alert(t('changePassword.passwordsDontMatch'));
-      return;
-    }
+      if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
+          alert(t('changePassword.fillAllFields'));
+          return;
+      }
+      if (form.newPassword !== form.confirmPassword) {
+          alert(t('changePassword.passwordsDontMatch'));
+          return;
+      }
+      if(invalid) return;
 
-    setLoading(true);
+      setLoading(true);
     try {
       // backend expects { oldPassword, newPassword }
       await apiPut(`/users/${stored.id}/password`, {
@@ -105,9 +174,9 @@ export default function ChangePassword() {
             showPasswordToggle
             showPassword={showCurrentPassword}
             onTogglePassword={() => setShowCurrentPassword(!showCurrentPassword)}
-            required
             disabled={loading}
             containerClassName="change-field"
+            error={errorCurrentPassword ? t(errorCurrentPassword) : null }
           />
 
           <InputField
@@ -119,9 +188,9 @@ export default function ChangePassword() {
             showPasswordToggle
             showPassword={showNewPassword}
             onTogglePassword={() => setShowNewPassword(!showNewPassword)}
-            required
             disabled={loading}
             containerClassName="change-field"
+            error={errorNewPassword ? t(errorNewPassword) : null}
           />
 
           <InputField
@@ -133,9 +202,9 @@ export default function ChangePassword() {
             showPasswordToggle
             showPassword={showConfirmPassword}
             onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-            required
             disabled={loading}
             containerClassName="change-field"
+            error={errorConfirmPassword ? t(errorConfirmPassword) : null}
           />
 
           <div className="form-actions">

@@ -9,6 +9,7 @@ import {useAuth} from "../auth/AuthProvider";
 import { useTranslation } from "../i18n";
 import LoadingSpinner from "../components/LoadingSpinner";
 import FilterSelect from "../components/FilterSelect";
+import {formatDate} from "../utils/dateUtils";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ export default function ProfilePage() {
           email: u.email || "",
           phone: u.phone || "",
           nationality: u.nationality || "",
-          birthdate: u.birthdate ? u.birthdate.split("T")[0] : "",
+          birthdate: u.birthdate ? formatDate(u.birthdate) : "",
           photo: u.photo || ""
         });
       } catch (err) {

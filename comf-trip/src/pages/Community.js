@@ -1,7 +1,18 @@
 // src/pages/Community.js
 import React, { useEffect, useState } from 'react';
 import '../styles/community.css';
-import { FaCheck, FaTimes, FaUser, FaShare, FaTrash, FaImage, FaHeart, FaRegHeart, FaComment,  FaRegComment} from 'react-icons/fa';
+import {
+  FaCheck,
+  FaTimes,
+  FaUser,
+  FaShare,
+  FaTrash,
+  FaImage,
+  FaHeart,
+  FaRegHeart,
+  FaComment,
+  FaRegComment,
+} from 'react-icons/fa';
 import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
@@ -18,50 +29,41 @@ import {
   togglePostLike,
   fetchPostComments,
   addPostComment,
-    deleteSocialPost,
+  deleteSocialPost,
 } from '../services/socialService';
-import {formatDateTime} from "../utils/dateUtils";
+import { formatDateTime } from '../utils/dateUtils';
 
 export default function Community() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-    const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
-    // ---------- comunidad / amigos ----------
+  // ---------- comunidad / amigos ----------
   const [loading, setLoading] = useState(true);
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
   const [emailOrId, setEmailOrId] = useState('');
   const [sending, setSending] = useState(false);
-  const [sendCommentary, setSendCommentary]=useState({})
+  const [sendCommentary, setSendCommentary] = useState({});
 
-    const [searchFriends, setSearchFriends] = useState('');
-    const [searchIncoming, setSearchIncoming] = useState('');
-    const [searchOutgoing, setSearchOutgoing] = useState('');
+  const [searchFriends, setSearchFriends] = useState('');
+  const [searchIncoming, setSearchIncoming] = useState('');
+  const [searchOutgoing, setSearchOutgoing] = useState('');
 
-    const filteredFriends = filterUsers(
-        friends,
-        searchFriends,
-        ['name', 'email']
-    );
+  // ---------- social feed ----------
+  const [posts, setPosts] = useState([]);
+  const [loadingFeed, setLoadingFeed] = useState(true);
+  const [feedError, setFeedError] = useState(null);
+  const [newPost, setNewPost] = useState('');
+  const [commentText, setCommentText] = useState({});
+  const [loadingPostId, setLoadingPostId] = useState(null);
+  const [commentsByPost, setCommentsByPost] = useState({});
+  const [commentsByPostOpen, setCommentsByPostOpen] = useState({});
+  const [attachedFiles, setAttachedFiles] = useState([]);
 
-    const filteredIncoming = filterUsers(
-        incoming,
-        searchIncoming,
-        ['requester_name', 'requester_email']
-    );
-
-    const filteredOutgoing = filterUsers(
-        outgoing,
-        searchOutgoing,
-        ['addressee_name', 'addressee_email']
-    );
-
-
-
-    // share modal state
+  // share modal state
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareTargetFriend, setShareTargetFriend] = useState(null);
   const [availableTrips, setAvailableTrips] = useState([]);
@@ -73,26 +75,71 @@ export default function Community() {
     userId: null,
   });
 
-  // ---------- social feed ----------
-  const [posts, setPosts] = useState([]);
-  const [loadingFeed, setLoadingFeed] = useState(true);
-  const [feedError, setFeedError] = useState(null);
-  const [newPost, setNewPost] = useState('');
-  const [commentText, setCommentText] = useState({});
-  const [loadingPostId, setLoadingPostId] = useState(null);
-  const [commentsByPost, setCommentsByPost] = useState({});
-    const [commentsByPostOpen, setCommentsByPostOpen] = useState({});
-  const [attachedFiles, setAttachedFiles] = useState([]);
+  // ========= FIX IMÁGENES =========
+  // Tu API_BASE es .../api  -> para estáticos necesitamos el ORIGIN sin /api
+  const BACKEND_ORIGIN = (process.env.REACT_APP_API_URL || 'https://comf-trip-backend.vercel.app/api')
+    .replace(/\/api\/?$/, '')
+    .replace(/\/$/, '');
+
+  function resolveImageUrl(url) {
+    if (!url) return '';
+    // Absolutas / blob / data
+    if (
+      url.startsWith('blob:') ||
+      url.startsWith('data:') ||
+      /^(https?:)?\/\//.test(url)
+    ) {
+      return url;
+    }
+    // Rutas de uploads del backend
+    if (url.startsWith('/uploads/')) {
+      return `${BACKEND_ORIGIN}${url}`;
+    }
+    return url;
+  }
+
+  function filterUsers(list, search, fields = []) {
+    if (!search.trim()) return list;
+
+    const q = search.toLowerCase();
+
+    return list.filter((item) =>
+      fields.some((field) => {
+        const value = item[field];
+        if (!value) return false;
+
+        let text = value.toString().toLowerCase();
+
+        // Si es email, usar solo lo anterior al @
+        if (text.includes('@')) {
+          text = text.split('@')[0];
+        }
+
+        return text.includes(q);
+      })
+    );
+  }
+
+  const filteredFriends = filterUsers(friends, searchFriends, ['name', 'email']);
+  const filteredIncoming = filterUsers(incoming, searchIncoming, [
+    'requester_name',
+    'requester_email',
+  ]);
+  const filteredOutgoing = filterUsers(outgoing, searchOutgoing, [
+    'addressee_name',
+    'addressee_email',
+  ]);
 
   // ---------- carga inicial ----------
   useEffect(() => {
     loadAll();
     loadFeed();
 
-      (async () => {
-          const id = await getCurrentUserId();
-          setCurrentUserId(Number(id));
-      })();
+    (async () => {
+      const id = await getCurrentUserId();
+      setCurrentUserId(Number(id));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadAll() {
@@ -143,29 +190,7 @@ export default function Community() {
     }
   }
 
-    function filterUsers(list, search, fields = []) {
-        if (!search.trim()) return list;
-
-        const q = search.toLowerCase();
-
-        return list.filter((item) =>
-            fields.some((field) => {
-                const value = item[field];
-                if (!value) return false;
-
-                let text = value.toString().toLowerCase();
-
-                // Si es email, usar solo lo anterior al @
-                if (text.includes('@')) {
-                    text = text.split('@')[0];
-                }
-
-                return text.includes(q);
-            })
-        );
-    }
-
-    // ---------- FEED: cargar ----------
+  // ---------- FEED: cargar ----------
   async function loadFeed() {
     try {
       setLoadingFeed(true);
@@ -182,56 +207,52 @@ export default function Community() {
   }
 
   // ---------- FEED: crear post ----------
-   async function handleCreatePost(e) {
-  e.preventDefault();
+  async function handleCreatePost(e) {
+    e.preventDefault();
 
-  if (!newPost.trim() && attachedFiles.length === 0) return;
+    if (!newPost.trim() && attachedFiles.length === 0) return;
 
-  try {
-    setLoadingPostId('new');
-    const res = await createSocialPost({
-      content: newPost.trim(),
-      files: attachedFiles,
-    });
+    try {
+      setLoadingPostId('new');
+      const res = await createSocialPost({
+        content: newPost.trim(),
+        files: attachedFiles, // backend acepta files/images/image con el controller nuevo
+      });
 
-    const created = res.post || res;
+      const created = res.post || res;
 
-    setPosts((prev) => [created, ...prev]);
-    setNewPost('');
-    setAttachedFiles([]);
-  } catch (err) {
-    console.error(err);
-    alert(err.message || t('community.errorCreatePost'));
-  } finally {
-    setLoadingPostId(null);
+      setPosts((prev) => [created, ...prev]);
+      setNewPost('');
+      setAttachedFiles([]);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || t('community.errorCreatePost'));
+    } finally {
+      setLoadingPostId(null);
+    }
   }
-}
-    async function handleDeletePost(postId) {
-        if (!postId) return;
 
-        const ok = window.confirm(t('community.confirmDeletePost'));
-        if (!ok) return;
+  async function handleDeletePost(postId) {
+    if (!postId) return;
 
-        try {
-            setLoadingPostId(postId);
-            await deleteSocialPost(postId);
+    const ok = window.confirm(t('community.confirmDeletePost'));
+    if (!ok) return;
 
-            setPosts((prev) => prev.filter((p) => p.id !== postId));
-        } catch (err) {
-            console.error(err);
-            alert(err.message || t('community.errorDeletePost'));
-        } finally {
-            setLoadingPostId(null);
-        }
+    try {
+      setLoadingPostId(postId);
+      await deleteSocialPost(postId);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch (err) {
+      console.error(err);
+      alert(err.message || t('community.errorDeletePost'));
+    } finally {
+      setLoadingPostId(null);
     }
+  }
 
-
-    function handleRemoveFile(indexToRemove) {
-        setAttachedFiles((prev) =>
-            prev.filter((_, index) => index !== indexToRemove)
-        );
-    }
-
+  function handleRemoveFile(indexToRemove) {
+    setAttachedFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+  }
 
   function handleFilesChange(e) {
     const files = Array.from(e.target.files || []);
@@ -267,19 +288,19 @@ export default function Community() {
   // ---------- FEED: cargar comentarios ----------
   async function handleLoadComments(postId) {
     if (commentsByPostOpen[postId]) {
-        setCommentsByPostOpen(prev => ({ ...prev, [postId]: false }));
-        return;
+      setCommentsByPostOpen((prev) => ({ ...prev, [postId]: false }));
+      return;
     }
 
-    if(commentsByPost[postId]) {
-        setCommentsByPostOpen(prev => ({ ...prev, [postId]: true }));
-        return;
+    if (commentsByPost[postId]) {
+      setCommentsByPostOpen((prev) => ({ ...prev, [postId]: true }));
+      return;
     }
 
     try {
       const comments = await fetchPostComments(postId);
       setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
-        setCommentsByPostOpen((prev) => ({ ...prev, [postId]: true }));
+      setCommentsByPostOpen((prev) => ({ ...prev, [postId]: true }));
     } catch (err) {
       console.error(err);
       alert(err.message || t('community.errorLoadingCom'));
@@ -293,30 +314,17 @@ export default function Community() {
     if (!text) return;
 
     try {
-        setSendCommentary((prev => ({ ...prev, [postId]: true })))
-      const res =await addPostComment(postId, text);
-        /*const newComment = {
-            author_name: res.author_name || "",
-            author_username: res.author_username,
-            comment: res.comment || "",
-            created_at: res.created_at
-        };
+      setSendCommentary((prev) => ({ ...prev, [postId]: true }));
+      await addPostComment(postId, text);
 
-
-        const existing = commentsByPost[postId] || [];
-      setCommentsByPost((prev) => ({
-        ...prev,
-        [postId]: [...existing, newComment],
-      }));*/
-        const comments = await fetchPostComments(postId);
-        setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
-
+      const comments = await fetchPostComments(postId);
+      setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
     } catch (err) {
       console.error(err);
       alert(err.message || t('community.errorAddingCon'));
     } finally {
-        setSendCommentary((prev => ({ ...prev, [postId]: false })))
+      setSendCommentary((prev) => ({ ...prev, [postId]: false }));
     }
   }
 
@@ -346,7 +354,7 @@ export default function Community() {
     try {
       await apiPost(`/friends/${reqId}/accept`);
       await loadAll();
-      await loadFeed(); // por si el nuevo amigo ya tenía posts
+      await loadFeed();
     } catch (err) {
       console.error('Error aceptando:', err);
       alert(t('community.acceptError'));
@@ -384,8 +392,7 @@ export default function Community() {
     for (const ep of candidates) {
       try {
         const r = await apiGet(ep);
-        if (r && (r.id || r.user_id || r._id))
-          return r.id || r.user_id || r._id;
+        if (r && (r.id || r.user_id || r._id)) return r.id || r.user_id || r._id;
       } catch (e) {}
     }
 
@@ -416,16 +423,16 @@ export default function Community() {
         : trips && trips.rows
         ? trips.rows
         : [];
-      const currentUserId = await getCurrentUserId();
+      const currentUserId2 = await getCurrentUserId();
 
-      if (currentUserId == null) {
+      if (currentUserId2 == null) {
         setAvailableTrips([]);
         alert(t('community.cannotDetermineUser'));
         return;
       }
 
       const ownedTrips = tripsArr.filter(
-        (t) => Number(t?.user_id) === Number(currentUserId)
+        (t) => Number(t?.user_id) === Number(currentUserId2)
       );
       if (ownedTrips.length === 0) {
         alert(t('community.noOwnTrips'));
@@ -486,7 +493,7 @@ export default function Community() {
                     onClick={sendRequest}
                     disabled={sending}
                   >
-                      {sending ? t('community.sending') : t('community.send')}
+                    {sending ? t('community.sending') : t('community.send')}
                   </ActionButton>
                 </div>
                 <p className="hint">{t('community.hint')}</p>
@@ -494,61 +501,66 @@ export default function Community() {
 
               <section className="card list-users">
                 <h3>{t('community.friends')}</h3>
-                  {friends.length === 0 ? (
+                {friends.length === 0 ? (
                   <EmptyState message={t('community.noFriends')} />
                 ) : (
                   <div className="list">
-                      <input
-                          className="list-search"
-                          type="text"
-                          placeholder={t('community.searchUser')}
-                          value={searchFriends}
-                          onChange={(e) => setSearchFriends(e.target.value)}
-                      />
-                      {filteredFriends.length===0 ? (
-                          <EmptyState message={t('community.noSearchFriends')} />
-                      ) :(<div>
-                    {filteredFriends.map((f) => (
-                      <div key={f.id} className="list-item">
-                        <div className="info">
-                          <div className="avatar">
-                            {(f.name || f.email || 'U')
-                              .split(' ')
-                              .map((s) => s[0])
-                              .slice(0, 2)
-                              .join('')
-                              .toUpperCase()}
-                          </div>
-                          <div style={{ marginLeft: 12 }}>
-                            <div className="title truncate">{f.name || f.email}</div>
-                            {f.name && <div className="subtitle truncate">{f.email}</div>}
-                          </div>
-                        </div>
-                        <div className="actions">
-                          <IconButton
-                            icon={<FaUser size={16} color="#34495e" />}
-                            onClick={() => navigate(`/friend/${f.id}`)}
-                            title={t('community.viewProfile')}
-                            ariaLabel={t('community.viewProfile')}
-                          />
+                    <input
+                      className="list-search"
+                      type="text"
+                      placeholder={t('community.searchUser')}
+                      value={searchFriends}
+                      onChange={(e) => setSearchFriends(e.target.value)}
+                    />
+                    {filteredFriends.length === 0 ? (
+                      <EmptyState message={t('community.noSearchFriends')} />
+                    ) : (
+                      <div>
+                        {filteredFriends.map((f) => (
+                          <div key={f.id} className="list-item">
+                            <div className="info">
+                              <div className="avatar">
+                                {(f.name || f.email || 'U')
+                                  .split(' ')
+                                  .map((s) => s[0])
+                                  .slice(0, 2)
+                                  .join('')
+                                  .toUpperCase()}
+                              </div>
+                              <div style={{ marginLeft: 12 }}>
+                                <div className="title truncate">{f.name || f.email}</div>
+                                {f.name && (
+                                  <div className="subtitle truncate">{f.email}</div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="actions">
+                              <IconButton
+                                icon={<FaUser size={16} color="#34495e" />}
+                                onClick={() => navigate(`/friend/${f.id}`)}
+                                title={t('community.viewProfile')}
+                                ariaLabel={t('community.viewProfile')}
+                              />
 
-                          <IconButton
-                            icon={<FaShare size={16} color="#2b8cff" />}
-                            onClick={() => openShareModal(f)}
-                            title={t('community.shareTrips')}
-                            ariaLabel={t('community.shareTrips')}
-                          />
+                              <IconButton
+                                icon={<FaShare size={16} color="#2b8cff" />}
+                                onClick={() => openShareModal(f)}
+                                title={t('community.shareTrips')}
+                                ariaLabel={t('community.shareTrips')}
+                              />
 
-                          <IconButton
-                            icon={<FaTrash size={16} color="#e74c3c" />}
-                            onClick={() => handleRemoveFriendClick(f.id)}
-                            title={t('community.removeFriend')}
-                            ariaLabel={t('community.removeFriend')}
-                            variant="muted"
-                          />
-                        </div>
+                              <IconButton
+                                icon={<FaTrash size={16} color="#e74c3c" />}
+                                onClick={() => handleRemoveFriendClick(f.id)}
+                                title={t('community.removeFriend')}
+                                ariaLabel={t('community.removeFriend')}
+                                variant="muted"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}</div>)}
+                    )}
                   </div>
                 )}
               </section>
@@ -556,57 +568,62 @@ export default function Community() {
               <section className="card list-users">
                 <h3>{t('community.incomingRequests')}</h3>
 
-                  {incoming.length === 0 ? (
+                {incoming.length === 0 ? (
                   <EmptyState message={t('community.noIncoming')} />
                 ) : (
                   <div className="list">
-                      <input
-                          className="list-search"
-                          type="text"
-                          placeholder={t('community.searchUser')}
-                          value={searchIncoming}
-                          onChange={(e) => setSearchIncoming(e.target.value)}
-                      />
-                      {filteredIncoming.length===0 ? (
-                          <EmptyState message={t('community.noSearchIncoming')} />
-                      ) : (<div>
-                    {filteredIncoming.map((r) => (
-                      <div key={r.id} className="list-item">
-                        <div className="info">
-                          <div className="avatar">
-                            {(r.requester_name || r.requester_email || 'U')
-                              .split(' ')
-                              .map((s) => s[0])
-                              .slice(0, 2)
-                              .join('')
-                              .toUpperCase()}
-                          </div>
-                          <div style={{ marginLeft: 12 }}>
-                            <div className="title truncate">
-                              {r.requester_name || r.requester_email}
+                    <input
+                      className="list-search"
+                      type="text"
+                      placeholder={t('community.searchUser')}
+                      value={searchIncoming}
+                      onChange={(e) => setSearchIncoming(e.target.value)}
+                    />
+                    {filteredIncoming.length === 0 ? (
+                      <EmptyState message={t('community.noSearchIncoming')} />
+                    ) : (
+                      <div>
+                        {filteredIncoming.map((r) => (
+                          <div key={r.id} className="list-item">
+                            <div className="info">
+                              <div className="avatar">
+                                {(r.requester_name || r.requester_email || 'U')
+                                  .split(' ')
+                                  .map((s) => s[0])
+                                  .slice(0, 2)
+                                  .join('')
+                                  .toUpperCase()}
+                              </div>
+                              <div style={{ marginLeft: 12 }}>
+                                <div className="title truncate">
+                                  {r.requester_name || r.requester_email}
+                                </div>
+                                {r.requester_name && (
+                                  <div className="subtitle truncate">
+                                    {r.requester_email}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            {r.requester_name && (
-                              <div className="subtitle truncate" >{r.requester_email}</div>
-                            )}
+                            <div className="actions">
+                              <IconButton
+                                icon={<FaCheck size={16} color="#1abc9c" />}
+                                onClick={() => acceptRequest(r.id)}
+                                title={t('community.accept')}
+                                ariaLabel={t('community.accept')}
+                              />
+                              <IconButton
+                                icon={<FaTimes size={16} color="#e74c3c" />}
+                                onClick={() => rejectRequest(r.id)}
+                                title={t('community.reject')}
+                                ariaLabel={t('community.reject')}
+                                variant="muted"
+                              />
+                            </div>
                           </div>
-                        </div>
-                        <div className="actions">
-                          <IconButton
-                            icon={<FaCheck size={16} color="#1abc9c" />}
-                            onClick={() => acceptRequest(r.id)}
-                            title={t('community.accept')}
-                            ariaLabel={t('community.accept')}
-                          />
-                          <IconButton
-                            icon={<FaTimes size={16} color="#e74c3c" />}
-                            onClick={() => rejectRequest(r.id)}
-                            title={t('community.reject')}
-                            ariaLabel={t('community.reject')}
-                            variant="muted"
-                          />
-                        </div>
+                        ))}
                       </div>
-                    ))}</div>)}
+                    )}
                   </div>
                 )}
               </section>
@@ -617,38 +634,43 @@ export default function Community() {
                   <EmptyState message={t('community.noOutgoing')} />
                 ) : (
                   <div className="list">
-                      <input
-                          className="list-search"
-                          type="text"
-                          placeholder={t('community.searchUser')}
-                          value={searchOutgoing}
-                          onChange={(e) => setSearchOutgoing(e.target.value)}
-                      />
-                      {filteredOutgoing.length===0 ? (
-                          <EmptyState message={t('community.noSearchOutgoing')} />
-                      ) : (<div>
-                      {filteredOutgoing.map((o) => (
-                      <div key={o.id} className="list-item">
-                        <div className="info">
-                          <div className="avatar">
-                            {(o.addressee_name || o.addressee_email || 'U')
-                              .split(' ')
-                              .map((s) => s[0])
-                              .slice(0, 2)
-                              .join('')
-                              .toUpperCase()}
-                          </div>
-                          <div style={{ marginLeft: 12 }}>
-                            <div className="title truncate" >
-                              {o.addressee_name || o.addressee_email}
+                    <input
+                      className="list-search"
+                      type="text"
+                      placeholder={t('community.searchUser')}
+                      value={searchOutgoing}
+                      onChange={(e) => setSearchOutgoing(e.target.value)}
+                    />
+                    {filteredOutgoing.length === 0 ? (
+                      <EmptyState message={t('community.noSearchOutgoing')} />
+                    ) : (
+                      <div>
+                        {filteredOutgoing.map((o) => (
+                          <div key={o.id} className="list-item">
+                            <div className="info">
+                              <div className="avatar">
+                                {(o.addressee_name || o.addressee_email || 'U')
+                                  .split(' ')
+                                  .map((s) => s[0])
+                                  .slice(0, 2)
+                                  .join('')
+                                  .toUpperCase()}
+                              </div>
+                              <div style={{ marginLeft: 12 }}>
+                                <div className="title truncate">
+                                  {o.addressee_name || o.addressee_email}
+                                </div>
+                                {o.addressee_name && (
+                                  <div className="subtitle truncate">
+                                    {o.addressee_email}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            {o.addressee_name && (
-                              <div className="subtitle truncate">{o.addressee_email}</div>
-                            )}
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}</div>)}
+                    )}
                   </div>
                 )}
               </section>
@@ -670,10 +692,13 @@ export default function Community() {
                   <div className="feed-attachments">
                     <label className="btn ghost small file-upload-btn">
                       <FaImage size={14} style={{ marginRight: 6 }} />
-                        {attachedFiles.length > 0 ? t('community.changePhoto') : t('community.addPhoto')}
+                      {attachedFiles.length > 0
+                        ? t('community.changePhoto')
+                        : t('community.addPhoto')}
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         capture="environment"
                         onChange={handleFilesChange}
                       />
@@ -681,55 +706,51 @@ export default function Community() {
 
                     {attachedFiles.length > 0 && (
                       <div className="feed-preview-row">
-                          {attachedFiles.map((file, index) => (
-                              <div
-                                  key={file.name + file.lastModified}
-                                  className="feed-preview-thumb"
-                              >
-                                  <img
-                                      src={URL.createObjectURL(file)}
-                                      alt={file.name}
-                                  />
+                        {attachedFiles.map((file, index) => (
+                          <div
+                            key={file.name + file.lastModified}
+                            className="feed-preview-thumb"
+                          >
+                            <img src={URL.createObjectURL(file)} alt={file.name} />
 
-                                  <button
-                                      type="button"
-                                      className="feed-preview-remove"
-                                      onClick={() => handleRemoveFile(index)}
-                                      aria-label={t('community.removePhoto')}
-                                  >
-                                      ×
-                                  </button>
-                              </div>
-                          ))}
-
+                            <button
+                              type="button"
+                              className="feed-preview-remove"
+                              onClick={() => handleRemoveFile(index)}
+                              aria-label={t('community.removePhoto')}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
 
                   <div className="feed-new-post-footer">
-                    <span className="feed-hint">
-                      {t('community.hintPost')}
-                    </span>
+                    <span className="feed-hint">{t('community.hintPost')}</span>
                     <button
                       type="submit"
                       disabled={loadingPostId === 'new'}
                       className="btn"
                     >
-                      {loadingPostId === 'new' ? t('community.publishing') : t('community.publish')}
+                      {loadingPostId === 'new'
+                        ? t('community.publishing')
+                        : t('community.publish')}
                     </button>
                   </div>
                 </form>
               </section>
 
               <section className="card feed-card">
-                {loadingFeed && <div className="spinner">{t('community.loadingFeed')}</div>}
+                {loadingFeed && (
+                  <div className="spinner">{t('community.loadingFeed')}</div>
+                )}
 
                 {feedError && <div className="error-text">{feedError}</div>}
 
                 {!loadingFeed && posts.length === 0 && !feedError && (
-                  <div className="muted">
-                      {t('community.noPost')}
-                  </div>
+                  <div className="muted">{t('community.noPost')}</div>
                 )}
 
                 <div className="feed-posts">
@@ -737,69 +758,90 @@ export default function Community() {
                     const images = getPostImages(post);
                     return (
                       <article key={post.id} className="feed-post">
-                          <header className="feed-post-header">
-                              <div style={{display:"flex"}}>
-                              <div className="avatar">
-                                  {(post.author_name || post.author_username || "U")
-                                      .toString()
-                                      .split(" ")
-                                      .map((s) => s[0])
-                                      .slice(0, 2)
-                                      .join("")
-                                      .toUpperCase()}
+                        <header className="feed-post-header">
+                          <div style={{ display: 'flex' }}>
+                            <div className="avatar">
+                              {(post.author_name || post.author_username || 'U')
+                                .toString()
+                                .split(' ')
+                                .map((s) => s[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase()}
+                            </div>
+
+                            <div className="feed-author" style={{ paddingLeft: 10 }}>
+                              <div className="feed-author-name">
+                                {post.author_name
+                                  ? post.author_name
+                                  : `@${post.author_username}` || t('community.user')}
                               </div>
 
-                              <div className="feed-author" style={{paddingLeft: 10}}>
-                                  <div className="feed-author-name">
-                                      {post.author_name
-                                          ? post.author_name
-                                          : `@${post.author_username}` || t('community.user')}
-                                  </div>
-
-                                  {post.author_username && post.author_name && (
-                                      <div className="feed-author-username">@{post.author_username}</div>
-                                  )}
-                              </div>
-                              </div>
-                              <div style={{textAlign: 'right'}}>
-                              {/* fecha arriba a la derecha */}
-                              {post.created_at && (
-                                  <div className="feed-date">
-                                      {formatDateTime(post.created_at)}
-                                  </div>
+                              {post.author_username && post.author_name && (
+                                <div className="feed-author-username">
+                                  @{post.author_username}
+                                </div>
                               )}
-                              {Number(post.user_id) === Number(currentUserId) && (
-                                  <button
-                                      className="btn icon danger small"
-                                      style={{marginTop:5}}
-                                      onClick={() => handleDeletePost(post.id)}
-                                      disabled={loadingPostId === post.id}
-                                      title={t('community.deletePost')}
-                                  >
-                                      <FaTrash size={12} />
-                                  </button>
-                              )}</div>
-                          </header>
+                            </div>
+                          </div>
 
+                          <div style={{ textAlign: 'right' }}>
+                            {post.created_at && (
+                              <div className="feed-date">
+                                {formatDateTime(post.created_at)}
+                              </div>
+                            )}
 
-                          {images.length > 0 && (
+                            {Number(post.user_id) === Number(currentUserId) && (
+                              <button
+                                className="btn icon danger small"
+                                style={{ marginTop: 5 }}
+                                onClick={() => handleDeletePost(post.id)}
+                                disabled={loadingPostId === post.id}
+                                title={t('community.deletePost')}
+                                type="button"
+                              >
+                                <FaTrash size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </header>
+
+                        {images.length > 0 && (
                           <div className="feed-images">
                             {images.map((url, idx) => (
                               <div key={idx} className="feed-image-wrapper">
-                                <img src={url} alt={`post-${post.id}-${idx}`} />
+                                {/* ✅ FIX: apuntar al backend */}
+                                <img
+                                  src={resolveImageUrl(url)}
+                                  alt={`post-${post.id}-${idx}`}
+                                />
                               </div>
                             ))}
                           </div>
                         )}
 
-                          {post.content && <div className="feed-post-content" style={{display:"flex", gap:5, paddingLeft:5, paddingTop:5, paddingBottom:5}}>
-                              <div className="feed-author-name">
-                                  {post.author_name
-                                      ? post.author_name
-                                      : `@${post.author_username}` || t('community.user')}
-                              </div>
-                              <div className="feed-comment" style={{paddingTop:0}}>{post.content}</div>
-                          </div>}
+                        {post.content && (
+                          <div
+                            className="feed-post-content"
+                            style={{
+                              display: 'flex',
+                              gap: 5,
+                              paddingLeft: 5,
+                              paddingTop: 5,
+                              paddingBottom: 5,
+                            }}
+                          >
+                            <div className="feed-author-name">
+                              {post.author_name
+                                ? post.author_name
+                                : `@${post.author_username}` || t('community.user')}
+                            </div>
+                            <div className="feed-comment" style={{ paddingTop: 0 }}>
+                              {post.content}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="feed-post-actions">
                           <button
@@ -808,11 +850,11 @@ export default function Community() {
                             onClick={() => handleToggleLike(post.id)}
                             className={'btn like small'}
                           >
-                              {post.liked_by_me ? (
-                                  <FaHeart size={20} color="var(--color-primary)" />   // corazón lleno rojo
-                              ) : (
-                                  <FaRegHeart size={20} color="var(--color-text-primary)" /> // corazón vacío gris
-                              )}{' '}
+                            {post.liked_by_me ? (
+                              <FaHeart size={20} color="var(--color-primary)" />
+                            ) : (
+                              <FaRegHeart size={20} color="var(--color-text-primary)" />
+                            )}{' '}
                             {post.like_count || 0} Likes
                           </button>
 
@@ -820,74 +862,91 @@ export default function Community() {
                             type="button"
                             onClick={() => handleLoadComments(post.id)}
                             className="btn comments small"
-                          >{
-                              commentsByPostOpen[post.id] ? <FaComment size={20} color={"var(--color-success)"}/> :
-                                  <FaRegComment size={20} color="var(--color-text-primary)"/>
-                          }{' '}{post.comment_count}{' '}{t('community.comment')}
+                          >
+                            {commentsByPostOpen[post.id] ? (
+                              <FaComment size={20} color={'var(--color-success)'} />
+                            ) : (
+                              <FaRegComment
+                                size={20}
+                                color="var(--color-text-primary)"
+                              />
+                            )}{' '}
+                            {post.comment_count}{' '}
+                            {t('community.comment')}
                           </button>
                         </div>
 
                         {commentsByPost[post.id] && commentsByPostOpen[post.id] && (
                           <div className="feed-comments">
-                              <div className="feed-comments-list">
-                            {commentsByPost[post.id].length === 0 && (
-                              <p className="muted">
-                                  {t('community.noCommentaries')}
-                              </p>
-                            )}
-                            {commentsByPost[post.id].map((c) => (
+                            <div className="feed-comments-list">
+                              {commentsByPost[post.id].length === 0 && (
+                                <p className="muted">{t('community.noCommentaries')}</p>
+                              )}
+                              {commentsByPost[post.id].map((c) => (
                                 <div key={c.id} className="feed-comment-item">
-                                    <div className="feed-comment-header">
-                                        <div style={{display: "flex", gap: "0.5rem"}}>
-                                            <div className="avatar">
-                                                {(c.author_name || c.author_username || "U")
-                                                    .toString()
-                                                    .split(" ")
-                                                    .map((s) => s[0])
-                                                    .slice(0, 2)
-                                                    .join("")
-                                                    .toUpperCase()}
-                                            </div>
+                                  <div className="feed-comment-header">
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                      <div className="avatar">
+                                        {(c.author_name || c.author_username || 'U')
+                                          .toString()
+                                          .split(' ')
+                                          .map((s) => s[0])
+                                          .slice(0, 2)
+                                          .join('')
+                                          .toUpperCase()}
+                                      </div>
 
-                                            <div className="feed-author">
-                                                <div className="feed-author-name">
-                                                    {c.author_name
-                                                        ? c.author_name
-                                                        : `@${c.author_username}` || t('community.user')}
-                                                </div>
-
-                                                {c.author_username && c.author_name && (
-                                                    <div className="feed-author-username">@{c.author_username}</div>
-                                                )}
-                                            </div>
+                                      <div className="feed-author">
+                                        <div className="feed-author-name">
+                                          {c.author_name
+                                            ? c.author_name
+                                            : `@${c.author_username}` || t('community.user')}
                                         </div>
-                                        {c.created_at && (
-                                            <div className="feed-date">
-                                                {new Date(c.created_at).toLocaleString()}
-                                            </div>
-                                        )}</div>
-                                    <div className="feed-comment">{c.content}</div>
+
+                                        {c.author_username && c.author_name && (
+                                          <div className="feed-author-username">
+                                            @{c.author_username}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {c.created_at && (
+                                      <div className="feed-date">
+                                        {new Date(c.created_at).toLocaleString()}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="feed-comment">{c.content}</div>
                                 </div>
-                            ))}</div>
+                              ))}
+                            </div>
 
                             <form
                               onSubmit={(e) => handleAddComment(e, post.id)}
                               className="feed-comment-form"
                             >
                               <textarea
-                                  className="feed-comment-input"
-                                  rows={1}
-                                  value={commentText[post.id] || ''}
-                                  onChange={(e) => {
-                                      setCommentText((prev) => ({
-                                          ...prev,
-                                          [post.id]: e.target.value,
-                                      }));
-                                  }}
+                                className="feed-comment-input"
+                                rows={1}
+                                value={commentText[post.id] || ''}
+                                onChange={(e) => {
+                                  setCommentText((prev) => ({
+                                    ...prev,
+                                    [post.id]: e.target.value,
+                                  }));
+                                }}
                               />
 
-                                <button type="submit" className="btn small" style={{height:"35px"}} disabled={sendCommentary[post.id]}>
-                                  {!sendCommentary[post.id] ? t('community.send') : t('community.sending')}
+                              <button
+                                type="submit"
+                                className="btn small"
+                                style={{ height: '35px' }}
+                                disabled={sendCommentary[post.id]}
+                              >
+                                {!sendCommentary[post.id]
+                                  ? t('community.send')
+                                  : t('community.sending')}
                               </button>
                             </form>
                           </div>

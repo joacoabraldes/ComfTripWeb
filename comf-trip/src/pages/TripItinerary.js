@@ -275,15 +275,6 @@ export default function TripItinerary() {
         const tripRes = await apiGet(`/trips/${tripId}`);
         if (!mounted) return;
 
-        if (
-          tripRes.places &&
-          tripRes.places.length &&
-          !(tripRes.places[0].images && tripRes.places[0].images.length)
-        ) {
-          tripRes.places[0].images = [
-            "https://i.pinimg.com/originals/d8/5d/9a/d85d9a3c01e81a917af38532b6b7523c.jpg",
-          ];
-        }
         setTrip(tripRes);
 
         const firstWithCoords = (tripRes.places || []).find((p) => {

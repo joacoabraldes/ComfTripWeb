@@ -1,5 +1,5 @@
 // src/pages/Community.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import '../styles/community.css';
 import {
   FaCheck,
@@ -32,6 +32,63 @@ import {
   deleteSocialPost,
 } from '../services/socialService';
 import { formatDateTime } from '../utils/dateUtils';
+
+/* =========================
+   LIGHTBOX (inline)
+   ========================= */
+function ImageLightbox({ open, images, index, onClose, onPrev, onNext }) {
+  if (!open) return null;
+
+  const hasMany = (images?.length || 0) > 1;
+  const current = images?.[index] || '';
+
+  return (
+    <div className="img-lightbox-overlay" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="img-lightbox" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="img-lightbox-close"
+          onClick={onClose}
+          aria-label="Close"
+          title="Close"
+        >
+          ×
+        </button>
+
+        {hasMany && (
+          <>
+            <button
+              type="button"
+              className="img-lightbox-nav left"
+              onClick={onPrev}
+              aria-label="Previous"
+              title="Previous"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className="img-lightbox-nav right"
+              onClick={onNext}
+              aria-label="Next"
+              title="Next"
+            >
+              ›
+            </button>
+          </>
+        )}
+
+        <img className="img-lightbox-img" src={current} alt={`image-${index}`} />
+
+        {hasMany && (
+          <div className="img-lightbox-counter">
+            {index + 1} / {images.length}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Community() {
   const { t } = useTranslation();
@@ -75,23 +132,63 @@ export default function Community() {
     userId: null,
   });
 
+  // ---------- LIGHTBOX state ----------
+  const [lightbox, setLightbox] = useState({
+    open: false,
+    images: [],
+    index: 0,
+  });
+
+  function openLightbox(images, index = 0) {
+    setLightbox({
+      open: true,
+      images: images || [],
+      index: Number(index) || 0,
+    });
+  }
+  function closeLightbox() {
+    setLightbox({ open: false, images: [], index: 0 });
+  }
+  function nextLightbox() {
+    setLightbox((prev) => {
+      const n = prev.images.length;
+      if (!n) return prev;
+      return { ...prev, index: (prev.index + 1) % n };
+    });
+  }
+  function prevLightbox() {
+    setLightbox((prev) => {
+      const n = prev.images.length;
+      if (!n) return prev;
+      return { ...prev, index: (prev.index - 1 + n) % n };
+    });
+  }
+
+  // Keyboard: ESC / arrows
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (!lightbox.open) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextLightbox();
+      if (e.key === 'ArrowLeft') prevLightbox();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [lightbox.open]);
+
   // ========= FIX IMÁGENES =========
   // Tu API_BASE es .../api  -> para estáticos necesitamos el ORIGIN sin /api
-  const BACKEND_ORIGIN = (process.env.REACT_APP_API_URL || 'https://comf-trip-backend.vercel.app/api')
-    .replace(/\/api\/?$/, '')
-    .replace(/\/$/, '');
+  const BACKEND_ORIGIN = useMemo(() => {
+    return (process.env.REACT_APP_API_URL || 'https://comf-trip-backend.vercel.app/api')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+  }, []);
 
   function resolveImageUrl(url) {
     if (!url) return '';
-    // Absolutas / blob / data
-    if (
-      url.startsWith('blob:') ||
-      url.startsWith('data:') ||
-      /^(https?:)?\/\//.test(url)
-    ) {
+    if (url.startsWith('blob:') || url.startsWith('data:') || /^(https?:)?\/\//.test(url)) {
       return url;
     }
-    // Rutas de uploads del backend
     if (url.startsWith('/uploads/')) {
       return `${BACKEND_ORIGIN}${url}`;
     }
@@ -102,33 +199,21 @@ export default function Community() {
     if (!search.trim()) return list;
 
     const q = search.toLowerCase();
-
     return list.filter((item) =>
       fields.some((field) => {
         const value = item[field];
         if (!value) return false;
 
         let text = value.toString().toLowerCase();
-
-        // Si es email, usar solo lo anterior al @
-        if (text.includes('@')) {
-          text = text.split('@')[0];
-        }
-
+        if (text.includes('@')) text = text.split('@')[0];
         return text.includes(q);
       })
     );
   }
 
   const filteredFriends = filterUsers(friends, searchFriends, ['name', 'email']);
-  const filteredIncoming = filterUsers(incoming, searchIncoming, [
-    'requester_name',
-    'requester_email',
-  ]);
-  const filteredOutgoing = filterUsers(outgoing, searchOutgoing, [
-    'addressee_name',
-    'addressee_email',
-  ]);
+  const filteredIncoming = filterUsers(incoming, searchIncoming, ['requester_name', 'requester_email']);
+  const filteredOutgoing = filterUsers(outgoing, searchOutgoing, ['addressee_name', 'addressee_email']);
 
   // ---------- carga inicial ----------
   useEffect(() => {
@@ -137,7 +222,7 @@ export default function Community() {
 
     (async () => {
       const id = await getCurrentUserId();
-      setCurrentUserId(Number(id));
+      setCurrentUserId(id != null ? Number(id) : null);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -145,24 +230,12 @@ export default function Community() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [fRes, reqRes] = await Promise.all([
-        apiGet('/friends'),
-        apiGet('/friends/requests'),
-      ]);
+      const [fRes, reqRes] = await Promise.all([apiGet('/friends'), apiGet('/friends/requests')]);
 
-      const friendsArr = Array.isArray(fRes)
-        ? fRes
-        : fRes && fRes.rows
-        ? fRes.rows
-        : [];
+      const friendsArr = Array.isArray(fRes) ? fRes : fRes && fRes.rows ? fRes.rows : [];
       setFriends(friendsArr);
 
-      const incomingArr =
-        reqRes && reqRes.incoming
-          ? reqRes.incoming
-          : Array.isArray(reqRes)
-          ? reqRes
-          : [];
+      const incomingArr = reqRes && reqRes.incoming ? reqRes.incoming : Array.isArray(reqRes) ? reqRes : [];
       let outgoingArr = reqRes && reqRes.outgoing ? reqRes.outgoing : [];
 
       // solo pendientes
@@ -199,7 +272,7 @@ export default function Community() {
       setPosts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      setFeedError(err.message || t('community.errorFeed'));
+      setFeedError(err?.message || t('community.errorFeed'));
       setPosts([]);
     } finally {
       setLoadingFeed(false);
@@ -209,24 +282,22 @@ export default function Community() {
   // ---------- FEED: crear post ----------
   async function handleCreatePost(e) {
     e.preventDefault();
-
     if (!newPost.trim() && attachedFiles.length === 0) return;
 
     try {
       setLoadingPostId('new');
       const res = await createSocialPost({
         content: newPost.trim(),
-        files: attachedFiles, // backend acepta files/images/image con el controller nuevo
+        files: attachedFiles,
       });
 
       const created = res.post || res;
-
       setPosts((prev) => [created, ...prev]);
       setNewPost('');
       setAttachedFiles([]);
     } catch (err) {
       console.error(err);
-      alert(err.message || t('community.errorCreatePost'));
+      alert(err?.message || t('community.errorCreatePost'));
     } finally {
       setLoadingPostId(null);
     }
@@ -234,7 +305,6 @@ export default function Community() {
 
   async function handleDeletePost(postId) {
     if (!postId) return;
-
     const ok = window.confirm(t('community.confirmDeletePost'));
     if (!ok) return;
 
@@ -244,7 +314,7 @@ export default function Community() {
       setPosts((prev) => prev.filter((p) => p.id !== postId));
     } catch (err) {
       console.error(err);
-      alert(err.message || t('community.errorDeletePost'));
+      alert(err?.message || t('community.errorDeletePost'));
     } finally {
       setLoadingPostId(null);
     }
@@ -264,7 +334,7 @@ export default function Community() {
     try {
       setLoadingPostId(postId);
       const res = await togglePostLike(postId);
-      const { liked } = res;
+      const liked = !!res?.liked;
 
       setPosts((prev) =>
         prev.map((p) =>
@@ -279,7 +349,7 @@ export default function Community() {
       );
     } catch (err) {
       console.error(err);
-      alert(err.message || t('community.errorLike'));
+      alert(err?.message || t('community.errorLike'));
     } finally {
       setLoadingPostId(null);
     }
@@ -303,7 +373,7 @@ export default function Community() {
       setCommentsByPostOpen((prev) => ({ ...prev, [postId]: true }));
     } catch (err) {
       console.error(err);
-      alert(err.message || t('community.errorLoadingCom'));
+      alert(err?.message || t('community.errorLoadingCom'));
     }
   }
 
@@ -322,7 +392,7 @@ export default function Community() {
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
     } catch (err) {
       console.error(err);
-      alert(err.message || t('community.errorAddingCon'));
+      alert(err?.message || t('community.errorAddingCon'));
     } finally {
       setSendCommentary((prev) => ({ ...prev, [postId]: false }));
     }
@@ -401,9 +471,7 @@ export default function Community() {
       if (token) {
         const parts = token.split('.');
         if (parts.length >= 2) {
-          const payload = JSON.parse(
-            atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
-          );
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
           if (payload) return payload.id || payload.user_id || payload.sub;
         }
       }
@@ -418,11 +486,7 @@ export default function Community() {
 
     try {
       const trips = await apiGet('/trips');
-      const tripsArr = Array.isArray(trips)
-        ? trips
-        : trips && trips.rows
-        ? trips.rows
-        : [];
+      const tripsArr = Array.isArray(trips) ? trips : trips && trips.rows ? trips.rows : [];
       const currentUserId2 = await getCurrentUserId();
 
       if (currentUserId2 == null) {
@@ -431,12 +495,8 @@ export default function Community() {
         return;
       }
 
-      const ownedTrips = tripsArr.filter(
-        (t) => Number(t?.user_id) === Number(currentUserId2)
-      );
-      if (ownedTrips.length === 0) {
-        alert(t('community.noOwnTrips'));
-      }
+      const ownedTrips = tripsArr.filter((tt) => Number(tt?.user_id) === Number(currentUserId2));
+      if (ownedTrips.length === 0) alert(t('community.noOwnTrips'));
       setAvailableTrips(ownedTrips);
     } catch (err) {
       console.error('Error fetching trips for sharing:', err);
@@ -466,6 +526,12 @@ export default function Community() {
     return [];
   }
 
+  function displayName(author_name, author_username) {
+    if (author_name) return author_name;
+    if (author_username) return `@${author_username}`;
+    return t('community.user');
+  }
+
   // ---------- UI ----------
   if (loading) {
     return <LoadingSpinner message={t('community.loading')} fullScreen />;
@@ -488,11 +554,7 @@ export default function Community() {
                     value={emailOrId}
                     onChange={(e) => setEmailOrId(e.target.value)}
                   />
-                  <ActionButton
-                    variant="primary"
-                    onClick={sendRequest}
-                    disabled={sending}
-                  >
+                  <ActionButton variant="primary" onClick={sendRequest} disabled={sending}>
                     {sending ? t('community.sending') : t('community.send')}
                   </ActionButton>
                 </div>
@@ -529,9 +591,7 @@ export default function Community() {
                               </div>
                               <div style={{ marginLeft: 12 }}>
                                 <div className="title truncate">{f.name || f.email}</div>
-                                {f.name && (
-                                  <div className="subtitle truncate">{f.email}</div>
-                                )}
+                                {f.name && <div className="subtitle truncate">{f.email}</div>}
                               </div>
                             </div>
                             <div className="actions">
@@ -599,9 +659,7 @@ export default function Community() {
                                   {r.requester_name || r.requester_email}
                                 </div>
                                 {r.requester_name && (
-                                  <div className="subtitle truncate">
-                                    {r.requester_email}
-                                  </div>
+                                  <div className="subtitle truncate">{r.requester_email}</div>
                                 )}
                               </div>
                             </div>
@@ -661,9 +719,7 @@ export default function Community() {
                                   {o.addressee_name || o.addressee_email}
                                 </div>
                                 {o.addressee_name && (
-                                  <div className="subtitle truncate">
-                                    {o.addressee_email}
-                                  </div>
+                                  <div className="subtitle truncate">{o.addressee_email}</div>
                                 )}
                               </div>
                             </div>
@@ -692,9 +748,7 @@ export default function Community() {
                   <div className="feed-attachments">
                     <label className="btn ghost small file-upload-btn">
                       <FaImage size={14} style={{ marginRight: 6 }} />
-                      {attachedFiles.length > 0
-                        ? t('community.changePhoto')
-                        : t('community.addPhoto')}
+                      {attachedFiles.length > 0 ? t('community.changePhoto') : t('community.addPhoto')}
                       <input
                         type="file"
                         accept="image/*"
@@ -707,12 +761,8 @@ export default function Community() {
                     {attachedFiles.length > 0 && (
                       <div className="feed-preview-row">
                         {attachedFiles.map((file, index) => (
-                          <div
-                            key={file.name + file.lastModified}
-                            className="feed-preview-thumb"
-                          >
+                          <div key={file.name + file.lastModified} className="feed-preview-thumb">
                             <img src={URL.createObjectURL(file)} alt={file.name} />
-
                             <button
                               type="button"
                               className="feed-preview-remove"
@@ -729,35 +779,36 @@ export default function Community() {
 
                   <div className="feed-new-post-footer">
                     <span className="feed-hint">{t('community.hintPost')}</span>
-                    <button
-                      type="submit"
-                      disabled={loadingPostId === 'new'}
-                      className="btn"
-                    >
-                      {loadingPostId === 'new'
-                        ? t('community.publishing')
-                        : t('community.publish')}
+                    <button type="submit" disabled={loadingPostId === 'new'} className="btn">
+                      {loadingPostId === 'new' ? t('community.publishing') : t('community.publish')}
                     </button>
                   </div>
                 </form>
               </section>
 
               <section className="card feed-card">
-                {loadingFeed && (
-                  <div className="spinner">{t('community.loadingFeed')}</div>
-                )}
-
+                {loadingFeed && <div className="spinner">{t('community.loadingFeed')}</div>}
                 {feedError && <div className="error-text">{feedError}</div>}
-
                 {!loadingFeed && posts.length === 0 && !feedError && (
                   <div className="muted">{t('community.noPost')}</div>
                 )}
 
                 <div className="feed-posts">
                   {posts.map((post) => {
-                    const images = getPostImages(post);
+                    const rawImages = getPostImages(post);
+                    const resolvedImages = rawImages.map(resolveImageUrl);
+
                     return (
-                      <article key={post.id} className="feed-post" style={{borderColor: Number(post.user_id) === Number(currentUserId) ? "var(--color-accent)": ""}}>
+                      <article
+                        key={post.id}
+                        className="feed-post"
+                        style={{
+                          borderColor:
+                            Number(post.user_id) === Number(currentUserId)
+                              ? 'var(--color-accent)'
+                              : '',
+                        }}
+                      >
                         <header className="feed-post-header">
                           <div style={{ display: 'flex' }}>
                             <div className="avatar">
@@ -772,24 +823,18 @@ export default function Community() {
 
                             <div className="feed-author" style={{ paddingLeft: 10 }}>
                               <div className="feed-author-name">
-                                {post.author_name
-                                  ? post.author_name
-                                  : `@${post.author_username}` || t('community.user')}
+                                {displayName(post.author_name, post.author_username)}
                               </div>
 
                               {post.author_username && post.author_name && (
-                                <div className="feed-author-username">
-                                  @{post.author_username}
-                                </div>
+                                <div className="feed-author-username">@{post.author_username}</div>
                               )}
                             </div>
                           </div>
 
                           <div style={{ textAlign: 'right' }}>
                             {post.created_at && (
-                              <div className="feed-date">
-                                {formatDateTime(post.created_at)}
-                              </div>
+                              <div className="feed-date">{formatDateTime(post.created_at)}</div>
                             )}
 
                             {Number(post.user_id) === Number(currentUserId) && (
@@ -807,16 +852,20 @@ export default function Community() {
                           </div>
                         </header>
 
-                        {images.length > 0 && (
+                        {/* ✅ CLICK PARA AMPLIAR */}
+                        {resolvedImages.length > 0 && (
                           <div className="feed-images">
-                            {images.map((url, idx) => (
-                              <div key={idx} className="feed-image-wrapper">
-                                {/* ✅ FIX: apuntar al backend */}
-                                <img
-                                  src={resolveImageUrl(url)}
-                                  alt={`post-${post.id}-${idx}`}
-                                />
-                              </div>
+                            {resolvedImages.map((url, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                className="feed-image-wrapper feed-image-btn"
+                                onClick={() => openLightbox(resolvedImages, idx)}
+                                aria-label={t('community.openImage') || 'Open image'}
+                                title={t('community.openImage') || 'Open image'}
+                              >
+                                <img src={url} alt={`post-${post.id}-${idx}`} />
+                              </button>
                             ))}
                           </div>
                         )}
@@ -833,9 +882,7 @@ export default function Community() {
                             }}
                           >
                             <div className="feed-author-name">
-                              {post.author_name
-                                ? post.author_name
-                                : `@${post.author_username}` || t('community.user')}
+                              {displayName(post.author_name, post.author_username)}
                             </div>
                             <div className="feed-comment" style={{ paddingTop: 0 }}>
                               {post.content}
@@ -848,7 +895,7 @@ export default function Community() {
                             type="button"
                             disabled={loadingPostId === post.id}
                             onClick={() => handleToggleLike(post.id)}
-                            className={'btn like small'}
+                            className="btn like small"
                           >
                             {post.liked_by_me ? (
                               <FaHeart size={20} color="var(--color-primary)" />
@@ -866,13 +913,9 @@ export default function Community() {
                             {commentsByPostOpen[post.id] ? (
                               <FaComment size={20} color={'var(--color-success)'} />
                             ) : (
-                              <FaRegComment
-                                size={20}
-                                color="var(--color-text-primary)"
-                              />
+                              <FaRegComment size={20} color="var(--color-text-primary)" />
                             )}{' '}
-                            {post.comment_count}{' '}
-                            {t('community.comment')}
+                            {post.comment_count} {t('community.comment')}
                           </button>
                         </div>
 
@@ -898,15 +941,11 @@ export default function Community() {
 
                                       <div className="feed-author">
                                         <div className="feed-author-name">
-                                          {c.author_name
-                                            ? c.author_name
-                                            : `@${c.author_username}` || t('community.user')}
+                                          {displayName(c.author_name, c.author_username)}
                                         </div>
 
                                         {c.author_username && c.author_name && (
-                                          <div className="feed-author-username">
-                                            @{c.author_username}
-                                          </div>
+                                          <div className="feed-author-username">@{c.author_username}</div>
                                         )}
                                       </div>
                                     </div>
@@ -922,10 +961,7 @@ export default function Community() {
                               ))}
                             </div>
 
-                            <form
-                              onSubmit={(e) => handleAddComment(e, post.id)}
-                              className="feed-comment-form"
-                            >
+                            <form onSubmit={(e) => handleAddComment(e, post.id)} className="feed-comment-form">
                               <textarea
                                 className="feed-comment-input"
                                 rows={1}
@@ -944,9 +980,7 @@ export default function Community() {
                                 style={{ height: '35px' }}
                                 disabled={sendCommentary[post.id]}
                               >
-                                {!sendCommentary[post.id]
-                                  ? t('community.send')
-                                  : t('community.sending')}
+                                {!sendCommentary[post.id] ? t('community.send') : t('community.sending')}
                               </button>
                             </form>
                           </div>
@@ -985,14 +1019,22 @@ export default function Community() {
           })
         }
         onConfirm={() => {
-          if (removeConfirm.userId) {
-            removeFriend(removeConfirm.userId);
-          }
+          if (removeConfirm.userId) removeFriend(removeConfirm.userId);
         }}
         title={t('community.removeTitle')}
         message={t('community.removeConfirm')}
         confirmText={t('community.remove')}
         variant="primary"
+      />
+
+      {/* ✅ Lightbox */}
+      <ImageLightbox
+        open={lightbox.open}
+        images={lightbox.images}
+        index={lightbox.index}
+        onClose={closeLightbox}
+        onPrev={prevLightbox}
+        onNext={nextLightbox}
       />
     </div>
   );

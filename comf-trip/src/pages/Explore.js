@@ -563,12 +563,6 @@ export default function Explore() {
                 <h2>
                   Lugares para tu viaje a {tripContextTitle}
                 </h2>
-                <div className="small-muted">
-                  Basado en tu viaje{" "}
-                  {tripContext.start_date
-                    ? `(${tripContext.start_date} – ${tripContext.end_date || "?"})`
-                    : ""}
-                </div>
               </div>
 
               {locationsLoading ? (
@@ -652,10 +646,6 @@ export default function Explore() {
                 <button className="btn-clear" onClick={clearFilters}>
                   {t("explore.clearFilters")}
                 </button>
-                <div className="hint">
-                  Estos filtros se aplican a los lugares
-                  recomendados, no a tus viajes.
-                </div>
               </div>
             </div>
 

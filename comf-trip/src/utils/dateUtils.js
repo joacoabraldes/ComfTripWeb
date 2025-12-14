@@ -20,6 +20,23 @@ export function formatDate(dateString) {
   }
 }
 
+export function formatDateTime(dateString) {
+    if (!dateString) return '-';
+    try {
+        const time=new Date(dateString).toLocaleString().split(',')[1].split(':')
+        const h=time[0]
+        const m=time[1]
+        const info=time[2].split(' ')[1]
+        const date = dateString.split('T')[0].split('-');
+        const yy = date[0];
+        const mm = date[1];
+        const dd = date[2];
+        return `${dd}/${mm}/${yy}, ${h}:${m} ${info}`;
+    } catch (e) {
+        return '-';
+    }
+}
+
 /**
  * Format a date range
  * @param {string} startDate - Start date ISO string

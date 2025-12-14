@@ -834,7 +834,7 @@ export default function TripItinerary() {
   // ---------- Flight card ----------
   const flightCard = (
     <section
-      className="card card--white"
+      className="card-trip card--white"
       style={{
         marginBottom: 16,
         padding: 16,
@@ -904,7 +904,7 @@ export default function TripItinerary() {
   // ---------- Add location (only from trip's city) ----------
   const addLocationCard = (
     <section
-      className="card card--white"
+      className="card-trip card--white"
       style={{
         marginBottom: 16,
         padding: 16,

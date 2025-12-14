@@ -422,7 +422,7 @@ export default function AddTrip() {
         <div className="add-trip-left">
           <form className="form" onSubmit={handleSubmit}>
             {/* SECTION: Destination */}
-            <section className="card">
+            <section className="card-trip">
               <h3>{t("addTrip.destinationAndDates")}</h3>
 
               <label>{t("addTrip.destinationCity")}</label>
@@ -545,7 +545,7 @@ export default function AddTrip() {
             </section>
 
             {/* SECTION: Flight selection (now via FlightFinder) */}
-            <section className="card card--white">
+            <section className="card-trip card--white">
               <h3>{t("addTrip.flights")}</h3>
 
               <FlightFinder
@@ -558,7 +558,7 @@ export default function AddTrip() {
             </section>
 
             {/* SECTION: Preferences */}
-            <section className="card">
+            <section className="card-trip">
               <h3>{t("addTrip.preferences")}</h3>
 
               <label>{t("addTrip.tripPace")}</label>

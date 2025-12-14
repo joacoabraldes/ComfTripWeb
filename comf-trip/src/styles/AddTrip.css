@@ -116,16 +116,18 @@
 }
 
 /* Card helper around sections */
-.card {
+.card-trip {
   margin-bottom: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: var(--color-bg-tertiary);
+    background: var(--color-bg-primary);
   box-sizing: border-box;
+    border: 0.0625rem solid var(--color-border-primary-alpha-03);
+    box-shadow: var(--shadow-lg);
 }
 
 /* When a section needs white background (e.g. flights) you can add .card--white if needed */
-.card.card--white {
+.card-trip.card--white {
   background: var(--color-bg-primary);
 }
 
@@ -305,8 +307,8 @@
 }
 
 /* labels in cards */
-.card label,
-.card .field label {
+.card-trip label,
+.card-trip .field label {
   display: block;
   margin-bottom: 0.375rem;
   font-weight: 600;
@@ -315,7 +317,7 @@
 }
 
 /* small helper spacing */
-.form > .card:last-child {
+.form > .card-trip:last-child {
   margin-bottom: 1.25rem;
 }
 

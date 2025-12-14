@@ -19,6 +19,7 @@ import {
   fetchPostComments,
   addPostComment,
 } from '../services/socialService';
+import {formatDateTime} from "../utils/dateUtils";
 
 export default function Community() {
   const { t } = useTranslation();
@@ -33,7 +34,31 @@ export default function Community() {
   const [sending, setSending] = useState(false);
   const [sendCommentary, setSendCommentary]=useState({})
 
-  // share modal state
+    const [searchFriends, setSearchFriends] = useState('');
+    const [searchIncoming, setSearchIncoming] = useState('');
+    const [searchOutgoing, setSearchOutgoing] = useState('');
+
+    const filteredFriends = filterUsers(
+        friends,
+        searchFriends,
+        ['name', 'email']
+    );
+
+    const filteredIncoming = filterUsers(
+        incoming,
+        searchIncoming,
+        ['requester_name', 'requester_email']
+    );
+
+    const filteredOutgoing = filterUsers(
+        outgoing,
+        searchOutgoing,
+        ['addressee_name', 'addressee_email']
+    );
+
+
+
+    // share modal state
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareTargetFriend, setShareTargetFriend] = useState(null);
   const [availableTrips, setAvailableTrips] = useState([]);
@@ -110,7 +135,29 @@ export default function Community() {
     }
   }
 
-  // ---------- FEED: cargar ----------
+    function filterUsers(list, search, fields = []) {
+        if (!search.trim()) return list;
+
+        const q = search.toLowerCase();
+
+        return list.filter((item) =>
+            fields.some((field) => {
+                const value = item[field];
+                if (!value) return false;
+
+                let text = value.toString().toLowerCase();
+
+                // Si es email, usar solo lo anterior al @
+                if (text.includes('@')) {
+                    text = text.split('@')[0];
+                }
+
+                return text.includes(q);
+            })
+        );
+    }
+
+    // ---------- FEED: cargar ----------
   async function loadFeed() {
     try {
       setLoadingFeed(true);
@@ -152,6 +199,11 @@ export default function Community() {
   }
 }
 
+    function handleRemoveFile(indexToRemove) {
+        setAttachedFiles((prev) =>
+            prev.filter((_, index) => index !== indexToRemove)
+        );
+    }
 
 
   function handleFilesChange(e) {
@@ -413,13 +465,23 @@ export default function Community() {
                 <p className="hint">{t('community.hint')}</p>
               </section>
 
-              <section className="card">
+              <section className="card list-users">
                 <h3>{t('community.friends')}</h3>
-                {friends.length === 0 ? (
+                  {friends.length === 0 ? (
                   <EmptyState message={t('community.noFriends')} />
                 ) : (
                   <div className="list">
-                    {friends.map((f) => (
+                      <input
+                          className="list-search"
+                          type="text"
+                          placeholder={t('community.searchUser')}
+                          value={searchFriends}
+                          onChange={(e) => setSearchFriends(e.target.value)}
+                      />
+                      {filteredFriends.length===0 ? (
+                          <EmptyState message={t('community.noSearchFriends')} />
+                      ) :(<div>
+                    {filteredFriends.map((f) => (
                       <div key={f.id} className="list-item">
                         <div className="info">
                           <div className="avatar">
@@ -459,18 +521,29 @@ export default function Community() {
                           />
                         </div>
                       </div>
-                    ))}
+                    ))}</div>)}
                   </div>
                 )}
               </section>
 
-              <section className="card">
+              <section className="card list-users">
                 <h3>{t('community.incomingRequests')}</h3>
-                {incoming.length === 0 ? (
+
+                  {incoming.length === 0 ? (
                   <EmptyState message={t('community.noIncoming')} />
                 ) : (
                   <div className="list">
-                    {incoming.map((r) => (
+                      <input
+                          className="list-search"
+                          type="text"
+                          placeholder={t('community.searchUser')}
+                          value={searchIncoming}
+                          onChange={(e) => setSearchIncoming(e.target.value)}
+                      />
+                      {filteredIncoming.length===0 ? (
+                          <EmptyState message={t('community.noSearchIncoming')} />
+                      ) : (<div>
+                    {filteredIncoming.map((r) => (
                       <div key={r.id} className="list-item">
                         <div className="info">
                           <div className="avatar">
@@ -506,18 +579,28 @@ export default function Community() {
                           />
                         </div>
                       </div>
-                    ))}
+                    ))}</div>)}
                   </div>
                 )}
               </section>
 
-              <section className="card">
+              <section className="card list-users">
                 <h3>{t('community.outgoingRequests')}</h3>
                 {outgoing.length === 0 ? (
                   <EmptyState message={t('community.noOutgoing')} />
                 ) : (
                   <div className="list">
-                    {outgoing.map((o) => (
+                      <input
+                          className="list-search"
+                          type="text"
+                          placeholder={t('community.searchUser')}
+                          value={searchOutgoing}
+                          onChange={(e) => setSearchOutgoing(e.target.value)}
+                      />
+                      {filteredOutgoing.length===0 ? (
+                          <EmptyState message={t('community.noSearchOutgoing')} />
+                      ) : (<div>
+                      {filteredOutgoing.map((o) => (
                       <div key={o.id} className="list-item">
                         <div className="info">
                           <div className="avatar">
@@ -538,7 +621,7 @@ export default function Community() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                    ))}</div>)}
                   </div>
                 )}
               </section>
@@ -547,7 +630,7 @@ export default function Community() {
             {/* ---- FEED CENTRAL ---- */}
             <section className="community-feed">
               <section className="card feed-card">
-                <h3>Social feed</h3>
+                <h3>{t('community.titleFeed')}</h3>
                 <form onSubmit={handleCreatePost} className="feed-new-post">
                   <textarea
                     className="feed-textarea"
@@ -564,7 +647,6 @@ export default function Community() {
                       <input
                         type="file"
                         accept="image/*"
-                        multiple
                         capture="environment"
                         onChange={handleFilesChange}
                       />
@@ -572,17 +654,27 @@ export default function Community() {
 
                     {attachedFiles.length > 0 && (
                       <div className="feed-preview-row">
-                        {attachedFiles.map((file) => (
-                          <div
-                            key={file.name + file.lastModified}
-                            className="feed-preview-thumb"
-                          >
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={file.name}
-                            />
-                          </div>
-                        ))}
+                          {attachedFiles.map((file, index) => (
+                              <div
+                                  key={file.name + file.lastModified}
+                                  className="feed-preview-thumb"
+                              >
+                                  <img
+                                      src={URL.createObjectURL(file)}
+                                      alt={file.name}
+                                  />
+
+                                  <button
+                                      type="button"
+                                      className="feed-preview-remove"
+                                      onClick={() => handleRemoveFile(index)}
+                                      aria-label={t('community.removePhoto')}
+                                  >
+                                      ×
+                                  </button>
+                              </div>
+                          ))}
+
                       </div>
                     )}
                   </div>
@@ -644,7 +736,7 @@ export default function Community() {
                               {/* fecha arriba a la derecha */}
                               {post.created_at && (
                                   <div className="feed-date">
-                                      {new Date(post.created_at).toLocaleString()}
+                                      {formatDateTime(post.created_at)}
                                   </div>
                               )}
                           </header>
@@ -666,7 +758,7 @@ export default function Community() {
                                       ? post.author_name
                                       : `@${post.author_username}` || t('community.user')}
                               </div>
-                              {post.content}
+                              <div className="feed-comment" style={{paddingTop:0}}>{post.content}</div>
                           </div>}
 
                         <div className="feed-post-actions">
@@ -754,7 +846,7 @@ export default function Community() {
                                   }}
                               />
 
-                                <button type="submit" className="btn small" disabled={sendCommentary[post.id]}>
+                                <button type="submit" className="btn small" style={{height:"35px"}} disabled={sendCommentary[post.id]}>
                                   {!sendCommentary[post.id] ? t('community.send') : t('community.sending')}
                               </button>
                             </form>

@@ -17,6 +17,7 @@ import {
 import { apiGet, apiPost, apiDelete } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
+import { useSnackbar } from '../contexts/SnackbarContext';
 import ShareTripModal from '../components/ShareTripModal';
 import IconButton from '../components/IconButton';
 import ActionButton from '../components/ActionButton';
@@ -125,6 +126,7 @@ export function displayName(author_name, author_username, t) {
 
 export default function Community() {
   const { t } = useTranslation();
+  const { showError, showSuccess } = useSnackbar();
   const navigate = useNavigate();
     const { user } = useAuth();
 
@@ -270,7 +272,7 @@ export default function Community() {
     } catch (err) {
       console.error('Error cargando comunidad:', err);
       const msg = err && err.message ? err.message : t('community.loadError');
-      alert(`${t('community.loadError')}\n\n${msg}`);
+      showError(`${t('community.loadError')}\n\n${msg}`);
       setFriends([]);
       setIncoming([]);
       setOutgoing([]);
@@ -313,7 +315,7 @@ export default function Community() {
       setAttachedFiles([]);
     } catch (err) {
       console.error(err);
-      alert(err?.message || t('community.errorCreatePost'));
+      showError(t('community.errorCreatePost'));
     } finally {
       setLoadingPostId(null);
     }
@@ -330,7 +332,7 @@ export default function Community() {
       setPosts((prev) => prev.filter((p) => p.id !== postId));
     } catch (err) {
       console.error(err);
-      alert(err?.message || t('community.errorDeletePost'));
+      showError(t('community.errorDeletePost'));
     } finally {
       setLoadingPostId(null);
     }
@@ -365,7 +367,7 @@ export default function Community() {
       );
     } catch (err) {
       console.error(err);
-      alert(err?.message || t('community.errorLike'));
+      showError(t('community.errorLike'));
     } finally {
       setLoadingPostId(null);
     }
@@ -389,7 +391,7 @@ export default function Community() {
       setCommentsByPostOpen((prev) => ({ ...prev, [postId]: true }));
     } catch (err) {
       console.error(err);
-      alert(err?.message || t('community.errorLoadingCom'));
+      showError(t('community.errorLoadingCom'));
     }
   }
 
@@ -408,7 +410,7 @@ export default function Community() {
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
     } catch (err) {
       console.error(err);
-      alert(err?.message || t('community.errorAddingCon'));
+      showError(t('community.errorAddingCon'));
     } finally {
       setSendCommentary((prev) => ({ ...prev, [postId]: false }));
     }
@@ -416,7 +418,7 @@ export default function Community() {
 
   // ---------- acciones comunidad ----------
   async function sendRequest() {
-    if (!emailOrId) return alert(t('community.enterEmailOrId'));
+    if (!emailOrId) return showError(t('community.enterEmailOrId'));
     setSending(true);
     try {
       const body = {};
@@ -424,13 +426,13 @@ export default function Community() {
       else body.addressee_id = Number(emailOrId);
 
       await apiPost('/friends', body);
-      alert(t('community.requestSent'));
+      showSuccess(t('community.requestSent'));
       setEmailOrId('');
       await loadAll();
     } catch (err) {
       console.error('Error enviando solicitud:', err);
       const msg = (err && err.message) || t('community.requestError');
-      alert(msg);
+      showError(msg);
     } finally {
       setSending(false);
     }
@@ -443,7 +445,7 @@ export default function Community() {
       await loadFeed();
     } catch (err) {
       console.error('Error aceptando:', err);
-      alert(t('community.acceptError'));
+      showError(t('community.acceptError'));
     }
   }
 
@@ -453,7 +455,7 @@ export default function Community() {
       await loadAll();
     } catch (err) {
       console.error('Error rechazando:', err);
-      alert(t('community.rejectError'));
+      showError(t('community.rejectError'));
     }
   }
 
@@ -468,7 +470,7 @@ export default function Community() {
       await loadFeed();
     } catch (err) {
       console.error('Error eliminando amigo:', err);
-      alert(t('community.removeError'));
+      showError(t('community.removeError'));
     }
   }
 
@@ -484,16 +486,16 @@ export default function Community() {
 
       if (currentUserId2 == null) {
         setAvailableTrips([]);
-        alert(t('community.cannotDetermineUser'));
+        showError(t('community.cannotDetermineUser'));
         return;
       }
 
       const ownedTrips = tripsArr.filter((tt) => Number(tt?.user_id) === Number(currentUserId2));
-      if (ownedTrips.length === 0) alert(t('community.noOwnTrips'));
+      if (ownedTrips.length === 0) showError(t('community.noOwnTrips'));
       setAvailableTrips(ownedTrips);
     } catch (err) {
       console.error('Error fetching trips for sharing:', err);
-      alert(t('community.noTripsToShare'));
+      showError(t('community.noTripsToShare'));
       setAvailableTrips([]);
     } finally {
       setLoadingTrips(false);

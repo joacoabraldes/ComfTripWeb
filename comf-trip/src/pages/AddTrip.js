@@ -6,6 +6,7 @@ import "../styles/AddTrip.css";
 import LogoSvg from "../components/LogoSvg";
 import Select from "react-select";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LoadTrip from "./LoadTrip";
 import { normalizeDate } from "../utils/dateUtils";
@@ -13,6 +14,7 @@ import FlightFinder from "../components/FlightFinder";
 
 export default function AddTrip() {
   const { t } = useTranslation();
+  const { showError } = useSnackbar();
 
   const [destinations, setDestinations] = useState([
     {
@@ -263,7 +265,7 @@ export default function AddTrip() {
     try {
       const stored = JSON.parse(localStorage.getItem("user") || "null");
       if (!stored || !stored.id) {
-        alert(t("addTrip.userNotIdentified"));
+        showError(t("addTrip.userNotIdentified"));
         nav("/login");
         return;
       }
@@ -376,7 +378,7 @@ export default function AddTrip() {
       }
     } catch (err) {
       console.error("Error creando viaje:", err);
-      alert(err.message || t("addTrip.createTripGenericError"));
+      showError(t("addTrip.createTripGenericError"));
       setStatusMessage(null);
     } finally {
       setLoadingTrip(false);

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost } from "./api";
 import "../styles/interests.css";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import { translateCategory, translateCategoryDescription } from "../helpers/categoryTranslations";
 import OptimizedImage from "../components/OptimizedImage";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -58,6 +59,7 @@ const PLACEHOLDER =
 export default function InterestsPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showError } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]=useState(false)
   const [interests, setInterests] = useState([]);
@@ -74,13 +76,13 @@ export default function InterestsPage() {
         setInterests(Array.isArray(res) ? res : []);
       } catch (err) {
         console.error("Error loading interests:", err);
-        alert(t('interests.loadError'));
+        showError(t('interests.loadError'));
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
-  }, [t]);
+  }, [t, showError]);
 
   function toggle(id) {
     setSelected((s) => {
@@ -94,7 +96,7 @@ export default function InterestsPage() {
   async function submitInterests() {
     const stored = JSON.parse(localStorage.getItem("user") || "null");
     if (!stored || !stored.id) {
-      alert(t('interests.userNotAuthenticated'));
+      showError(t('interests.userNotAuthenticated'));
       navigate("/login");
       return;
     }
@@ -114,8 +116,8 @@ export default function InterestsPage() {
       navigate("/home");
     } catch (err) {
       console.error("Error saving interests:", err);
-      const errMsg = err?.message || err?.error || "Error al guardar intereses";
-      alert(errMsg);
+      const errMsg = t('interests.saveError');
+      showError(errMsg);
     } finally {
         setSaving(false);
     }

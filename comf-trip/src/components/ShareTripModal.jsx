@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import Modal from "./Modal";
 import ActionButton from "./ActionButton";
 import { apiGet, apiPost } from "../pages/api";
@@ -27,6 +28,7 @@ export default function ShareTripModal({
                                            loadingTrips = true
 }) {
   const { t } = useTranslation();
+  const { showError, showSuccess } = useSnackbar();
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedTripIds, setSelectedTripIds] = useState(new Set());
@@ -90,11 +92,12 @@ export default function ShareTripModal({
       }
 
       setSharing(false);
-      let msg = '';
-      if (successes.length) msg += t('community.shareSuccess', { count: successes.length }) + '\n';
-      if (failures.length) msg += t('community.shareErrors', { count: failures.length }) + '\n' + failures.map(f => ` - ${f.tripId}: ${f.message}`).join('\n');
-
-      alert(msg || t('community.operationCompleted'));
+      
+      // Mostrar mensaje de éxito si hubo al menos un viaje compartido exitosamente
+      if (successes.length) {
+        showSuccess(t('community.shareSuccess', { count: successes.length }));
+      }
+      
       if (onShareSuccess) onShareSuccess();
       onClose();
       setSelectedTripIds(new Set());
@@ -107,13 +110,13 @@ export default function ShareTripModal({
           public: false,
           shared_with_user_id: selectedFriend.id,
         });
-        alert(t("trips.share.success", { friendName: selectedFriend.name || selectedFriend.email }));
+        showSuccess(t("trips.share.success", { friendName: selectedFriend.name || selectedFriend.email }));
         if (onShareSuccess) onShareSuccess();
         onClose();
         setSelectedFriend(null);
       } catch (err) {
         console.error("Error sharing trip:", err);
-        alert(t("trips.share.error"));
+        showError(t("trips.share.error"));
       } finally {
         setSharing(false);
       }

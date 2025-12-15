@@ -5,6 +5,7 @@ import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
 import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import InputField from "../components/forms/InputField";
 import FilterSelect from "../components/FilterSelect";
 
@@ -15,6 +16,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { t, language, setLanguage } = useTranslation();
+  const { showError } = useSnackbar();
     const [message, setMessage] = useState("");
     const [errorIdentifier, setErrorIdentifier]=useState(null)
     const [errorPassword, setErrorPassword]=useState(null)
@@ -52,7 +54,7 @@ export default function Login() {
                 setErrorIdentifier(null)
             }
         }
-    }, [form, t]);
+    }, [form, t, onEmail, onPassword]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -78,7 +80,7 @@ export default function Login() {
       // on success, go to trips
       nav("/home");
     } catch (err) {
-      alert(err.message || JSON.stringify(err));
+      showError(err.message || JSON.stringify(err));
     } finally {
       setLoading(false);
     }

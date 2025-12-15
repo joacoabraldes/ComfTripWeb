@@ -1,6 +1,8 @@
 // src/components/social/PostCard.jsx
 import React, { useState } from 'react';
 import { toggleLike } from '../services/socialService';
+import { useSnackbar } from '../contexts/SnackbarContext';
+import { useTranslation } from '../i18n';
 import CommentsSection from './CommentSection';
 
 function formatDate(dateStr) {
@@ -10,6 +12,8 @@ function formatDate(dateStr) {
 }
 
 export default function PostCard({ post, onPostUpdated }) {
+  const { t } = useTranslation();
+  const { showError } = useSnackbar();
   const [isLiking, setIsLiking] = useState(false);
 
   const handleToggleLike = async () => {
@@ -27,21 +31,21 @@ export default function PostCard({ post, onPostUpdated }) {
       });
     } catch (err) {
       console.error(err);
-      alert('No se pudo cambiar el like');
+      showError(t('socialFeed.errorToggleLike'));
     } finally {
       setIsLiking(false);
     }
   };
 
-  const likeLabel = post.like_count === 1 ? '1 Me gusta' : `${post.like_count || 0} Me gusta`;
+  const likeLabel = post.like_count === 1 ? t('socialFeed.oneLike') : `${post.like_count || 0} ${t('socialFeed.likes')}`;
   const commentLabel =
     post.comment_count === 1
-      ? '1 comentario'
-      : `${post.comment_count || 0} comentarios`;
+      ? t('socialFeed.oneComment')
+      : `${post.comment_count || 0} ${t('socialFeed.comments')}`;
 
   const authorDisplay = post.author_username
     ? `@${post.author_username}`
-    : post.author_name || 'Usuario';
+    : post.author_name || t('socialFeed.user');
 
   return (
     <article
@@ -150,7 +154,7 @@ export default function PostCard({ post, onPostUpdated }) {
             cursor: 'pointer',
           }}
         >
-          {post.liked_by_me ? 'Ya no me gusta' : 'Me gusta'}
+          {post.liked_by_me ? t('socialFeed.unlike') : t('socialFeed.like')}
         </button>
       </div>
 

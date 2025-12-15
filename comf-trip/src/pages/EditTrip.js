@@ -5,10 +5,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import "../styles/AddTrip.css";
 import LogoSvg from "../components/LogoSvg";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function EditTrip() {
     const { t } = useTranslation();
+    const { showError, showSuccess } = useSnackbar();
     const { tripId } = useParams(); // 👈 recibimos el ID por la URL
     const [destinations, setDestinations] = useState([
         { destination:"", startDate: null, endDate: null }
@@ -76,14 +78,14 @@ export default function EditTrip() {
                 setNotes(trip.notes || "");
             } catch (err) {
                 console.error("Error cargando trip:", err);
-                alert(t('editTrip.loadError'));
+                showError(t('editTrip.loadError'));
                 nav("/");
             } finally {
                 if (mounted) setLoadingOpen(false);
             }
         };
         fetchTrip();return () => { mounted = false; };
-    }, [tripId, nav]);
+    }, [tripId, nav, showError, t]);
 
     const getDaysInMonth = (year, month) =>
         new Date(year, month + 1, 0).getDate();
@@ -208,11 +210,11 @@ export default function EditTrip() {
             };
 
             await apiPut(`/trips/${tripId}`, payload);
-            alert(t('editTrip.updateSuccess'));
+            showSuccess(t('editTrip.updateSuccess'));
             nav(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Error editando viaje:", err);
-            alert(err.message || t('editTrip.updateError'));
+            showError(t('editTrip.updateError'));
         } finally {
             setLoading(false);
         }

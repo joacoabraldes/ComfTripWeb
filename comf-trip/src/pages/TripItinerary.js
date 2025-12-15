@@ -15,6 +15,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 import flightsApi from "../services/flightsApi";
 import { Country } from "country-state-city";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
 import IconButton from "../components/IconButton";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -44,6 +45,7 @@ export default function TripItinerary() {
   const params = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showError } = useSnackbar();
   const tripIdRaw = params.tripId ?? params.id ?? params?.tripId;
   const tripId = Number(tripIdRaw);
 
@@ -555,7 +557,7 @@ export default function TripItinerary() {
       setMenuOpen(null);
     } catch (err) {
       console.error("Error eliminando punto:", err);
-      alert(t("tripItinerary.deletePlaceError"));
+      showError(t("tripItinerary.deletePlaceError"));
     }
   };
 

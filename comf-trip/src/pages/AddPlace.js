@@ -6,7 +6,8 @@ import "../styles/addPlace.css";
 import "../styles/auth.css"
 import Select from "react-select";
 import { useTranslation } from "../i18n";
-import {normalizeDate, formatDate} from "../utils/dateUtils";
+import { useSnackbar } from "../contexts/SnackbarContext";
+import {normalizeDate} from "../utils/dateUtils";
 
 
 
@@ -17,6 +18,7 @@ const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function AddPlace() {
     const { t } = useTranslation();
+    const { showError } = useSnackbar();
     // NOTE: read the param name that you defined in App.jsx (/:tripId)
     const params = useParams();
     const navigate = useNavigate();
@@ -112,7 +114,7 @@ export default function AddPlace() {
             }
         })();
         return () => { mounted = false; };
-    }, [tripId]);
+    }, [tripId, t, selectedDate]);
 
     useEffect(() => {
         setStartHour("");
@@ -269,20 +271,20 @@ export default function AddPlace() {
     async function handleAddPlace(e) {
         e?.preventDefault();
         if (!selectedLocation) {
-            alert(t('addPlace.selectLocation'));
+            showError(t('addPlace.selectLocation'));
             return;
         }
         if (!date) {
-            alert(t('addPlace.selectDate'));
+            showError(t('addPlace.selectDate'));
             return;
         }
         if(!startHour || !startHour.split(":")[1]){
-            alert(t('addPlace.selectStartTime'));
+            showError(t('addPlace.selectStartTime'));
             return;
         }
 
         if(!endHour || !endHour.split(":")[1]){
-            alert(t('addPlace.selectEndTime'));
+            showError(t('addPlace.selectEndTime'));
             return;
         }
         setAdding(true);
@@ -322,11 +324,11 @@ export default function AddPlace() {
     async function handleAutoAddPlace(e) {
         e?.preventDefault();
         if (!selectedLocation) {
-            alert(t('addPlace.selectLocation'));
+            showError(t('addPlace.selectLocation'));
             return;
         }
         if (!date) {
-            alert(t('addPlace.selectDate'));
+            showError(t('addPlace.selectDate'));
             return;
         }
 
@@ -344,7 +346,7 @@ export default function AddPlace() {
             };
 
             // call the new backend endpoint that uses routing service and inserts/reorders day places
-            const res = await apiPost(`/trips/${tripId}/places/auto`, body);
+            await apiPost(`/trips/${tripId}/places/auto`, body);
 
             // backend returns created places for that date; to keep client state consistent we refetch the trip
             const refreshed = await apiGet(`/trips/${tripId}`);

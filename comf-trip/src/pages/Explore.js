@@ -5,6 +5,7 @@ import "../styles/explore.css";
 import { apiGet, apiPost } from "./api";
 import OptimizedImage from "../components/OptimizedImage";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import Modal from "../components/Modal";
 import WideModal from "../components/WideModal";
 import ActionButton from "../components/ActionButton";
@@ -181,6 +182,7 @@ function buildDestinationForCreate(exp) {
 export default function Explore() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showSuccess } = useSnackbar();
 
   // server-driven
   const [categories, setCategories] = useState([]);
@@ -194,7 +196,14 @@ export default function Explore() {
 
   // categoría elegida (slug de interests)
   const [selectedCategorySlug, setSelectedCategorySlug] = useState("todo");
-  const [selectedCategoryTitle, setSelectedCategoryTitle] = useState("Todo");
+  const [selectedCategoryTitle, setSelectedCategoryTitle] = useState("");
+  
+  // Initialize selectedCategoryTitle with translation
+  useEffect(() => {
+    if (selectedCategoryTitle === "" && selectedCategorySlug === "todo") {
+      setSelectedCategoryTitle(t("explore.all"));
+    }
+  }, [t, selectedCategoryTitle, selectedCategorySlug]);
 
   // filtros de lugares (NO de viaje)
   const [filterCountry, setFilterCountry] = useState("");
@@ -274,7 +283,7 @@ export default function Explore() {
 
     // Basic required fields (backend requires titulo + fk_interest)
     if (!newLoc.titulo.trim() || !newLoc.fk_interest) {
-      setCreateLocError("Completá el nombre del lugar y una categoría.");
+      setCreateLocError(t("explore.addPlaceModal.nameRequired"));
       return;
     }
 
@@ -323,7 +332,7 @@ export default function Explore() {
       });
     } catch (err) {
       console.error("POST /locations error:", err);
-      setCreateLocError(err?.message || "No se pudo crear el lugar.");
+      setCreateLocError(err?.message || t("explore.errorCreatePlace"));
     } finally {
       setCreateLocLoading(false);
     }
@@ -397,7 +406,7 @@ export default function Explore() {
       } catch (err) {
         console.error("Initial load Explore error:", err);
         if (!mounted) return;
-        setError("No se pudieron cargar los lugares.");
+        setError(t("explore.errorLoadLocations"));
         setInitialLoading(false);
         setLocationsLoading(false);
       }
@@ -416,7 +425,7 @@ export default function Explore() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [t]);
 
   // ---- experiencias globales (todas, ordenadas por relevancia)
   const worldwideExperiences = useMemo(() => mapToExperiences(allLocations), [allLocations]);
@@ -548,7 +557,7 @@ const tripCountry = useMemo(() => {
     return () => {
       alive = false;
     };
-  }, [tripContext?.id]);
+  }, [tripContext]);
 
   // ---- lugares para el país del viaje de contexto (hide already added)
   const tripExperiences = useMemo(() => {
@@ -593,10 +602,10 @@ const tripCountry = useMemo(() => {
 
   const sortOptions = useMemo(
     () => [
-      { value: "relevance", label: "Más relevantes" },
-      { value: "name", label: "Nombre (A-Z)" },
+      { value: "relevance", label: t("explore.mostRelevant") },
+      { value: "name", label: t("explore.nameAZ") },
     ],
-    []
+    [t]
   );
 
   const selectedCategoryId = useMemo(() => {
@@ -684,7 +693,7 @@ if (selectedCategorySlug !== "todo") {
     }
 
     if (!Number.isFinite(locationId)) {
-      setAddError("No se pudo determinar el id del lugar.");
+      setAddError(t("explore.errorDeterminePlaceId"));
       return;
     }
 
@@ -727,13 +736,13 @@ if (selectedCategorySlug !== "todo") {
         .catch(console.error);
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert(t("explore.linkCopied"));
+      showSuccess(t("explore.linkCopied"));
     }
   };
 
   const clearFilters = () => {
     setSelectedCategorySlug("todo");
-    setSelectedCategoryTitle("Todo");
+    setSelectedCategoryTitle(t("explore.all"));
     setFilterCountry("");
     setFilterCity("");
     setSortBy("relevance");
@@ -809,7 +818,7 @@ const qs = new URLSearchParams({
     return () => {
       alive = false;
     };
-  }, [showDetailModal, selectedExperience?.id]);
+  }, [showDetailModal, selectedExperience]);
 
   // ---- bloqueamos solo mientras carga TODO por primera vez
   if (initialLoading) {
@@ -849,7 +858,7 @@ const qs = new URLSearchParams({
   // Primary CTA (what you asked):
   // - If not addable (city mismatch OR already in trip OR no trip) => show "Crear viaje"
   const primaryCtaLabel = canAddToCurrentTrip
-    ? "Agregar al viaje"
+    ? t("explore.addToTrip")
     : t("explore.createTripPlan");
 
   const primaryCtaOnClick = canAddToCurrentTrip ? addSelectedToTrip : goCreateTripFromSelected;
@@ -862,7 +871,7 @@ const qs = new URLSearchParams({
 
           <div className="owner-bubble">
             <div className="owner-bubble-text">
-              ¿Sos dueño/a o administrador/a de un lugar turístico? Publicalo en ComfTrip para que más viajeros lo encuentren.
+              {t("explore.ownerBubbleText")}
             </div>
             <button
               className="owner-bubble-btn"
@@ -871,7 +880,7 @@ const qs = new URLSearchParams({
                 setShowAddLocationModal(true);
               }}
             >
-              Agregar lugar
+              {t("explore.addPlace")}
             </button>
           </div>
 
@@ -879,20 +888,20 @@ const qs = new URLSearchParams({
           {tripContextTitle && tripCountry && (
             <div className="experiences-section">
               <div className="section-header">
-                <h2>Lugares para tu viaje a {tripContextTitle}</h2>
+                <h2>{t("explore.placesForTrip", { tripTitle: tripContextTitle })}</h2>
               </div>
 
               {tripPlacesLoading ? (
-                <div className="small-muted">Cargando lugares del viaje…</div>
+                <div className="small-muted">{t("explore.loadingTripPlaces")}</div>
               ) : tripPlacesError ? (
                 <div className="small-muted" style={{ color: "#c33" }}>
-                  No se pudieron cargar lugares del viaje: {tripPlacesError}
+                  {t("explore.errorLoadTripPlaces", { error: tripPlacesError })}
                 </div>
               ) : locationsLoading ? (
                 renderGridSkeleton(6)
               ) : tripExperiences.length === 0 ? (
                 <div className="small-muted">
-                  No hay recomendaciones nuevas para este viaje (o ya agregaste las más relevantes).
+                  {t("explore.noNewRecommendations")}
                 </div>
               ) : (
                 <div className="experiences-grid">
@@ -913,7 +922,7 @@ const qs = new URLSearchParams({
                             priority={idx < 4}
                           />
                         ) : (
-                          <div className="no-image">No image</div>
+                          <div className="no-image">{t("explore.noImage")}</div>
                         )}
                       </div>
                       <div className="card-content">
@@ -966,7 +975,7 @@ const qs = new URLSearchParams({
           <div className="filters-section compact">
             <div className="filters-row">
               <div className="filter-field">
-                <label>País</label>
+                <label>{t("explore.country")}</label>
                 <FilterSelect
                   value={filterCountry}
                   onChange={(val) => {
@@ -980,7 +989,7 @@ const qs = new URLSearchParams({
               </div>
 
               <div className="filter-field">
-                <label>Ciudad</label>
+                <label>{t("explore.city")}</label>
                 <FilterSelect
                   value={filterCity}
                   onChange={setFilterCity}
@@ -991,11 +1000,11 @@ const qs = new URLSearchParams({
               </div>
 
               <div className="filter-field">
-                <label>Ordenar por</label>
+                <label>{t("explore.sortBy")}</label>
                 <FilterSelect
                   value={sortBy}
                   onChange={setSortBy}
-                  placeholder="Más relevantes"
+                  placeholder={t("explore.mostRelevant")}
                   options={sortOptions}
                   isClearable={false}
                 />
@@ -1012,7 +1021,7 @@ const qs = new URLSearchParams({
             <div className="active-chips">
               {filterCountry && (
                 <div className="filter-chip">
-                  País: {filterCountry}
+                  {t("explore.countryLabel")} {filterCountry}
                   <button className="chip-x" onClick={() => removeActiveFilter("country")}>
                     ✕
                   </button>
@@ -1020,7 +1029,7 @@ const qs = new URLSearchParams({
               )}
               {filterCity && (
                 <div className="filter-chip">
-                  Ciudad: {filterCity}
+                  {t("explore.cityLabel")} {filterCity}
                   <button className="chip-x" onClick={() => removeActiveFilter("city")}>
                     ✕
                   </button>
@@ -1028,7 +1037,7 @@ const qs = new URLSearchParams({
               )}
               {sortBy !== "relevance" && (
                 <div className="filter-chip">
-                  Orden: {sortOptions.find((o) => o.value === sortBy)?.label}
+                  {t("explore.sortLabel")} {sortOptions.find((o) => o.value === sortBy)?.label}
                   <button className="chip-x" onClick={() => removeActiveFilter("sort")}>
                     ✕
                   </button>
@@ -1042,8 +1051,8 @@ const qs = new URLSearchParams({
             <div className="section-header">
               <h2>
                 {selectedCategorySlug === "todo"
-                  ? "Lugares recomendados en el mundo"
-                  : `Lugares de ${selectedCategoryTitle}`}
+                  ? t("explore.recommendedPlacesWorld")
+                  : t("explore.placesOfCategory", { category: selectedCategoryTitle })}
               </h2>
               <div className="small-muted">
                 {filteredExperiences.length} {t("explore.resultsCount")}
@@ -1076,7 +1085,7 @@ const qs = new URLSearchParams({
                             priority={idx < 6}
                           />
                         ) : (
-                          <div className="no-image">No image</div>
+                          <div className="no-image">{t("explore.noImage")}</div>
                         )}
                       </div>
                       <div className="card-content">
@@ -1117,7 +1126,7 @@ const qs = new URLSearchParams({
                           priority={idx < 6}
                         />
                       ) : (
-                        <div className="no-image">No image</div>
+                        <div className="no-image">{t("explore.noImage")}</div>
                       )}
                     </div>
                     <div className="card-content">
@@ -1135,23 +1144,23 @@ const qs = new URLSearchParams({
             {/* ADD LOCATION MODAL */}
       <Modal isOpen={showAddLocationModal} onClose={() => setShowAddLocationModal(false)}>
         <div style={{ padding: 18, width: "min(720px, 92vw)" }}>
-          <h2 style={{ marginTop: 0 }}>Agregar un lugar</h2>
+          <h2 style={{ marginTop: 0 }}>{t("explore.addPlaceModal.title")}</h2>
           <div className="small-muted" style={{ marginBottom: 12 }}>
-            Completá los datos básicos. Podés pegar varias imágenes separadas por coma.
+            {t("explore.addPlaceModal.subtitle")}
           </div>
 
           <form onSubmit={submitNewLocation} style={{ display: "grid", gap: 10 }}>
             <div style={{ display: "grid", gap: 6 }}>
-              <label>Nombre *</label>
+              <label>{t("explore.addPlaceModal.name")} *</label>
               <input
                 value={newLoc.titulo}
                 onChange={(e) => setNewLoc((p) => ({ ...p, titulo: e.target.value }))}
-                placeholder="Ej: Teatro Colón"
+                placeholder={t("explore.addPlaceModal.namePlaceholder")}
               />
             </div>
 
             <div style={{ display: "grid", gap: 6 }}>
-              <label>Categoría *</label>
+              <label>{t("explore.addPlaceModal.category")} *</label>
               <select
                 value={newLoc.fk_interest}
                 onChange={(e) => setNewLoc((p) => ({ ...p, fk_interest: e.target.value }))}
@@ -1165,78 +1174,78 @@ const qs = new URLSearchParams({
             </div>
 
             <div style={{ display: "grid", gap: 6 }}>
-              <label>Descripción</label>
+              <label>{t("explore.addPlaceModal.description")}</label>
               <textarea
                 rows={3}
                 value={newLoc.descripcion}
                 onChange={(e) => setNewLoc((p) => ({ ...p, descripcion: e.target.value }))}
-                placeholder="Contanos qué hace especial este lugar…"
+                placeholder={t("explore.addPlaceModal.descriptionPlaceholder")}
               />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div style={{ display: "grid", gap: 6 }}>
-                <label>País</label>
+                <label>{t("explore.country")}</label>
                 <input
                   value={newLoc.country}
                   onChange={(e) => setNewLoc((p) => ({ ...p, country: e.target.value }))}
-                  placeholder="Argentina"
+                  placeholder={t("explore.addPlaceModal.countryPlaceholder")}
                 />
               </div>
               <div style={{ display: "grid", gap: 6 }}>
-                <label>Ciudad</label>
+                <label>{t("explore.city")}</label>
                 <input
                   value={newLoc.city}
                   onChange={(e) => setNewLoc((p) => ({ ...p, city: e.target.value }))}
-                  placeholder="Buenos Aires"
+                  placeholder={t("explore.addPlaceModal.cityPlaceholder")}
                 />
               </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div style={{ display: "grid", gap: 6 }}>
-                <label>Latitud</label>
+                <label>{t("explore.addPlaceModal.latitude")}</label>
                 <input
                   value={newLoc.latitude}
                   onChange={(e) => setNewLoc((p) => ({ ...p, latitude: e.target.value }))}
-                  placeholder="-34.6010807"
+                  placeholder={t("explore.addPlaceModal.latitudePlaceholder")}
                 />
               </div>
               <div style={{ display: "grid", gap: 6 }}>
-                <label>Longitud</label>
+                <label>{t("explore.addPlaceModal.longitude")}</label>
                 <input
                   value={newLoc.longitude}
                   onChange={(e) => setNewLoc((p) => ({ ...p, longitude: e.target.value }))}
-                  placeholder="-58.3831792"
+                  placeholder={t("explore.addPlaceModal.longitudePlaceholder")}
                 />
               </div>
             </div>
 
             <div style={{ display: "grid", gap: 6 }}>
-              <label>Horarios (formato libre)</label>
+              <label>{t("explore.addPlaceModal.openingHours")}</label>
               <input
                 value={newLoc.opening_hours_raw}
                 onChange={(e) => setNewLoc((p) => ({ ...p, opening_hours_raw: e.target.value }))}
-                placeholder='Ej: "Mo-Sa 09:00-20:00; Su 09:00-17:00"'
+                placeholder={t("explore.addPlaceModal.openingHoursPlaceholder")}
               />
             </div>
 
             <div style={{ display: "grid", gap: 6 }}>
-              <label>Sitio web</label>
+              <label>{t("explore.addPlaceModal.website")}</label>
               <input
                 value={newLoc.website}
                 onChange={(e) => setNewLoc((p) => ({ ...p, website: e.target.value }))}
-                placeholder="https://..."
+                placeholder={t("explore.addPlaceModal.websitePlaceholder")}
               />
             </div>
 
             <div style={{ display: "grid", gap: 6 }}>
-              <label>Imágenes (URLs separadas por coma)</label>
+              <label>{t("explore.addPlaceModal.images")}</label>
               <textarea
                 rows={2}
                 value={newLoc.imagenes_raw}
                 onChange={(e) => setNewLoc((p) => ({ ...p, imagenes_raw: e.target.value }))}
-                placeholder="https://... , https://..."
+                placeholder={t("explore.addPlaceModal.imagesPlaceholder")}
               />
             </div>
 
@@ -1253,10 +1262,10 @@ const qs = new URLSearchParams({
                 onClick={() => setShowAddLocationModal(false)}
                 disabled={createLocLoading}
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
               <ActionButton variant="create" type="submit" disabled={createLocLoading}>
-                {createLocLoading ? "Guardando…" : "Publicar lugar"}
+                {createLocLoading ? t("explore.saving") : t("explore.publishPlace")}
               </ActionButton>
             </div>
           </form>
@@ -1319,7 +1328,7 @@ const qs = new URLSearchParams({
 
                   <div style={{ marginTop: 6, fontSize: 14, opacity: 0.95 }}>
                     {googleLoading ? (
-                      <span>Cargando rating…</span>
+                      <span>{t("explore.detailModal.loadingRating")}</span>
                     ) : place?.rating ? (
                       <>
                         <span style={{ marginRight: 8 }}>
@@ -1336,13 +1345,13 @@ const qs = new URLSearchParams({
                               rel="noreferrer"
                               style={{ color: "white", textDecoration: "underline" }}
                             >
-                              Ver en Google Maps
+                              {t("explore.detailModal.viewOnGoogleMaps")}
                             </a>
                           </>
                         ) : null}
                       </>
                     ) : (
-                      <span style={{ opacity: 0.9 }}>Rating no disponible</span>
+                      <span style={{ opacity: 0.9 }}>{t("explore.detailModal.ratingNotAvailable")}</span>
                     )}
                   </div>
 
@@ -1379,17 +1388,17 @@ const qs = new URLSearchParams({
 
               <div style={{ marginTop: 10 }}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>
-                  Reviews
+                  {t("explore.detailModal.reviews")}
                 </div>
 
                 {googleLoading ? (
-                  <div className="small-muted">Cargando reviews…</div>
+                  <div className="small-muted">{t("explore.detailModal.loadingReviews")}</div>
                 ) : googleError ? (
                   <div className="small-muted" style={{ color: "#c33" }}>
-                    No se pudieron cargar reviews: {googleError}
+                    {t("explore.detailModal.errorLoadReviews", { error: googleError })}
                   </div>
                 ) : reviews.length === 0 ? (
-                  <div className="small-muted">No hay reviews disponibles.</div>
+                  <div className="small-muted">{t("explore.detailModal.noReviewsAvailable")}</div>
                 ) : (
                   <div style={{ display: "grid", gap: 12 }}>
                     {reviews.slice(0, 3).map((r, idx) => (
@@ -1437,7 +1446,7 @@ const qs = new URLSearchParams({
 
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontWeight: 700, lineHeight: 1.1 }}>
-                              {r?.author?.name || "Google user"}
+                              {r?.author?.name || t("explore.detailModal.googleUser")}
                             </div>
                             <div style={{ fontSize: 13, opacity: 0.85 }}>
                               {r?.rating ? (
@@ -1465,7 +1474,7 @@ const qs = new URLSearchParams({
                           </div>
                         ) : (
                           <div className="small-muted" style={{ marginTop: 10 }}>
-                            Sin texto
+                            {t("explore.detailModal.noText")}
                           </div>
                         )}
                       </div>
@@ -1489,7 +1498,7 @@ const qs = new URLSearchParams({
                   onClick={primaryCtaOnClick}
                   disabled={addLoading} // ✅ only disable while posting
                 >
-                  {addLoading ? "Agregando…" : primaryCtaLabel}
+                  {addLoading ? t("explore.detailModal.adding") : primaryCtaLabel}
                 </ActionButton>
 
                 <ActionButton variant="share" onClick={handleShare}>

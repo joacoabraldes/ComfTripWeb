@@ -1,5 +1,5 @@
 // src/pages/SocialFeedPage.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   fetchSocialFeed,
   createSocialPost,
@@ -7,8 +7,11 @@ import {
   fetchPostComments,
   addPostComment,
 } from "../services/socialService";
+import { useSnackbar } from "../contexts/SnackbarContext";
+import { useTranslation } from "../i18n";
 
 function SocialFeedPage() {
+  const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [error, setError] = useState(null);
@@ -16,12 +19,9 @@ function SocialFeedPage() {
   const [commentText, setCommentText] = useState({});
   const [loadingPostId, setLoadingPostId] = useState(null);
   const [commentsByPost, setCommentsByPost] = useState({});
+  const { showError } = useSnackbar();
 
-  useEffect(() => {
-    loadFeed();
-  }, []);
-
-  async function loadFeed() {
+  const loadFeed = useCallback(async () => {
     try {
       setLoadingFeed(true);
       setError(null);
@@ -29,11 +29,15 @@ function SocialFeedPage() {
       setPosts(data);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Error cargando el feed");
+      setError(t('socialFeed.errorLoadingFeed'));
     } finally {
       setLoadingFeed(false);
     }
-  }
+  }, [t]);
+
+  useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
 
   async function handleCreatePost(e) {
     e.preventDefault();
@@ -55,7 +59,7 @@ function SocialFeedPage() {
       setNewPost("");
     } catch (err) {
       console.error(err);
-      alert(err.message || "Error al crear el post");
+      showError(t('socialFeed.errorCreatePost'));
     } finally {
       setLoadingPostId(null);
     }
@@ -80,7 +84,7 @@ function SocialFeedPage() {
       );
     } catch (err) {
       console.error(err);
-      alert(err.message || "Error cambiando like");
+      showError(t('socialFeed.errorToggleLike'));
     } finally {
       setLoadingPostId(null);
     }
@@ -94,7 +98,7 @@ function SocialFeedPage() {
       setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
     } catch (err) {
       console.error(err);
-      alert(err.message || "Error cargando comentarios");
+      showError(t('socialFeed.errorLoadingComments'));
     }
   }
 
@@ -115,20 +119,20 @@ function SocialFeedPage() {
       setCommentText((prev) => ({ ...prev, [postId]: "" }));
     } catch (err) {
       console.error(err);
-      alert(err.message || "Error agregando comentario");
+      showError(t('socialFeed.errorAddingComment'));
     }
   }
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Social feed</h1>
+      <h1 className="text-2xl font-bold mb-4">{t('socialFeed.title')}</h1>
 
       {/* Crear post */}
       <form onSubmit={handleCreatePost} className="mb-6">
         <textarea
           className="w-full border rounded p-2 mb-2"
           rows={3}
-          placeholder="¿Qué querés compartir sobre tu viaje?"
+          placeholder={t('socialFeed.postPlaceholder')}
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
         />
@@ -137,19 +141,19 @@ function SocialFeedPage() {
           disabled={loadingPostId === "new"}
           className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
         >
-          {loadingPostId === "new" ? "Publicando..." : "Publicar"}
+          {loadingPostId === "new" ? t('socialFeed.publishing') : t('socialFeed.publish')}
         </button>
       </form>
 
       {/* Feed */}
-      {loadingFeed && <p>Cargando feed...</p>}
+      {loadingFeed && <p>{t('socialFeed.loadingFeed')}</p>}
       {error && (
         <p className="text-red-600 mb-2">
           {error}
         </p>
       )}
 
-      {!loadingFeed && posts.length === 0 && <p>No hay posts todavía.</p>}
+      {!loadingFeed && posts.length === 0 && <p>{t('socialFeed.noPosts')}</p>}
 
       {posts.map((post) => (
         <div
@@ -157,7 +161,7 @@ function SocialFeedPage() {
           className="border rounded mb-4 p-3 bg-white shadow-sm"
         >
           <div className="mb-1 text-sm text-gray-600">
-            <strong>{post.author_name || "Usuario"}</strong>{" "}
+            <strong>{post.author_name || t('socialFeed.user')}</strong>{" "}
             {post.author_username && (
               <span className="text-gray-500">@{post.author_username}</span>
             )}
@@ -172,7 +176,7 @@ function SocialFeedPage() {
               className="flex items-center gap-1"
             >
               <span>{post.liked_by_me ? "💙" : "🤍"}</span>
-              <span>{post.like_count || 0} likes</span>
+              <span>{post.like_count || 0} {t('socialFeed.likes')}</span>
             </button>
 
             <button
@@ -180,7 +184,7 @@ function SocialFeedPage() {
               onClick={() => handleLoadComments(post.id)}
               className="underline"
             >
-              Ver comentarios
+              {t('socialFeed.viewComments')}
             </button>
           </div>
 
@@ -189,12 +193,12 @@ function SocialFeedPage() {
             <div className="mt-2 border-t pt-2">
               {commentsByPost[post.id].length === 0 && (
                 <p className="text-sm text-gray-500">
-                  No hay comentarios todavía.
+                  {t('socialFeed.noComments')}
                 </p>
               )}
               {commentsByPost[post.id].map((c) => (
                 <div key={c.id} className="mb-1 text-sm">
-                  <strong>{c.author_name || "Usuario"}</strong>: {c.content}
+                  <strong>{c.author_name || t('socialFeed.user')}</strong>: {c.content}
                 </div>
               ))}
             </div>
@@ -208,7 +212,7 @@ function SocialFeedPage() {
             <input
               type="text"
               className="flex-1 border rounded px-2 py-1 text-sm"
-              placeholder="Escribir un comentario..."
+              placeholder={t('socialFeed.writeComment')}
               value={commentText[post.id] || ""}
               onChange={(e) =>
                 setCommentText((prev) => ({
@@ -221,7 +225,7 @@ function SocialFeedPage() {
               type="submit"
               className="text-sm bg-gray-800 text-white px-3 py-1 rounded"
             >
-              Enviar
+              {t('socialFeed.send')}
             </button>
           </form>
         </div>

@@ -11,10 +11,10 @@ import '../styles/friendProfile.css';
 import { apiGet } from './api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
+import { useSnackbar } from '../contexts/SnackbarContext';
 import {formatDate, formatDateRange, formatDateTime} from '../utils/dateUtils';
 import LoadingSpinner from "../components/LoadingSpinner";
-import {FaComment, FaHeart, FaRegComment, FaRegHeart, FaTrash, FaUser} from "react-icons/fa";
-import FilterSelect from "../components/FilterSelect";
+import {FaComment, FaHeart, FaRegComment, FaRegHeart, FaUser} from "react-icons/fa";
 import {displayName, getPostImages, resolveImageUrl} from "./Community";
 
 export default function FriendProfile() {
@@ -24,9 +24,9 @@ export default function FriendProfile() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [friend, setFriend] = useState(null);
-  const [visibleTrips, setVisibleTrips] = useState([]);
   const [error, setError] = useState(null);
   const { t } = useTranslation();
+  const { showError } = useSnackbar();
 
     const [posts, setPosts] = useState([]);
     const [loadingPosts, setLoadingPosts] = useState(true);
@@ -35,7 +35,7 @@ export default function FriendProfile() {
     const [tripsISent, setTripsISent] = useState([]);
 
     // ---------- LIGHTBOX state ----------
-    const [lightbox, setLightbox] = useState({
+    const [setLightbox] = useState({
         open: false,
         images: [],
         index: 0,
@@ -146,7 +146,7 @@ export default function FriendProfile() {
             );
         } catch (err) {
             console.error(err);
-            alert(err?.message || t('community.errorLike'));
+            showError(t('community.errorLike'));
         } finally {
             setLoadingPostId(null);
         }
@@ -170,7 +170,7 @@ export default function FriendProfile() {
             setCommentsByPostOpen((prev) => ({ ...prev, [postId]: true }));
         } catch (err) {
             console.error(err);
-            alert(err?.message || t('community.errorLoadingCom'));
+            showError(t('community.errorLoadingCom'));
         }
     }
 
@@ -189,7 +189,7 @@ export default function FriendProfile() {
             setCommentText((prev) => ({ ...prev, [postId]: '' }));
         } catch (err) {
             console.error(err);
-            alert(err?.message || t('community.errorAddingCon'));
+            showError(t('community.errorAddingCon'));
         } finally {
             setSendCommentary((prev) => ({ ...prev, [postId]: false }));
         }

@@ -6,6 +6,7 @@ import { FaShare, FaMapMarkerAlt, FaCalendar, FaSortAmountDown, FaSortAmountUp, 
 import "../styles/header.css";
 import { apiGet, apiDelete } from "./api";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import { formatDate, formatDateRange, normalizeDate, isTripCurrent } from "../utils/dateUtils";
 import ShareTripModal from "../components/ShareTripModal";
 import IconButton from "../components/IconButton";
@@ -21,6 +22,7 @@ export default function Trips() {
   const [menuOpen, setMenuOpen] = useState(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showError } = useSnackbar();
     const { user } = useAuth();
 
   // estados para compartir viajes
@@ -43,22 +45,6 @@ export default function Trips() {
 // opciones dinámicas
     const [availableCountries, setAvailableCountries] = useState([]);
     const [availableProvinces, setAvailableProvinces] = useState([]);
-
-    // obtener ID del usuario actual desde token
-  const getCurrentUserId = () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return null;
-      const parts = token.split('.');
-      if (parts.length < 2) return null;
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      return payload && (payload.id || payload.userId || payload.sub || payload.user_id)
-        ? Number(payload.id || payload.userId || payload.sub || payload.user_id)
-        : null;
-    } catch (e) {
-      return null;
-    }
-  };
 
 
 
@@ -88,7 +74,7 @@ export default function Trips() {
         }
       } catch (err) {
         console.error("Error cargando viajes:", err);
-        alert(t('trips.loadError'));
+        showError(t('trips.loadError'));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -96,7 +82,7 @@ export default function Trips() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [t, showError]);
 
     const getCreatorName = (trip) => {
         const creator = friends.find(f => Number(f.id) === Number(trip.user_id));
@@ -391,9 +377,9 @@ export default function Trips() {
             } catch (err) {
               console.error("Error eliminando viaje:", err);
                 if(Number(user.id)===Number(deleteConfirm.trip.user_id)){
-                    alert(t('trips.delete.error'));
+                    showError(t('trips.delete.error'));
                 }else {
-                    alert(t('trips.delete.errorAccess'))
+                    showError(t('trips.delete.errorAccess'))
                 }
             }
           }}

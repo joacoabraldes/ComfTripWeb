@@ -1,8 +1,12 @@
 // src/components/social/NewPostForm.jsx
 import React, { useState } from 'react';
 import { createPost } from '../services/socialService';
+import { useSnackbar } from '../contexts/SnackbarContext';
+import { useTranslation } from '../i18n';
 
 export default function NewPostForm({ onPostCreated }) {
+  const { t } = useTranslation();
+  const { showError } = useSnackbar();
   const [content, setContent] = useState('');
   const [imagesInput, setImagesInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +33,7 @@ export default function NewPostForm({ onPostCreated }) {
       setImagesInput('');
     } catch (err) {
       console.error(err);
-      alert('Error al crear el post');
+      showError(t('socialFeed.errorCreatePost'));
     } finally {
       setSubmitting(false);
     }
@@ -46,12 +50,12 @@ export default function NewPostForm({ onPostCreated }) {
         backgroundColor: '#fff',
       }}
     >
-      <h2 style={{ marginTop: 0, marginBottom: 8, fontSize: 18 }}>Crear publicación</h2>
+      <h2 style={{ marginTop: 0, marginBottom: 8, fontSize: 18 }}>{t('socialFeed.createPost')}</h2>
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={3}
-        placeholder="¿En qué estás pensando para tu viaje?"
+        placeholder={t('socialFeed.tripThoughtsPlaceholder')}
         style={{
           width: '100%',
           resize: 'vertical',
@@ -65,7 +69,7 @@ export default function NewPostForm({ onPostCreated }) {
         type="text"
         value={imagesInput}
         onChange={(e) => setImagesInput(e.target.value)}
-        placeholder="URLs de imágenes separadas por coma (opcional)"
+        placeholder={t('socialFeed.imageUrlsPlaceholder')}
         style={{
           width: '100%',
           padding: 8,
@@ -89,7 +93,7 @@ export default function NewPostForm({ onPostCreated }) {
             fontWeight: 500,
           }}
         >
-          {submitting ? 'Publicando...' : 'Publicar'}
+          {submitting ? t('socialFeed.publishing') : t('socialFeed.publish')}
         </button>
       </div>
     </form>

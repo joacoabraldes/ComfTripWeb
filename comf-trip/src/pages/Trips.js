@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthProvider";
 import "../styles/trips.css";
 import { FaShare, FaMapMarkerAlt, FaCalendar, FaSortAmountDown, FaSortAmountUp, FaEdit, FaTrash } from "react-icons/fa";
 import "../styles/header.css";
@@ -20,6 +21,7 @@ export default function Trips() {
   const [menuOpen, setMenuOpen] = useState(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+    const { user } = useAuth();
 
   // estados para compartir viajes
   const [showShareModal, setShowShareModal] = useState(false);
@@ -58,7 +60,6 @@ export default function Trips() {
     }
   };
 
-  const currentUserId = getCurrentUserId();
 
 
   useEffect(() => {
@@ -100,7 +101,7 @@ export default function Trips() {
     const getCreatorName = (trip) => {
         const creator = friends.find(f => Number(f.id) === Number(trip.user_id));
         if (!creator) return "";
-        return creator.name || creator.email;
+        return creator.username || creator.name || creator.email;
     };
 
 
@@ -124,22 +125,22 @@ export default function Trips() {
     }, [countryFilter, trips]);
 
 
-    const filteredTrips = trips.filter(t => {
-        const start = normalizeDate(t.start_date);
-        const end = normalizeDate(t.end_date);
+    const filteredTrips = trips.filter(tri => {
+        const start = normalizeDate(tri.start_date);
+        const end = normalizeDate(tri.end_date);
         const today = new Date();
 
         // Tipo de viaje
-        if (typeFilter === "current" && !isTripCurrent(t.start_date, t.end_date)) return false;
+        if (typeFilter === "current" && !isTripCurrent(tri.start_date, tri.end_date)) return false;
         if (typeFilter === "upcoming" && !(today < start)) return false;
         if (typeFilter === "past" && !(today > end)) return false;
 
         // País / provincia
-        if (countryFilter && t.destination.split(",")[1] !== countryFilter) return false;
-        if (provinceFilter && t.destination.split(",")[0] !== provinceFilter) return false;
+        if (countryFilter && tri.destination.split(",")[1] !== countryFilter) return false;
+        if (provinceFilter && tri.destination.split(",")[0] !== provinceFilter) return false;
 
         // Creador
-        const isMine = currentUserId && Number(t.user_id) === Number(currentUserId);
+        const isMine = user.id && Number(tri.user_id) === Number(user.id);
         if (creatorFilter === "me" && !isMine) return false;
         else if (creatorFilter === "others" && isMine) return false;
 
@@ -276,7 +277,7 @@ export default function Trips() {
 
                 <div className="trips-list" role="list">
                 {sortedTrips.map((trip) => {
-                  const isOwner = currentUserId ? Number(trip.user_id) === Number(currentUserId) : null;
+                  const isOwner = user.id ? Number(trip.user_id) === Number(user.id) : null;
                   return (
                     <div
                       key={trip.id}
@@ -339,7 +340,7 @@ export default function Trips() {
                             <IconButton
                               icon={<FaTrash size={18} />}
                               onClick={() => {
-                                setDeleteConfirm({ isOpen: true, trip });
+                                setDeleteConfirm({ isOpen: true, trip: trip });
                                 setMenuOpen(null);
                               }}
                               variant="menu"
@@ -379,16 +380,26 @@ export default function Trips() {
           onConfirm={async () => {
             if (!deleteConfirm.trip) return;
             try {
-              await apiDelete(`/trips/${deleteConfirm.trip.id}`);
+                if(Number(user.id)===Number(deleteConfirm.trip.user_id)){
+                    await apiDelete(`/trips/${Number(deleteConfirm.trip.id)}`);
+                }else{
+                    if(deleteConfirm.trip.share) {
+                        await apiDelete(`/share/trip/${deleteConfirm.trip.share.share_uuid}/leave`);
+                    }
+                }
               setTrips((prev) => prev.filter((tripItem) => tripItem.id !== deleteConfirm.trip.id));
             } catch (err) {
               console.error("Error eliminando viaje:", err);
-              alert(t('trips.delete.error'));
+                if(Number(user.id)===Number(deleteConfirm.trip.user_id)){
+                    alert(t('trips.delete.error'));
+                }else {
+                    alert(t('trips.delete.errorAccess'))
+                }
             }
           }}
-          title={t('trips.delete.title')}
-          message={t('trips.delete.confirm', { destination: deleteConfirm.trip?.destination || '' })}
-          confirmText={t('trips.delete.confirmButton')}
+          title={deleteConfirm.trip && Number(user.id)===Number(deleteConfirm.trip.user_id) ? t('trips.delete.title') : t('trips.delete.titleAccess')}
+          message={deleteConfirm.trip && Number(user.id)===Number(deleteConfirm.trip.user_id) ? t('trips.delete.confirm', { destination: deleteConfirm.trip?.destination || '' }) : t('trips.delete.confirmAccess', { destination: deleteConfirm.trip?.destination || '' })}
+          confirmText={deleteConfirm.trip && Number(user.id)===Number(deleteConfirm.trip.user_id) ? t('trips.delete.confirmButton') : t('trips.delete.confirmAccessButton') }
           variant="primary"
         />
       </main>

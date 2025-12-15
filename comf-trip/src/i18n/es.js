@@ -196,6 +196,10 @@
       confirm: '¿Seguro que deseas eliminar el viaje a {destination}?',
       confirmButton: 'Eliminar',
       error: 'No se pudo eliminar el viaje.',
+        titleAccess: 'Cancelar Acceso',
+        confirmAccess:'¿Estas seguro que queres cancelasr el acceso al viaje  {destination}?',
+        confirmAccessButton: 'Aceptar',
+        errorAccess:'No se pudo eliminar el acceso al viaje'
     },
     created: 'Creado:',
     unknownDestination: 'Destino desconocido',
@@ -303,19 +307,27 @@
   },
 
   // Friend Profile
-  friendProfile: {
-    loading: 'Cargando perfil…',
-    loadError: 'No se pudo cargar el perfil del usuario.',
-    notFound: 'Usuario no encontrado',
-    back: 'Volver',
-    trips: 'Viajes',
-    noTrips: 'No hay viajes visibles',
-    unknownDestination: 'Destino desconocido',
-    datesNotSpecified: 'Fechas no especificadas',
-    publicLink: 'Enlace público',
-    shared: 'Compartido',
-    memberSince: 'Miembro desde',
-  },
+    friendProfile: {
+        loading: 'Cargando perfil…',
+        loadError: 'No se pudo cargar el perfil del usuario.',
+        notFound: 'Usuario no encontrado',
+
+        sharedWithMe: 'Viajes compartidos conmigo',
+        iShared: 'Viajes que compartí',
+        trips: 'Viajes',
+        noTrips: 'No hay viajes visibles',
+
+        posts: 'Publicaciones',
+        noPosts: 'Este usuario no tiene publicaciones',
+
+        unknownDestination: 'Destino desconocido',
+        datesNotSpecified: 'Fechas no especificadas',
+
+        publicLink: 'Enlace público',
+        shared: 'Compartido',
+
+        memberSince: 'Miembro desde'
+    },
 
   // Protected Route
   protectedRoute: {

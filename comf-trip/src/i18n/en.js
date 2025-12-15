@@ -196,6 +196,10 @@ const en = {
       confirm: 'Are you sure you want to delete the trip to {destination}?',
       confirmButton: 'Delete',
       error: 'Could not delete the trip.',
+        titleAccess: 'Cancel Access',
+        confirmAccess: 'Are you sure you want to cancel access to the trip to {destination}?',
+        confirmAccessButton: 'Accept',
+        errorAccess: 'Could not remove access to the trip'
     },
     created: 'Created:',
     unknownDestination: 'Unknown destination',
@@ -303,21 +307,30 @@ const en = {
   },
 
   // Friend Profile
-  friendProfile: {
-    loading: 'Loading profile…',
-    loadError: 'Could not load user profile.',
-    notFound: 'User not found',
-    back: 'Back',
-    trips: 'Trips',
-    noTrips: 'No visible trips',
-    unknownDestination: 'Unknown destination',
-    datesNotSpecified: 'Dates not specified',
-    publicLink: 'Public link',
-    shared: 'Shared',
-    memberSince: 'Member since',
-  },
+    friendProfile: {
+        loading: 'Loading profile…',
+        loadError: 'Could not load user profile.',
+        notFound: 'User not found',
 
-  // Protected Route
+        sharedWithMe: 'Trips shared with me',
+        iShared: 'Trips I shared',
+        trips: 'Trips',
+        noTrips: 'No visible trips',
+
+        posts: 'Posts',
+        noPosts: 'This user has no posts',
+
+        unknownDestination: 'Unknown destination',
+        datesNotSpecified: 'Dates not specified',
+
+        publicLink: 'Public link',
+        shared: 'Shared',
+
+        memberSince: 'Member since'
+    },
+
+
+    // Protected Route
   protectedRoute: {
     loading: 'Loading...',
   },

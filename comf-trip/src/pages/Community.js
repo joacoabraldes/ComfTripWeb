@@ -1,6 +1,7 @@
 // src/pages/Community.js
 import React, { useEffect, useState, useMemo } from 'react';
 import '../styles/community.css';
+import { useAuth } from "../auth/AuthProvider";
 import {
   FaCheck,
   FaTimes,
@@ -90,11 +91,42 @@ function ImageLightbox({ open, images, index, onClose, onPrev, onNext }) {
   );
 }
 
+export function resolveImageUrl(url, BACKEND_ORIGIN) {
+    if (!url) return '';
+    if (url.startsWith('blob:') || url.startsWith('data:') || /^(https?:)?\/\//.test(url)) {
+        return url;
+    }
+    if (url.startsWith('/uploads/')) {
+        return `${BACKEND_ORIGIN}${url}`;
+    }
+    return url;
+}
+
+// helper para parsear imágenes del post
+export function getPostImages(post) {
+    if (!post || post.images == null) return [];
+    if (Array.isArray(post.images)) return post.images;
+    if (typeof post.images === 'string') {
+        try {
+            const parsed = JSON.parse(post.images);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+    return [];
+}
+
+export function displayName(author_name, author_username, t) {
+    if (author_name) return author_name;
+    if (author_username) return `@${author_username}`;
+    return t('community.user');
+}
+
 export default function Community() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  const [currentUserId, setCurrentUserId] = useState(null);
+    const { user } = useAuth();
 
   // ---------- comunidad / amigos ----------
   const [loading, setLoading] = useState(true);
@@ -184,17 +216,6 @@ export default function Community() {
       .replace(/\/$/, '');
   }, []);
 
-  function resolveImageUrl(url) {
-    if (!url) return '';
-    if (url.startsWith('blob:') || url.startsWith('data:') || /^(https?:)?\/\//.test(url)) {
-      return url;
-    }
-    if (url.startsWith('/uploads/')) {
-      return `${BACKEND_ORIGIN}${url}`;
-    }
-    return url;
-  }
-
   function filterUsers(list, search, fields = []) {
     if (!search.trim()) return list;
 
@@ -219,11 +240,6 @@ export default function Community() {
   useEffect(() => {
     loadAll();
     loadFeed();
-
-    (async () => {
-      const id = await getCurrentUserId();
-      setCurrentUserId(id != null ? Number(id) : null);
-    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -456,29 +472,6 @@ export default function Community() {
     }
   }
 
-  // ---------- helpers share ----------
-  async function getCurrentUserId() {
-    const candidates = ['/auth/me', '/users/me', '/profile'];
-    for (const ep of candidates) {
-      try {
-        const r = await apiGet(ep);
-        if (r && (r.id || r.user_id || r._id)) return r.id || r.user_id || r._id;
-      } catch (e) {}
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const parts = token.split('.');
-        if (parts.length >= 2) {
-          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-          if (payload) return payload.id || payload.user_id || payload.sub;
-        }
-      }
-    } catch (e) {}
-    return null;
-  }
-
   async function openShareModal(friend) {
     setLoadingTrips(true);
     setShareTargetFriend(friend);
@@ -487,7 +480,7 @@ export default function Community() {
     try {
       const trips = await apiGet('/trips');
       const tripsArr = Array.isArray(trips) ? trips : trips && trips.rows ? trips.rows : [];
-      const currentUserId2 = await getCurrentUserId();
+      const currentUserId2 = user.id
 
       if (currentUserId2 == null) {
         setAvailableTrips([]);
@@ -511,26 +504,7 @@ export default function Community() {
     loadAll();
   }
 
-  // helper para parsear imágenes del post
-  function getPostImages(post) {
-    if (!post || post.images == null) return [];
-    if (Array.isArray(post.images)) return post.images;
-    if (typeof post.images === 'string') {
-      try {
-        const parsed = JSON.parse(post.images);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  }
 
-  function displayName(author_name, author_username) {
-    if (author_name) return author_name;
-    if (author_username) return `@${author_username}`;
-    return t('community.user');
-  }
 
   // ---------- UI ----------
   if (loading) {
@@ -796,7 +770,7 @@ export default function Community() {
                 <div className="feed-posts">
                   {posts.map((post) => {
                     const rawImages = getPostImages(post);
-                    const resolvedImages = rawImages.map(resolveImageUrl);
+                    const resolvedImages = rawImages.map((url)=>resolveImageUrl(url, BACKEND_ORIGIN));
 
                     return (
                       <article
@@ -804,7 +778,7 @@ export default function Community() {
                         className="feed-post"
                         style={{
                           borderColor:
-                            Number(post.user_id) === Number(currentUserId)
+                            Number(post.user_id) === Number(user.id)
                               ? 'var(--color-accent)'
                               : '',
                         }}
@@ -823,7 +797,7 @@ export default function Community() {
 
                             <div className="feed-author" style={{ paddingLeft: 10 }}>
                               <div className="feed-author-name">
-                                {displayName(post.author_name, post.author_username)}
+                                {displayName(post.author_name, post.author_username, t)}
                               </div>
 
                               {post.author_username && post.author_name && (
@@ -837,7 +811,7 @@ export default function Community() {
                               <div className="feed-date">{formatDateTime(post.created_at)}</div>
                             )}
 
-                            {Number(post.user_id) === Number(currentUserId) && (
+                            {Number(post.user_id) === Number(user.id) && (
                               <button
                                 className="btn icon danger small"
                                 style={{ marginTop: 5 }}
@@ -882,7 +856,7 @@ export default function Community() {
                             }}
                           >
                             <div className="feed-author-name">
-                              {displayName(post.author_name, post.author_username)}
+                              {displayName(post.author_name, post.author_username, t)}
                             </div>
                             <div className="feed-comment" style={{ paddingTop: 0 }}>
                               {post.content}
@@ -941,7 +915,7 @@ export default function Community() {
 
                                       <div className="feed-author">
                                         <div className="feed-author-name">
-                                          {displayName(c.author_name, c.author_username)}
+                                          {displayName(c.author_name, c.author_username, t)}
                                         </div>
 
                                         {c.author_username && c.author_name && (

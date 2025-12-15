@@ -24,6 +24,12 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 
+// ✅ use the same mapbox entrypoint/style you already use
+import Map, { Marker, NavigationControl, Popup } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
+
 /**
  * Normaliza muchas formas distintas de `imagenes` a un array de URLs de string.
  */
@@ -219,7 +225,7 @@ export default function Explore() {
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState(null);
 
-    // --- "Add location" modal state
+  // --- "Add location" modal state
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [createLocLoading, setCreateLocLoading] = useState(false);
   const [createLocError, setCreateLocError] = useState(null);
@@ -238,6 +244,17 @@ export default function Explore() {
     imagenes_raw: "", // comma-separated URLs
   });
 
+  // ✅ MAP PICKER (like your Map.jsx)
+  // pickerPos uses [lat, lng]
+  const [pickerPos, setPickerPos] = useState([-34.6037, -58.3816]); // BA default
+  const [createMapViewState, setCreateMapViewState] = useState({
+    longitude: -58.3816,
+    latitude: -34.6037,
+    zoom: 2,
+    pitch: 0,
+    bearing: 0,
+  });
+
   // Keep fk_interest default in sync once categories load
   useEffect(() => {
     if (!newLoc.fk_interest && Array.isArray(categories) && categories.length > 0) {
@@ -245,6 +262,74 @@ export default function Explore() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories]);
+
+  // ✅ when opening add modal: sync map with existing coords and/or try geolocation
+useEffect(() => {
+  if (!showAddLocationModal) return;
+
+  const latStr = (newLoc.latitude ?? "").toString().trim();
+  const lngStr = (newLoc.longitude ?? "").toString().trim();
+
+  const lat = latStr !== "" ? Number(latStr) : NaN;
+  const lng = lngStr !== "" ? Number(lngStr) : NaN;
+
+  const isValid =
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 && lat <= 90 &&
+    lng >= -180 && lng <= 180;
+
+  if (isValid) {
+    setPickerPos([lat, lng]);
+    setCreateMapViewState((v) => ({
+      ...v,
+      latitude: lat,
+      longitude: lng,
+      zoom: Math.max(v.zoom || 2, 14),
+      pitch: v.pitch || 0,
+      bearing: v.bearing || 0,
+    }));
+    return;
+  }
+
+  // fallback: geolocation...
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const glat = pos.coords.latitude;
+        const glng = pos.coords.longitude;
+        if (Number.isFinite(glat) && Number.isFinite(glng)) {
+          setPickerPos([glat, glng]);
+          setCreateMapViewState((v) => ({
+            ...v,
+            latitude: glat,
+            longitude: glng,
+            zoom: 13,
+            pitch: v.pitch || 0,
+            bearing: v.bearing || 0,
+          }));
+          setNewLoc((p) => ({
+            ...p,
+            latitude: p.latitude || String(glat),
+            longitude: p.longitude || String(glng),
+          }));
+        }
+      },
+      () => { /* ignore */ }
+    );
+  }
+}, [showAddLocationModal]);
+
+  const setCoordsFromPicker = (lat, lng) => {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    setPickerPos([lat, lng]); // [lat, lng]
+    setNewLoc((p) => ({
+      ...p,
+      latitude: String(lat),
+      longitude: String(lng),
+    }));
+  };
 
   function parseImagesRaw(str) {
     const s = (str || "").trim();
@@ -321,6 +406,16 @@ export default function Explore() {
         opening_hours_raw: "",
         imagenes_raw: "",
       });
+
+      // reset map picker
+      setPickerPos([-34.6037, -58.3816]);
+      setCreateMapViewState({
+        longitude: -58.3816,
+        latitude: -34.6037,
+        zoom: 12,
+        pitch: 0,
+        bearing: 0,
+      });
     } catch (err) {
       console.error("POST /locations error:", err);
       setCreateLocError(err?.message || "No se pudo crear el lugar.");
@@ -328,7 +423,6 @@ export default function Explore() {
       setCreateLocLoading(false);
     }
   }
-
 
   const scrollRoot =
     typeof document !== "undefined"
@@ -461,41 +555,40 @@ export default function Explore() {
   }
 
   // ---- mapear destino del viaje a un país de locations
-const tripCountry = useMemo(() => {
-  if (!tripContext) return null;
+  const tripCountry = useMemo(() => {
+    if (!tripContext) return null;
 
-  // ✅ best source: parse "City, Country"
-  const destParts = parseDestinationCityCountry(tripContext.destination);
-  const countryFromDest = (destParts.country || "").trim();
-  if (countryFromDest) return countryFromDest;
+    // ✅ best source: parse "City, Country"
+    const destParts = parseDestinationCityCountry(tripContext.destination);
+    const countryFromDest = (destParts.country || "").trim();
+    if (countryFromDest) return countryFromDest;
 
-  // fallback: previous heuristic (only if destination has no country)
-  if (!allLocations.length) return null;
-  const destination = (tripContext.destination || "").trim();
-  if (!destination) return null;
+    // fallback: previous heuristic (only if destination has no country)
+    if (!allLocations.length) return null;
+    const destination = (tripContext.destination || "").trim();
+    if (!destination) return null;
 
-  const destLower = destination.toLowerCase();
+    const destLower = destination.toLowerCase();
 
-  const countries = Array.from(
-    new Set(allLocations.map((l) => (l.country || "").trim()).filter(Boolean))
-  );
+    const countries = Array.from(
+      new Set(allLocations.map((l) => (l.country || "").trim()).filter(Boolean))
+    );
 
-  let found = countries.find((c) => c.toLowerCase() === destLower);
-  if (found) return found;
+    let found = countries.find((c) => c.toLowerCase() === destLower);
+    if (found) return found;
 
-  const locByCity = allLocations.find(
-    (loc) => (loc.city || "").toLowerCase() === destLower
-  );
-  if (locByCity && locByCity.country) return locByCity.country;
+    const locByCity = allLocations.find(
+      (loc) => (loc.city || "").toLowerCase() === destLower
+    );
+    if (locByCity && locByCity.country) return locByCity.country;
 
-  found = countries.find((c) => {
-    const lc = c.toLowerCase();
-    return lc.includes(destLower) || destLower.includes(lc);
-  });
+    found = countries.find((c) => {
+      const lc = c.toLowerCase();
+      return lc.includes(destLower) || destLower.includes(lc);
+    });
 
-  return found || null;
-}, [tripContext, allLocations]);
-
+    return found || null;
+  }, [tripContext, allLocations]);
 
   const tripContextTitle = useMemo(() => {
     if (!tripContext) return null;
@@ -600,30 +693,28 @@ const tripCountry = useMemo(() => {
   );
 
   const selectedCategoryId = useMemo(() => {
-  if (selectedCategorySlug === "todo") return null;
+    if (selectedCategorySlug === "todo") return null;
 
-  const cat = categories.find(
-    (c) => String(c.slug).toLowerCase() === String(selectedCategorySlug).toLowerCase()
-  );
+    const cat = categories.find(
+      (c) => String(c.slug).toLowerCase() === String(selectedCategorySlug).toLowerCase()
+    );
 
-  return cat ? String(cat.id) : null;
-}, [categories, selectedCategorySlug]);
-
+    return cat ? String(cat.id) : null;
+  }, [categories, selectedCategorySlug]);
 
   // ---- aplicar filtros (categoría, país, ciudad, orden) al grid principal
   const filteredExperiences = useMemo(() => {
     let exps = worldwideExperiences;
 
-if (selectedCategorySlug !== "todo") {
-  const wantedId = selectedCategoryId; // e.g. "1"
-  exps = exps.filter((exp) => {
-    const expInterestId =
-      exp?.category ?? exp?.raw?.interest ?? exp?.raw?.fk_interest ?? null;
+    if (selectedCategorySlug !== "todo") {
+      const wantedId = selectedCategoryId; // e.g. "1"
+      exps = exps.filter((exp) => {
+        const expInterestId =
+          exp?.category ?? exp?.raw?.interest ?? exp?.raw?.fk_interest ?? null;
 
-    return wantedId && String(expInterestId) === String(wantedId);
-  });
-}
-
+        return wantedId && String(expInterestId) === String(wantedId);
+      });
+    }
 
     if (filterCountry) {
       const cLower = filterCountry.toLowerCase();
@@ -641,7 +732,6 @@ if (selectedCategorySlug !== "todo") {
 
     return exps;
   }, [worldwideExperiences, selectedCategorySlug, selectedCategoryId, filterCountry, filterCity, sortBy]);
-
 
   // ---- callbacks UI
   const onCategoryClick = (category) => {
@@ -689,7 +779,6 @@ if (selectedCategorySlug !== "todo") {
     }
 
     if (tripPlaceLocationIds.has(locationId)) {
-      // you asked to show "Crear viaje" instead of "Ya está en tu viaje"
       goCreateTripFromSelected();
       return;
     }
@@ -785,12 +874,12 @@ if (selectedCategorySlug !== "todo") {
         const city = raw.city || "";
         const country = raw.country || "";
 
-const qs = new URLSearchParams({
-  name,
-  city,
-  country,
-  lang: "es",
-});
+        const qs = new URLSearchParams({
+          name,
+          city,
+          country,
+          lang: "es",
+        });
 
         const data = await apiGet(`/google/reviews?${qs.toString()}`);
         if (!alive) return;
@@ -841,13 +930,11 @@ const qs = new URLSearchParams({
 
   // Only show "Agregar al viaje" if it can truly be added to the current trip.
   const canAddToCurrentTrip =
-  !!tripIdForAdd &&
-  sameCity &&
-  !isAlreadyInTrip &&
-  (!tripCountry || sameCountry);
+    !!tripIdForAdd &&
+    sameCity &&
+    !isAlreadyInTrip &&
+    (!tripCountry || sameCountry);
 
-  // Primary CTA (what you asked):
-  // - If not addable (city mismatch OR already in trip OR no trip) => show "Crear viaje"
   const primaryCtaLabel = canAddToCurrentTrip
     ? "Agregar al viaje"
     : t("explore.createTripPlan");
@@ -859,7 +946,6 @@ const qs = new URLSearchParams({
     <div className="explorar-page">
       <main className="explorar-main">
         <div className="explorar-container">
-
           <div className="owner-bubble">
             <div className="owner-bubble-text">
               ¿Sos dueño/a o administrador/a de un lugar turístico? Publicalo en ComfTrip para que más viajeros lo encuentren.
@@ -1132,7 +1218,7 @@ const qs = new URLSearchParams({
         </div>
       </main>
 
-            {/* ADD LOCATION MODAL */}
+      {/* ADD LOCATION MODAL */}
       <Modal isOpen={showAddLocationModal} onClose={() => setShowAddLocationModal(false)}>
         <div style={{ padding: 18, width: "min(720px, 92vw)" }}>
           <h2 style={{ marginTop: 0 }}>Agregar un lugar</h2>
@@ -1191,6 +1277,109 @@ const qs = new URLSearchParams({
                   placeholder="Buenos Aires"
                 />
               </div>
+            </div>
+
+            {/* ✅ MAP PICKER */}
+            <div style={{ display: "grid", gap: 8 }}>
+              <label style={{ fontWeight: 700 }}>Ubicación (click o arrastrá el pin)</label>
+
+              {!MAPBOX_TOKEN ? (
+                <div className="small-muted" style={{ color: "#c33" }}>
+                  Falta configurar REACT_APP_MAPBOX_TOKEN para usar el mapa.
+                </div>
+              ) : (
+                <div
+                  style={{
+                    height: 280,
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    border: "1px solid var(--color-border-light)",
+                    background: "var(--color-bg-secondary)",
+                    position: "relative",
+                  }}
+                >
+                  <Map
+                    {...createMapViewState}
+                    onMove={(evt) => {
+                      if (!evt || !evt.viewState) return;
+                      const vs = evt.viewState;
+                      if (
+                        vs &&
+                        Number.isFinite(vs.latitude) &&
+                        Number.isFinite(vs.longitude) &&
+                        Number.isFinite(vs.zoom)
+                      ) {
+                        setCreateMapViewState({
+                          ...vs,
+                          pitch: vs.pitch || 0,
+                          bearing: vs.bearing || 0,
+                        });
+                      }
+                    }}
+                    onClick={(evt) => {
+                      // react-map-gl gives evt.lngLat (object with lng/lat)
+                      const ll = evt?.lngLat;
+                      const lat = ll?.lat;
+                      const lng = ll?.lng;
+                      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+                      setCoordsFromPicker(lat, lng);
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                    mapStyle="mapbox://styles/mapbox/streets-v11"
+                    mapboxAccessToken={MAPBOX_TOKEN}
+                  >
+                    <div style={{ position: "absolute", right: "0.625rem", top: "0.625rem", zIndex: 1 }}>
+                      <NavigationControl showCompass showZoom />
+                    </div>
+
+                    {Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1]) && (
+                      <Marker
+                        longitude={pickerPos[1]}
+                        latitude={pickerPos[0]}
+                        anchor="bottom"
+                        draggable
+                        onDragEnd={(evt) => {
+                          const raw = evt?.lngLat ?? null;
+                          const lat = raw?.lat;
+                          const lng = raw?.lng;
+                          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+                          setCoordsFromPicker(lat, lng);
+                        }}
+                      >
+                        <svg
+                          width="28"
+                          height="28"
+                          viewBox="0 0 24 24"
+                          style={{ transform: "translate(-0.875rem,-1.75rem)" }}
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M12 2C8.1 2 5 5.1 5 9c0 5 7 12 7 12s7-7 7-12c0-3.9-3.1-7-7-7z"
+                            fill="#ff7a45"
+                          />
+                          <circle cx="12" cy="9" r="2.3" fill="#fff" />
+                        </svg>
+                      </Marker>
+                    )}
+
+                    {Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1]) && (
+                      <Popup
+                        longitude={pickerPos[1]}
+                        latitude={pickerPos[0]}
+                        anchor="bottom"
+                        onClose={() => {}}
+                        closeButton={false}
+                        closeOnClick={false}
+                      >
+                        <div style={{ fontSize: 12 }}>
+                          Lat {pickerPos[0].toFixed(5)} <br />
+                          Lng {pickerPos[1].toFixed(5)}
+                        </div>
+                      </Popup>
+                    )}
+                  </Map>
+                </div>
+              )}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -1263,7 +1452,6 @@ const qs = new URLSearchParams({
         </div>
       </Modal>
 
-
       {/* DETAIL MODAL */}
       <WideModal
         isOpen={showDetailModal && !!selectedExperience}
@@ -1278,7 +1466,7 @@ const qs = new URLSearchParams({
               boxSizing: "border-box",
               maxHeight: "85vh",
               overflowY: "auto",
-              overflowX: "hidden", // ✅ prevent horizontal scroll
+              overflowX: "hidden",
               borderRadius: 16,
             }}
           >
@@ -1487,7 +1675,7 @@ const qs = new URLSearchParams({
                 <ActionButton
                   variant="create"
                   onClick={primaryCtaOnClick}
-                  disabled={addLoading} // ✅ only disable while posting
+                  disabled={addLoading}
                 >
                   {addLoading ? "Agregando…" : primaryCtaLabel}
                 </ActionButton>
@@ -1496,12 +1684,8 @@ const qs = new URLSearchParams({
                   {t("explore.share")}
                 </ActionButton>
 
-                {/* Only show errors for real API failures now (no city/country mismatch text) */}
                 {addError ? (
-                  <div
-                    className="small-muted"
-                    style={{ color: "#c33", overflowWrap: "anywhere" }}
-                  >
+                  <div className="small-muted" style={{ color: "#c33", overflowWrap: "anywhere" }}>
                     {addError}
                   </div>
                 ) : null}

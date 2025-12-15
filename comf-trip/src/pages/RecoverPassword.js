@@ -18,7 +18,6 @@ export default function RecoverPassword() {
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [message, setMessage] = useState('');
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { showSuccess, showError } = useSnackbar();
@@ -73,14 +72,13 @@ export default function RecoverPassword() {
     if (resendCooldown > 0) return;
 
     setSendingCode(true);
-    setMessage('');
     try {
       const res = await apiPost('/auth/forgot-password', { email: email.trim().toLowerCase() });
       const data = res.data ?? res;
       
       if (data?.message || data?.success || res.data !== undefined) {
         setResendCooldown(30); // 30 seconds cooldown
-        setMessage(t('auth.recoverPassword.codeSent'));
+        showSuccess(t('auth.recoverPassword.codeSent'));
       }
     } catch (err) {
       console.error('Send code error', err);
@@ -118,12 +116,11 @@ export default function RecoverPassword() {
       }
 
       if(!isFormValid){
-          setMessage( 'auth.recoverPassword.completeAllFields');
+          showError(t('auth.recoverPassword.completeAllFields'));
           return
       }
 
     setLoading(true);
-    setMessage('');
     try {
       const res = await apiPost('/auth/reset-password', {
         email: email.trim().toLowerCase(),
@@ -258,7 +255,6 @@ export default function RecoverPassword() {
                 : t('auth.recoverPassword.confirmButton')}
             </button>
 
-            {message && <div className="message">{t(message)}</div>}
             <div className="footer-cta">
               <button
                 type="button"

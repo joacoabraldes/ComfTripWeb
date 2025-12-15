@@ -17,7 +17,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { t, language, setLanguage } = useTranslation();
   const { showError } = useSnackbar();
-    const [message, setMessage] = useState("");
     const [errorIdentifier, setErrorIdentifier]=useState(null)
     const [errorPassword, setErrorPassword]=useState(null)
     const [onEmail, setOnEmail]=useState(false)
@@ -65,7 +64,7 @@ export default function Login() {
         if (form.email.trim().length === 0) {
             setErrorIdentifier("auth.errors.identifierRequired")
         }
-        setMessage("auth.register.completeFields");
+        showError(t("auth.register.completeFields"));
         return
     }
     setLoading(true);
@@ -141,7 +140,6 @@ export default function Login() {
             <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading}>
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
-              {message && <div className="message">{t(message)}</div>}
             <div className="footer-cta">
               <span>{t('auth.login.notRegistered')}</span>
               <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>{t('auth.login.register')}</button>

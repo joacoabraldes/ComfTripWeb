@@ -14,7 +14,6 @@ function SocialFeedPage() {
   const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
-  const [error, setError] = useState(null);
   const [newPost, setNewPost] = useState("");
   const [commentText, setCommentText] = useState({});
   const [loadingPostId, setLoadingPostId] = useState(null);
@@ -24,16 +23,15 @@ function SocialFeedPage() {
   const loadFeed = useCallback(async () => {
     try {
       setLoadingFeed(true);
-      setError(null);
       const data = await fetchSocialFeed();
       setPosts(data);
     } catch (err) {
       console.error(err);
-      setError(t('socialFeed.errorLoadingFeed'));
+      showError(t('socialFeed.errorLoadingFeed'));
     } finally {
       setLoadingFeed(false);
     }
-  }, [t]);
+  }, [t, showError]);
 
   useEffect(() => {
     loadFeed();
@@ -147,11 +145,6 @@ function SocialFeedPage() {
 
       {/* Feed */}
       {loadingFeed && <p>{t('socialFeed.loadingFeed')}</p>}
-      {error && (
-        <p className="text-red-600 mb-2">
-          {error}
-        </p>
-      )}
 
       {!loadingFeed && posts.length === 0 && <p>{t('socialFeed.noPosts')}</p>}
 

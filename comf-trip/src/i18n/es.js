@@ -195,7 +195,8 @@
         alreadySharedTrips: "Viajes ya compartidos",
         noTripsToShareAvailable: "No hay viajes disponibles para compartir",
         trip:'Viaje',
-        errorTrip:"Error al cargar los vajes ya compartidos"
+        errorTrip:"Error al cargar los vajes ya compartidos",
+        errorFriends: 'Error cangando amigos'
     },
     badges: {
       publicLink: 'Enlace público',

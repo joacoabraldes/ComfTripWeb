@@ -195,7 +195,8 @@ const en = {
         alreadySharedTrips: "Already shared trips",
         noTripsToShareAvailable: "No trips available to share",
         trip: 'Trip',
-        errorTrip:'Error loading shared trips'
+        errorTrip:'Error loading shared trips',
+        errorFriends:'"Error loading friends"'
     },
     badges: {
       publicLink: 'Public link',

@@ -217,6 +217,8 @@
     editProfile: 'Editar perfil',
     changePassword: 'Cambiar contraseña',
     logout: 'Cerrar sesión',
+    logoutTitle: 'Cerrar sesión',
+    logoutConfirm: '¿Estás seguro de que deseas cerrar sesión?',
     email: 'Mail',
     phone: 'Numero de telefono',
     birthdate: 'Fecha de Nacimiento',

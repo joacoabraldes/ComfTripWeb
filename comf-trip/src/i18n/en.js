@@ -217,6 +217,8 @@ const en = {
     editProfile: 'Edit profile',
     changePassword: 'Change password',
     logout: 'Logout',
+    logoutTitle: 'Logout',
+    logoutConfirm: 'Are you sure you want to log out?',
     email: 'Email',
     phone: 'Phone number',
     birthdate: 'Date of Birth',

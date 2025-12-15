@@ -414,18 +414,35 @@ export default function AddPlace() {
                         <Select
                             className="dropdown-select"
                             classNamePrefix="react-select"
-                            options={availableLocations.map(l => ({
-                                value: l.id,
-                                label: `${l.titulo} ${l.city ? `— ${l.city}` : ''}`.trim()
-                            }))}
-                            value={selectedLocation ? {
-                                value: selectedLocation,
-                                label: `${(locations.find(l => Number(l.id) === Number(selectedLocation))?.titulo) || ""}`
-                            } : null}
+                            options={availableLocations.map(l => {
+                                const titulo = l.titulo || l.title || "";
+                                const city = l.city || l.ciudad || l.localidad || "";
+                                return {
+                                    value: Number(l.id),
+                                    label: `${titulo}${city ? ` — ${city}` : ""}`,
+                                    meta: l
+                                };
+                            })}
+                            value={selectedLocation ? (() => {
+                                const loc = locations.find(l => Number(l.id) === Number(selectedLocation));
+                                if (!loc) return null;
+                                const titulo = loc.titulo || loc.title || "";
+                                const city = loc.city || loc.ciudad || loc.localidad || "";
+                                return {
+                                    value: Number(selectedLocation),
+                                    label: `${titulo}${city ? ` — ${city}` : ""}`,
+                                    meta: loc
+                                };
+                            })() : null}
                             onChange={(option) => {
+                                if (!option) {
+                                    setSelectedLocation(null);
+                                    setLocationInfo(null);
+                                    return;
+                                }
                                 const id = Number(option.value);
                                 setSelectedLocation(id);
-                                const loc = locations.find(l => Number(l.id) === id);
+                                const loc = option.meta || locations.find(l => Number(l.id) === id);
                                 setLocationInfo(loc || null);
                                 if(loc){
                                     const lat = getLat(loc);
@@ -437,6 +454,31 @@ export default function AddPlace() {
                             }}
                             placeholder={availableLocations.length ? t('addPlace.searchLocation') : t('addPlace.noLocationsFound', { destination: trip.destination })}
                             isDisabled={availableLocations.length === 0}
+                            isClearable
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
+                            styles={{
+                                menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                            }}
+                            formatOptionLabel={(opt) => {
+                                const meta = opt?.meta || {};
+                                const city = meta?.city || meta?.ciudad || meta?.localidad || "";
+                                const country = meta?.country || meta?.pais || "";
+                                return (
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            gap: 8,
+                                        }}
+                                    >
+                                        <div style={{ fontWeight: 700 }}>{opt.label}</div>
+                                        <div style={{ color: "#666", fontSize: 12 }}>
+                                            {city || country || ""}
+                                        </div>
+                                    </div>
+                                );
+                            }}
                         />
 
                         {/* show an action to reveal all locations when filter returns none */}
@@ -445,7 +487,8 @@ export default function AddPlace() {
                                 <small>{t('addPlace.noMatchingLocations')}</small>
                                 <button type="button" className="btn-small" onClick={() => setShowAllLocations(true)} style={{ marginLeft: 8 }}>{t('addPlace.showAll')}</button>
                             </div>
-                        )}</div>
+                        )}
+                        </div>
                         <div className="trip-it-card">
                         <label>{t('addPlace.date')}</label>
 

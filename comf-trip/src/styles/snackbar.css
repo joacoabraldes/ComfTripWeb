@@ -1,7 +1,7 @@
 /* src/styles/snackbar.css */
 .snackbar-container {
   position: fixed;
-  top: 20px;
+  top: calc(var(--header-height, 5rem) + 20px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 10000;

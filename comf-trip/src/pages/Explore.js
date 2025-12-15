@@ -6,6 +6,7 @@ import { apiGet, apiPost } from "./api";
 import OptimizedImage from "../components/OptimizedImage";
 import { useTranslation } from "../i18n";
 import Modal from "../components/Modal";
+import WideModal from "../components/WideModal";
 import ActionButton from "../components/ActionButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import FilterSelect from "../components/FilterSelect";
@@ -487,14 +488,31 @@ const tripCountry = useMemo(() => {
     []
   );
 
+  const selectedCategoryId = useMemo(() => {
+  if (selectedCategorySlug === "todo") return null;
+
+  const cat = categories.find(
+    (c) => String(c.slug).toLowerCase() === String(selectedCategorySlug).toLowerCase()
+  );
+
+  return cat ? String(cat.id) : null;
+}, [categories, selectedCategorySlug]);
+
+
   // ---- aplicar filtros (categoría, país, ciudad, orden) al grid principal
   const filteredExperiences = useMemo(() => {
     let exps = worldwideExperiences;
 
-    if (selectedCategorySlug !== "todo") {
-      const slugLower = selectedCategorySlug.toLowerCase();
-      exps = exps.filter((exp) => (exp.category || "").toLowerCase() === slugLower);
-    }
+if (selectedCategorySlug !== "todo") {
+  const wantedId = selectedCategoryId; // e.g. "1"
+  exps = exps.filter((exp) => {
+    const expInterestId =
+      exp?.category ?? exp?.raw?.interest ?? exp?.raw?.fk_interest ?? null;
+
+    return wantedId && String(expInterestId) === String(wantedId);
+  });
+}
+
 
     if (filterCountry) {
       const cLower = filterCountry.toLowerCase();
@@ -511,7 +529,8 @@ const tripCountry = useMemo(() => {
     }
 
     return exps;
-  }, [worldwideExperiences, selectedCategorySlug, filterCountry, filterCity, sortBy]);
+  }, [worldwideExperiences, selectedCategorySlug, selectedCategoryId, filterCountry, filterCity, sortBy]);
+
 
   // ---- callbacks UI
   const onCategoryClick = (category) => {
@@ -729,40 +748,6 @@ const tripCountry = useMemo(() => {
     <div className="explorar-page">
       <main className="explorar-main">
         <div className="explorar-container">
-          <h1 className="explorar-title">{t("explore.title")}</h1>
-
-          {/* CATEGORÍAS */}
-          <div className="categories-section">
-            <div className="categories-grid">
-              <div
-                className={`category-card ${selectedCategorySlug === "todo" ? "active" : ""}`}
-                onClick={() => onCategoryClick("todo")}
-              >
-                <div className="category-icon">
-                  <FaGlobe />
-                </div>
-                <div className="category-name">{t("explore.all")}</div>
-              </div>
-
-              {categories.map((cat) => {
-                const IconComponent = categoryIcons[cat.slug] || FaMapMarkerAlt;
-                const slug = cat.slug ?? String(cat.id ?? "");
-                const translatedTitle = translateCategory(t, slug, cat.title);
-                return (
-                  <div
-                    key={cat.slug ?? cat.id}
-                    className={`category-card ${selectedCategorySlug === cat.slug ? "active" : ""}`}
-                    onClick={() => onCategoryClick(cat)}
-                  >
-                    <div className="category-icon">
-                      <IconComponent />
-                    </div>
-                    <div className="category-name">{translatedTitle}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
           {/* SECCIÓN VIAJE ACTUAL / MÁS CERCANO (hide already added) */}
           {tripContextTitle && tripCountry && (
@@ -815,6 +800,41 @@ const tripCountry = useMemo(() => {
               )}
             </div>
           )}
+
+                    <h1 className="explorar-title">{t("explore.title")}</h1>
+
+          {/* CATEGORÍAS */}
+          <div className="categories-section">
+            <div className="categories-grid">
+              <div
+                className={`category-card ${selectedCategorySlug === "todo" ? "active" : ""}`}
+                onClick={() => onCategoryClick("todo")}
+              >
+                <div className="category-icon">
+                  <FaGlobe />
+                </div>
+                <div className="category-name">{t("explore.all")}</div>
+              </div>
+
+              {categories.map((cat) => {
+                const IconComponent = categoryIcons[cat.slug] || FaMapMarkerAlt;
+                const slug = cat.slug ?? String(cat.id ?? "");
+                const translatedTitle = translateCategory(t, slug, cat.title);
+                return (
+                  <div
+                    key={cat.slug ?? cat.id}
+                    className={`category-card ${selectedCategorySlug === cat.slug ? "active" : ""}`}
+                    onClick={() => onCategoryClick(cat)}
+                  >
+                    <div className="category-icon">
+                      <IconComponent />
+                    </div>
+                    <div className="category-name">{translatedTitle}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* FILTROS LÓGICOS PARA LUGARES */}
           <div className="filters-section compact">
@@ -987,7 +1007,7 @@ const tripCountry = useMemo(() => {
       </main>
 
       {/* DETAIL MODAL */}
-      <Modal
+      <WideModal
         isOpen={showDetailModal && !!selectedExperience}
         onClose={() => setShowDetailModal(false)}
       >
@@ -1231,7 +1251,7 @@ const tripCountry = useMemo(() => {
             </div>
           </div>
         )}
-      </Modal>
+      </WideModal>
     </div>
   );
 }

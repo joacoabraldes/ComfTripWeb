@@ -674,12 +674,12 @@ if (selectedCategorySlug !== "todo") {
         const city = raw.city || "";
         const country = raw.country || "";
 
-        const qs = new URLSearchParams({
-          name,
-          city,
-          country,
-          lang: "en",
-        });
+const qs = new URLSearchParams({
+  name,
+  city,
+  country,
+  lang: "es",
+});
 
         const data = await apiGet(`/google/reviews?${qs.toString()}`);
         if (!alive) return;

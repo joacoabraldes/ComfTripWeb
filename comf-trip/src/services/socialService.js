@@ -128,3 +128,20 @@ export async function addPostComment(postId, content) {
 
   return handleJsonResponse(res, 'Error agregando comentario');
 }
+
+// -------- ELIMINAR COMENTARIO --------
+export async function deletePostComment(commentId) {
+    if (!commentId) {
+        throw new Error('commentId es obligatorio');
+    }
+
+
+    const res = await fetch(buildUrl(`/social/comments/${commentId}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+    });
+
+
+    return handleJsonResponse(res, 'Error al eliminar el comentario');
+}
+

@@ -185,6 +185,17 @@ const en = {
       error: 'Could not share the trip.',
       errorLoadingFriends: 'Could not load your friends.',
       selectFriend: 'Select a friend to share',
+        availableFriends: "Available friends",
+        alreadyShared: "Already shared with",
+        remove: "Stop sharing",
+        removeTitle: "Stop sharing trip",
+        removeConfirm: "Are you sure you want to stop sharing this trip with this person?",
+        removeError: "Could not stop sharing the trip",
+        notSharedTrips: "Trips available to share",
+        alreadySharedTrips: "Already shared trips",
+        noTripsToShareAvailable: "No trips available to share",
+        trip: 'Trip',
+        errorTrip:'Error loading shared trips'
     },
     badges: {
       publicLink: 'Public link',
@@ -302,7 +313,12 @@ const en = {
       comment: 'Comments',
       confirmDeletePost: "Delete this post?",
       errorDeletePost: "Could not delete the post",
-      deletePost: "Delete post"
+      deletePost: "Delete post",
+      removePostTitle: 'Delete post',
+      removePostConfirm: 'Are you sure you want to delete this post?',
+      removeCommentTitle: 'Delete comment',
+      removeCommentConfirm: 'Are you sure you want to delete this comment?',
+      errorDeleteComment: "Could not delete the comment"
   },
 
   // Error

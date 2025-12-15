@@ -185,6 +185,17 @@
       error: 'No se pudo compartir el viaje.',
       errorLoadingFriends: 'No se pudieron cargar tus amigos.',
       selectFriend: 'Selecciona un amigo para compartir',
+        availableFriends: "Amigos disponibles",
+        alreadyShared: "Ya compartido con",
+        remove: "Dejar de compartir",
+        removeTitle: "Dejar de compartir viaje",
+        removeConfirm: "¿Seguro que querés dejar de compartir este viaje con esta persona?",
+        removeError: "No se pudo dejar de compartir el viaje",
+        notSharedTrips: "Viajes disponibles para compartir",
+        alreadySharedTrips: "Viajes ya compartidos",
+        noTripsToShareAvailable: "No hay viajes disponibles para compartir",
+        trip:'Viaje',
+        errorTrip:"Error al cargar los vajes ya compartidos"
     },
     badges: {
       publicLink: 'Enlace público',
@@ -302,7 +313,12 @@
       comment:'Comentarios',
       confirmDeletePost: "¿Eliminar este post?",
       errorDeletePost: "No se pudo eliminar el post",
-      deletePost: "Eliminar post"
+      deletePost: "Eliminar post",
+      removePostTitle: 'Eliminar post',
+      removePostConfirm: '¿Estás seguro de que deseas eliminar esta post?',
+      removeCommentTitle: 'Eliminar comentario',
+      removeCommentConfirm: '¿Estás seguro de que deseas eliminar este comentario?',
+      errorDeleteComment: "No se pudo eliminar el comentario",
   },
 
   // Error

@@ -30,8 +30,8 @@ describe('ComfTrip - Tests de Login y Creación de Viajes', () => {
 
     it('debería mostrar el estado de carga durante el login', () => {
       // Llenar los campos con datos de prueba
-      cy.get('input[name="email"]').type('test@example.com');
-      cy.get('input[name="password"]').type('password123');
+      cy.get('input[name="email"]').type('test00@gmail.com');
+      cy.get('input[name="password"]').type('qwertyu');
       
       // Interceptar la llamada de login para simular una respuesta lenta
       cy.intercept('POST', '**/login', {
@@ -75,8 +75,8 @@ describe('ComfTrip - Tests de Login y Creación de Viajes', () => {
       cy.visit('/login');
       
       // Llenar el formulario de login
-      cy.get('input[name="email"]').type('test@example.com');
-      cy.get('input[name="password"]').type('password123');
+      cy.get('input[name="email"]').type('test00@gmail.com');
+      cy.get('input[name="password"]').type('qwertyu');
       
       // Interceptar la llamada de login para capturar la respuesta
       cy.intercept('POST', '**/login').as('loginRequest');

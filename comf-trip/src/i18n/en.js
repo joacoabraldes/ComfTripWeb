@@ -196,10 +196,12 @@ const en = {
       confirm: 'Are you sure you want to delete the trip to {destination}?',
       confirmButton: 'Delete',
       error: 'Could not delete the trip.',
+      success: 'Trip deleted successfully.',
         titleAccess: 'Cancel Access',
         confirmAccess: 'Are you sure you want to cancel access to the trip to {destination}?',
         confirmAccessButton: 'Accept',
-        errorAccess: 'Could not remove access to the trip'
+        errorAccess: 'Could not remove access to the trip',
+        successAccess: 'Trip access cancelled successfully.'
     },
     created: 'Created:',
     unknownDestination: 'Unknown destination',
@@ -257,11 +259,14 @@ const en = {
     requestSent: 'Request sent',
     requestError: 'Could not send request',
     acceptError: 'Could not accept request',
+    acceptSuccess: 'Request accepted successfully.',
     rejectError: 'Could not reject request',
+    rejectSuccess: 'Request rejected successfully.',
     removeTitle: 'Remove friend',
     removeConfirm: 'Are you sure you want to remove this friend?',
     remove: 'Remove',
     removeError: 'Could not remove',
+    removeSuccess: 'Friend removed successfully.',
     loadError: 'Could not load community',
     shareTitle: 'Share trips with {name}',
     user: 'User',
@@ -584,6 +589,7 @@ const en = {
     tripNotFound: 'Trip not found (check ownership or id).',
     loadTripOrLocationsError: 'Could not load trip or locations.',
     addPlaceError: 'Could not add place. Please try again.',
+    addPlaceSuccess: 'Place added successfully.',
     autoAddError: 'Could not add automatically.',
     description: 'Description',
   },
@@ -605,6 +611,7 @@ const en = {
     loadTripError: 'Could not load trip',
     description: 'Description',
     saveError: 'Could not save changes.',
+    saveSuccess: 'Changes saved successfully.',
   },
 
   // Trip Itinerary
@@ -639,9 +646,12 @@ const en = {
     hideRoute: 'Hide route',
     showRoute: 'Show route',
     currentPlace: 'Current place',
+    removeFlight: 'Remove flight',
     removeFlightConfirm: 'Remove flight association with this trip?',
+    deletePlace: 'Delete point',
     deletePlaceConfirm: 'Are you sure you want to delete the point "{placeTitle}"?',
     deletePlaceError: 'Could not delete point. Check console for details.',
+    deletePlaceSuccess: 'Point deleted successfully.',
     selectOriginCountry: 'Select origin country',
     place: 'Place',
     addPointToDay: 'Add point to this day',
@@ -773,8 +783,10 @@ const en = {
   interests: {
     loadError: 'Could not load interests. Please try again.',
     userNotAuthenticated: 'No authenticated user. Please log in.',
+    noInterestsTitle: 'No interests selected',
     noInterestsSelected: 'You have not selected interests. Do you want to continue?',
     saveError: 'Error saving interests',
+    userNotIdentified: 'User not identified',
   },
 
   // Load Trip

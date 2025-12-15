@@ -165,6 +165,10 @@ export default function Community() {
     isOpen: false,
     userId: null,
   });
+  const [deletePostConfirm, setDeletePostConfirm] = useState({
+    isOpen: false,
+    postId: null,
+  });
 
   // ---------- LIGHTBOX state ----------
   const [lightbox, setLightbox] = useState({
@@ -321,10 +325,14 @@ export default function Community() {
     }
   }
 
-  async function handleDeletePost(postId) {
+  function handleDeletePost(postId) {
     if (!postId) return;
-    const ok = window.confirm(t('community.confirmDeletePost'));
-    if (!ok) return;
+    setDeletePostConfirm({ isOpen: true, postId });
+  }
+
+  async function confirmDeletePost() {
+    const postId = deletePostConfirm.postId;
+    if (!postId) return;
 
     try {
       setLoadingPostId(postId);
@@ -441,6 +449,7 @@ export default function Community() {
   async function acceptRequest(reqId) {
     try {
       await apiPost(`/friends/${reqId}/accept`);
+      showSuccess(t('community.acceptSuccess'));
       await loadAll();
       await loadFeed();
     } catch (err) {
@@ -452,6 +461,7 @@ export default function Community() {
   async function rejectRequest(reqId) {
     try {
       await apiPost(`/friends/${reqId}/reject`);
+      showSuccess(t('community.rejectSuccess'));
       await loadAll();
     } catch (err) {
       console.error('Error rechazando:', err);
@@ -466,6 +476,7 @@ export default function Community() {
   async function removeFriend(userId) {
     try {
       await apiDelete(`/friends/${userId}`);
+      showSuccess(t('community.removeSuccess'));
       await loadAll();
       await loadFeed();
     } catch (err) {
@@ -985,7 +996,7 @@ export default function Community() {
         loadingTrips={loadingTrips}
       />
 
-      {/* Confirmación de eliminación */}
+      {/* Confirmación de eliminación de amigo */}
       <ConfirmDialog
         isOpen={removeConfirm.isOpen}
         onClose={() =>
@@ -1000,6 +1011,22 @@ export default function Community() {
         title={t('community.removeTitle')}
         message={t('community.removeConfirm')}
         confirmText={t('community.remove')}
+        variant="primary"
+      />
+
+      {/* Confirmación de eliminación de post */}
+      <ConfirmDialog
+        isOpen={deletePostConfirm.isOpen}
+        onClose={() =>
+          setDeletePostConfirm({
+            isOpen: false,
+            postId: null,
+          })
+        }
+        onConfirm={confirmDeletePost}
+        title={t('community.deletePost')}
+        message={t('community.confirmDeletePost')}
+        confirmText={t('common.delete')}
         variant="primary"
       />
 

@@ -22,7 +22,7 @@ export default function Trips() {
   const [menuOpen, setMenuOpen] = useState(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { showError } = useSnackbar();
+  const { showError, showSuccess } = useSnackbar();
     const { user } = useAuth();
 
   // estados para compartir viajes
@@ -368,9 +368,11 @@ export default function Trips() {
             try {
                 if(Number(user.id)===Number(deleteConfirm.trip.user_id)){
                     await apiDelete(`/trips/${Number(deleteConfirm.trip.id)}`);
+                    showSuccess(t('trips.delete.success'));
                 }else{
                     if(deleteConfirm.trip.share) {
                         await apiDelete(`/share/trip/${deleteConfirm.trip.share.share_uuid}/leave`);
+                        showSuccess(t('trips.delete.successAccess'));
                     }
                 }
               setTrips((prev) => prev.filter((tripItem) => tripItem.id !== deleteConfirm.trip.id));

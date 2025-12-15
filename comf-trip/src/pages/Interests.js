@@ -8,6 +8,7 @@ import { useSnackbar } from "../contexts/SnackbarContext";
 import { translateCategory, translateCategoryDescription } from "../helpers/categoryTranslations";
 import OptimizedImage from "../components/OptimizedImage";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 // --- image loader: compatible Vite (import.meta.glob) y CRA/webpack (require.context)
 const imagesMap = (() => {
@@ -64,6 +65,7 @@ export default function InterestsPage() {
   const [saving, setSaving]=useState(false)
   const [interests, setInterests] = useState([]);
   const [selected, setSelected] = useState(new Set());
+  const [noInterestsConfirm, setNoInterestsConfirm] = useState(false);
   const scrollRoot = typeof document !== "undefined" ? document.querySelector(".explorar-main") : null;
 
   useEffect(() => {
@@ -104,13 +106,18 @@ export default function InterestsPage() {
     const interestIds = Array.from(selected);
 
     if (!interestIds.length) {
-      const ok = window.confirm(t('interests.noInterestsSelected'));
-      if (!ok) return;
+      setNoInterestsConfirm(true);
+      return;
     }
 
+    saveInterests(userId, interestIds);
+  }
+
+  async function saveInterests(userId, interestIds) {
     try {
         setSaving(true);
       await apiPost(`/users/${userId}/interests`, { interestIds });
+      const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
       const newStored = { ...stored, interests: interestIds };
       localStorage.setItem("user", JSON.stringify(newStored));
       navigate("/home");
@@ -189,6 +196,26 @@ export default function InterestsPage() {
           </button>
         </div>
       </main>
+
+      {/* Confirmación cuando no hay intereses seleccionados */}
+      <ConfirmDialog
+        isOpen={noInterestsConfirm}
+        onClose={() => setNoInterestsConfirm(false)}
+        onConfirm={() => {
+          const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
+          if (!stored || !stored.id) {
+            showError(t('interests.userNotIdentified'));
+            navigate("/login");
+            return;
+          }
+          const userId = stored.id;
+          saveInterests(userId, []);
+        }}
+        title={t('interests.noInterestsTitle')}
+        message={t('interests.noInterestsSelected')}
+        confirmText={t('common.confirm')}
+        variant="primary"
+      />
     </div>
   );
 }

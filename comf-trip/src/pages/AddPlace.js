@@ -18,7 +18,7 @@ const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function AddPlace() {
     const { t } = useTranslation();
-    const { showError } = useSnackbar();
+    const { showError, showSuccess } = useSnackbar();
     // NOTE: read the param name that you defined in App.jsx (/:tripId)
     const params = useParams();
     const navigate = useNavigate();
@@ -311,6 +311,7 @@ export default function AddPlace() {
             setStartHour("");
             setEndHour("");
             setNotes("");
+            showSuccess(t('addPlace.addPlaceSuccess'));
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Add place error:", err);
@@ -358,6 +359,7 @@ export default function AddPlace() {
             setEndHour("");
             setNotes("");
 
+            showSuccess(t('addPlace.addPlaceSuccess'));
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error('Auto add error:', err);

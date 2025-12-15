@@ -14,7 +14,7 @@ const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function EditPlace() {
     const { t } = useTranslation();
-    const { showError } = useSnackbar();
+    const { showError, showSuccess } = useSnackbar();
     const { tripId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
@@ -205,6 +205,7 @@ export default function EditPlace() {
                 }))
             });
 
+            showSuccess(t('editPlace.saveSuccess'));
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Error actualizando lugar:", err);

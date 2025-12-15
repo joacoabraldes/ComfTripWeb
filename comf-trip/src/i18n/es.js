@@ -196,10 +196,12 @@
       confirm: '¿Seguro que deseas eliminar el viaje a {destination}?',
       confirmButton: 'Eliminar',
       error: 'No se pudo eliminar el viaje.',
+      success: 'Viaje eliminado correctamente.',
         titleAccess: 'Cancelar Acceso',
         confirmAccess:'¿Estas seguro que queres cancelasr el acceso al viaje  {destination}?',
         confirmAccessButton: 'Aceptar',
-        errorAccess:'No se pudo eliminar el acceso al viaje'
+        errorAccess:'No se pudo eliminar el acceso al viaje',
+        successAccess: 'Acceso al viaje cancelado correctamente.'
     },
     created: 'Creado:',
     unknownDestination: 'Destino desconocido',
@@ -257,11 +259,14 @@
     requestSent: 'Solicitud enviada',
     requestError: 'No se pudo enviar la solicitud',
     acceptError: 'No se pudo aceptar la solicitud',
+    acceptSuccess: 'Solicitud aceptada correctamente.',
     rejectError: 'No se pudo rechazar la solicitud',
+    rejectSuccess: 'Solicitud rechazada correctamente.',
     removeTitle: 'Eliminar amigo',
     removeConfirm: '¿Estás seguro de que deseas eliminar este amigo?',
     remove: 'Eliminar',
     removeError: 'No se pudo eliminar',
+    removeSuccess: 'Amigo eliminado correctamente.',
     loadError: 'No se pudo cargar la comunidad',
     shareTitle: 'Compartir viajes con {name}',
     user: 'Usuario',
@@ -580,6 +585,7 @@
     tripNotFound: 'Viaje no encontrado (compruebe ownership o id).',
     loadTripOrLocationsError: 'No se pudo cargar el viaje o las localidades.',
     addPlaceError: 'No se pudo añadir el lugar. Intente nuevamente.',
+    addPlaceSuccess: 'Lugar agregado correctamente.',
     autoAddError: 'No se pudo añadir automáticamente.',
     description: 'Descripción',
     selectLocation: 'Seleccione una ubicación.',
@@ -603,6 +609,7 @@
     loadTripError: 'No se pudo cargar el viaje',
     description: 'Descripción',
     saveError: 'No se pudo guardar los cambios.',
+    saveSuccess: 'Cambios guardados correctamente.',
   },
 
   // Trip Itinerary
@@ -637,9 +644,12 @@
     hideRoute: 'Ocultar ruta',
     showRoute: 'Mostrar ruta',
     currentPlace: 'Lugar actual',
+    removeFlight: 'Remover vuelo',
     removeFlightConfirm: 'Quitar la asociación del vuelo con este viaje?',
+    deletePlace: 'Eliminar punto',
     deletePlaceConfirm: '¿Seguro que deseas eliminar el punto "{placeTitle}"?',
     deletePlaceError: 'No se pudo eliminar el punto. Revisa la consola para más detalle.',
+    deletePlaceSuccess: 'Punto eliminado correctamente.',
     selectOriginCountry: 'Seleccioná país de origen',
     place: 'Lugar',
     addPointToDay: 'Añadir punto a este día',
@@ -771,8 +781,10 @@
   interests: {
     loadError: 'No se pudieron cargar los intereses. Intente nuevamente.',
     userNotAuthenticated: 'No authenticated user. Please log in.',
+    noInterestsTitle: 'Sin intereses seleccionados',
     noInterestsSelected: 'No has seleccionado intereses. Deseas continuar?',
     saveError: 'Error al guardar intereses',
+    userNotIdentified: 'Usuario no identificado',
   },
 
   // Load Trip

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/explore.css";
-import { apiGet } from "./api";
+import { apiGet, apiPost } from "./api";
 import OptimizedImage from "../components/OptimizedImage";
 import { useTranslation } from "../i18n";
 import Modal from "../components/Modal";
@@ -104,6 +104,79 @@ const wikimediaSrcSet = (thumbUrl, widths = [320, 640, 1024]) => {
 
 const defaultModalSizes = "(max-width: 900px) 100vw, 900px";
 
+/** Simple star row like "★★★★☆" */
+function renderStars(rating) {
+  const n = Math.max(0, Math.min(5, Math.round(Number(rating || 0))));
+  const full = "★".repeat(n);
+  const empty = "☆".repeat(5 - n);
+  return full + empty;
+}
+
+function getTripId(trip) {
+  if (!trip) return null;
+  const id = trip.id ?? trip.trip_id ?? trip.tripId;
+  const n = Number(id);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function safeParsePlaces(places) {
+  if (!places) return [];
+  if (Array.isArray(places)) return places;
+  if (typeof places === "string") {
+    try {
+      const parsed = JSON.parse(places);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function extractLocationIdFromTripPlace(p) {
+  // based on your payload: p.fk_location and p.location.id
+  const a = p?.fk_location;
+  const b = p?.location?.id;
+  const n = Number(a ?? b);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normStr(s) {
+  return (s ?? "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function parseDestinationCityCountry(destination) {
+  const d = (destination ?? "").toString().trim();
+  if (!d) return { city: null, country: null };
+
+  const parts = d.split(",").map((p) => p.trim()).filter(Boolean);
+
+  // "Berlin, Germany" -> city="Berlin", country="Germany"
+  if (parts.length >= 2) {
+    return {
+      city: parts.slice(0, parts.length - 1).join(", "),
+      country: parts[parts.length - 1],
+    };
+  }
+
+  // Single token like "Berlin" or "Germany" (unknown which)
+  return { city: d, country: null };
+}
+
+function buildDestinationForCreate(exp) {
+  const city = exp?.raw?.city?.toString().trim();
+  const country = exp?.raw?.country?.toString().trim();
+  if (city && country) return `${city}, ${country}`;
+  if (city) return city;
+  if (country) return country;
+  return exp?.title ?? "";
+}
+
 export default function Explore() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -120,8 +193,7 @@ export default function Explore() {
 
   // categoría elegida (slug de interests)
   const [selectedCategorySlug, setSelectedCategorySlug] = useState("todo");
-  const [selectedCategoryTitle, setSelectedCategoryTitle] =
-    useState("Todo");
+  const [selectedCategoryTitle, setSelectedCategoryTitle] = useState("Todo");
 
   // filtros de lugares (NO de viaje)
   const [filterCountry, setFilterCountry] = useState("");
@@ -131,6 +203,20 @@ export default function Explore() {
   // modal
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState(null);
+
+  // google reviews state
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState(null);
+  const [googleData, setGoogleData] = useState(null);
+
+  // trip places
+  const [tripPlacesLoading, setTripPlacesLoading] = useState(false);
+  const [tripPlacesError, setTripPlacesError] = useState(null);
+  const [tripPlaceLocationIds, setTripPlaceLocationIds] = useState(new Set());
+
+  // add-to-trip state
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState(null);
 
   const scrollRoot =
     typeof document !== "undefined"
@@ -143,9 +229,8 @@ export default function Explore() {
     return locs.map((loc) => {
       const imgs = safeParseImages(loc.images ?? loc.imagenes);
       const chosen = pickBestImage(imgs);
-      const imageSrcSet = chosen
-        ? wikimediaSrcSet(chosen, [320, 640, 1024])
-        : null;
+      const imageSrcSet = chosen ? wikimediaSrcSet(chosen, [320, 640, 1024]) : null;
+
       let imageLarge = null;
       if (chosen && chosen.includes("/thumb/") && chosen.match(/\/\d+px-/)) {
         imageLarge = chosen.replace(/\/\d+px-/, "/1024px-");
@@ -191,9 +276,7 @@ export default function Explore() {
         const cats = Array.isArray(catsRes) ? catsRes : [];
         setCategories(cats);
 
-        const locArray = Array.isArray(locsRes)
-          ? locsRes
-          : locsRes?.rows || [];
+        const locArray = Array.isArray(locsRes) ? locsRes : locsRes?.rows || [];
         const sorted = sortByRelevanceDesc(locArray);
         setAllLocations(sorted);
 
@@ -207,17 +290,13 @@ export default function Explore() {
         setLocationsLoading(false);
       }
 
-      // trips: si falla o el user no está logueado, simplemente no mostramos sección de viaje
       try {
         const tripsRes = await apiGet("/trips");
         if (!mounted) return;
-        const tripsArr = Array.isArray(tripsRes)
-          ? tripsRes
-          : tripsRes?.rows || [];
+        const tripsArr = Array.isArray(tripsRes) ? tripsRes : tripsRes?.rows || [];
         setUserTrips(tripsArr);
       } catch (err) {
         console.error("Trips fetch error:", err);
-        // sin drama, solo no mostramos sección de viaje
       }
     };
 
@@ -228,16 +307,10 @@ export default function Explore() {
   }, []);
 
   // ---- experiencias globales (todas, ordenadas por relevancia)
-  const worldwideExperiences = useMemo(
-    () => mapToExperiences(allLocations),
-    [allLocations]
-  );
+  const worldwideExperiences = useMemo(() => mapToExperiences(allLocations), [allLocations]);
 
   // ---- sección "Populares mundialmente"
-  const popularExperiences = useMemo(
-    () => worldwideExperiences.slice(0, 12),
-    [worldwideExperiences]
-  );
+  const popularExperiences = useMemo(() => worldwideExperiences.slice(0, 12), [worldwideExperiences]);
 
   // ---- determinar viaje de contexto (activo o más cercano en el tiempo)
   const tripContext = useMemo(() => {
@@ -253,15 +326,13 @@ export default function Explore() {
     }));
 
     const active = tripsWithDates.filter(
-      (t) =>
-        t.start && t.end && t.start <= today && t.end >= today
+      (t) => t.start && t.end && t.start <= today && t.end >= today
     );
     if (active.length > 0) {
       active.sort((a, b) => a.end - b.end);
       return active[0];
     }
 
-    // viaje más cercano (pasado o futuro)
     tripsWithDates.sort((a, b) => {
       const refA = tRefDate(a, today);
       const refB = tRefDate(b, today);
@@ -278,57 +349,112 @@ export default function Explore() {
   }
 
   // ---- mapear destino del viaje a un país de locations
-  const tripCountry = useMemo(() => {
-    if (!tripContext || !allLocations.length) return null;
-    const destination = (tripContext.destination || "").trim();
-    if (!destination) return null;
+const tripCountry = useMemo(() => {
+  if (!tripContext) return null;
 
-    const destLower = destination.toLowerCase();
+  // ✅ best source: parse "City, Country"
+  const destParts = parseDestinationCityCountry(tripContext.destination);
+  const countryFromDest = (destParts.country || "").trim();
+  if (countryFromDest) return countryFromDest;
 
-    const countries = Array.from(
-      new Set(
-        allLocations
-          .map((l) => (l.country || "").trim())
-          .filter(Boolean)
-      )
-    );
+  // fallback: previous heuristic (only if destination has no country)
+  if (!allLocations.length) return null;
+  const destination = (tripContext.destination || "").trim();
+  if (!destination) return null;
 
-    // 1) match exacto
-    let found = countries.find(
-      (c) => c.toLowerCase() === destLower
-    );
-    if (found) return found;
+  const destLower = destination.toLowerCase();
 
-    // 2) city -> country
-    const locByCity = allLocations.find(
-      (loc) =>
-        (loc.city || "").toLowerCase() === destLower
-    );
-    if (locByCity && locByCity.country) return locByCity.country;
+  const countries = Array.from(
+    new Set(allLocations.map((l) => (l.country || "").trim()).filter(Boolean))
+  );
 
-    // 3) substring (Argentina / Buenos Aires, etc.)
-    found = countries.find((c) => {
-      const lc = c.toLowerCase();
-      return lc.includes(destLower) || destLower.includes(lc);
-    });
-    return found || null;
-  }, [tripContext, allLocations]);
+  let found = countries.find((c) => c.toLowerCase() === destLower);
+  if (found) return found;
+
+  const locByCity = allLocations.find(
+    (loc) => (loc.city || "").toLowerCase() === destLower
+  );
+  if (locByCity && locByCity.country) return locByCity.country;
+
+  found = countries.find((c) => {
+    const lc = c.toLowerCase();
+    return lc.includes(destLower) || destLower.includes(lc);
+  });
+
+  return found || null;
+}, [tripContext, allLocations]);
+
 
   const tripContextTitle = useMemo(() => {
     if (!tripContext) return null;
     return tripContext.destination || tripCountry || null;
   }, [tripContext, tripCountry]);
 
-  // ---- lugares para el país del viaje de contexto
+  const tripDestParts = useMemo(() => {
+    return parseDestinationCityCountry(tripContext?.destination);
+  }, [tripContext?.destination]);
+
+  const tripCity = tripDestParts.city;
+
+  // NEW: fetch places from GET /trips/:id and build a Set of fk_location
+  useEffect(() => {
+    let alive = true;
+
+    async function loadTripPlaces() {
+      const tripId = getTripId(tripContext);
+
+      if (!tripId) {
+        setTripPlacesError(null);
+        setTripPlaceLocationIds(new Set());
+        return;
+      }
+
+      setTripPlacesLoading(true);
+      setTripPlacesError(null);
+
+      try {
+        const trip = await apiGet(`/trips/${tripId}`);
+        if (!alive) return;
+
+        const placesArr = safeParsePlaces(trip?.places);
+        const set = new Set(
+          placesArr.map(extractLocationIdFromTripPlace).filter((x) => x !== null)
+        );
+
+        setTripPlaceLocationIds(set);
+      } catch (err) {
+        console.error("GET /trips/:id (places) error:", err);
+        if (!alive) return;
+        setTripPlacesError(err?.message || String(err));
+        setTripPlaceLocationIds(new Set());
+      } finally {
+        if (alive) setTripPlacesLoading(false);
+      }
+    }
+
+    loadTripPlaces();
+    return () => {
+      alive = false;
+    };
+  }, [tripContext?.id]);
+
+  // ---- lugares para el país del viaje de contexto (hide already added)
   const tripExperiences = useMemo(() => {
     if (!tripCountry) return [];
     const locs = allLocations.filter(
-      (loc) =>
-        (loc.country || "").toLowerCase() ===
-        tripCountry.toLowerCase()
+      (loc) => (loc.country || "").toLowerCase() === tripCountry.toLowerCase()
     );
-    return mapToExperiences(locs).slice(0, 8);
-  }, [tripCountry, allLocations]);
+
+    const exps = mapToExperiences(locs);
+
+    const filtered = exps.filter((exp) => {
+      const locId = Number(exp?.id);
+      if (!Number.isFinite(locId)) return true;
+      return !tripPlaceLocationIds.has(locId);
+    });
+
+    return filtered.slice(0, 8);
+  }, [tripCountry, allLocations, tripPlaceLocationIds]);
 
   // ---- opciones de país y ciudad para los filtros
   const countryOptions = useMemo(() => {
@@ -338,10 +464,7 @@ export default function Explore() {
       if (c) set.add(c);
     });
     const arr = Array.from(set).sort((a, b) => a.localeCompare(b));
-    return [
-      { value: "", label: t("explore.any") },
-      ...arr.map((c) => ({ value: c, label: c })),
-    ];
+    return [{ value: "", label: t("explore.any") }, ...arr.map((c) => ({ value: c, label: c }))];
   }, [allLocations, t]);
 
   const cityOptions = useMemo(() => {
@@ -353,10 +476,7 @@ export default function Explore() {
       set.add(city);
     });
     const arr = Array.from(set).sort((a, b) => a.localeCompare(b));
-    return [
-      { value: "", label: t("explore.any") },
-      ...arr.map((c) => ({ value: c, label: c })),
-    ];
+    return [{ value: "", label: t("explore.any") }, ...arr.map((c) => ({ value: c, label: c }))];
   }, [allLocations, filterCountry, t]);
 
   const sortOptions = useMemo(
@@ -371,49 +491,27 @@ export default function Explore() {
   const filteredExperiences = useMemo(() => {
     let exps = worldwideExperiences;
 
-    // categoría
     if (selectedCategorySlug !== "todo") {
       const slugLower = selectedCategorySlug.toLowerCase();
-      exps = exps.filter((exp) => {
-        const cat = (exp.category || "").toLowerCase();
-        return cat === slugLower;
-      });
+      exps = exps.filter((exp) => (exp.category || "").toLowerCase() === slugLower);
     }
 
-    // país
     if (filterCountry) {
       const cLower = filterCountry.toLowerCase();
-      exps = exps.filter(
-        (exp) =>
-          (exp.raw?.country || "").toLowerCase() === cLower
-      );
+      exps = exps.filter((exp) => (exp.raw?.country || "").toLowerCase() === cLower);
     }
 
-    // ciudad
     if (filterCity) {
       const cityLower = filterCity.toLowerCase();
-      exps = exps.filter(
-        (exp) =>
-          (exp.raw?.city || "").toLowerCase() === cityLower
-      );
+      exps = exps.filter((exp) => (exp.raw?.city || "").toLowerCase() === cityLower);
     }
 
-    // orden
     if (sortBy === "name") {
-      exps = [...exps].sort((a, b) =>
-        a.title.localeCompare(b.title)
-      );
+      exps = [...exps].sort((a, b) => a.title.localeCompare(b.title));
     }
-    // si es "relevance", ya vienen ordenados por relevancia
 
     return exps;
-  }, [
-    worldwideExperiences,
-    selectedCategorySlug,
-    filterCountry,
-    filterCity,
-    sortBy,
-  ]);
+  }, [worldwideExperiences, selectedCategorySlug, filterCountry, filterCity, sortBy]);
 
   // ---- callbacks UI
   const onCategoryClick = (category) => {
@@ -431,14 +529,60 @@ export default function Explore() {
 
   const handleExperienceClick = (experience) => {
     setSelectedExperience(experience);
+    setAddError(null);
     setShowDetailModal(true);
   };
 
-  const handleCreateTrip = () => {
+  // ✅ create trip navigation (used when not allowed to add to current trip)
+  const goCreateTripFromSelected = () => {
+    const destination = buildDestinationForCreate(selectedExperience);
+    setAddError(null);
     setShowDetailModal(false);
-    navigate("/add-trip", {
-      state: { destination: selectedExperience?.title ?? "" },
-    });
+    navigate("/add-trip", { state: { destination } });
+  };
+
+  // ✅ add to current trip (only called when allowed)
+  const addSelectedToTrip = async () => {
+    setAddError(null);
+
+    const tripId = getTripId(tripContext);
+    const locationId = Number(selectedExperience?.id);
+
+    if (!tripId) {
+      goCreateTripFromSelected();
+      return;
+    }
+
+    if (!Number.isFinite(locationId)) {
+      setAddError("No se pudo determinar el id del lugar.");
+      return;
+    }
+
+    if (tripPlaceLocationIds.has(locationId)) {
+      // you asked to show "Crear viaje" instead of "Ya está en tu viaje"
+      goCreateTripFromSelected();
+      return;
+    }
+
+    setAddLoading(true);
+    try {
+      await apiPost(`/trips/${tripId}/places/auto`, {
+        place: { fk_location: locationId },
+      });
+
+      setTripPlaceLocationIds((prev) => {
+        const next = new Set(prev);
+        next.add(locationId);
+        return next;
+      });
+
+      setShowDetailModal(false);
+    } catch (err) {
+      console.error("POST /places/auto error:", err);
+      setAddError(err?.message || String(err));
+    } finally {
+      setAddLoading(false);
+    }
   };
 
   const handleShare = () => {
@@ -494,6 +638,49 @@ export default function Explore() {
     );
   };
 
+  // ---- fetch Google rating + reviews when modal opens
+  useEffect(() => {
+    let alive = true;
+
+    async function loadGoogle() {
+      if (!showDetailModal || !selectedExperience) return;
+
+      setGoogleError(null);
+      setGoogleLoading(true);
+      setGoogleData(null);
+
+      try {
+        const raw = selectedExperience.raw || {};
+        const name = selectedExperience.title || "";
+        const city = raw.city || "";
+        const country = raw.country || "";
+
+        const qs = new URLSearchParams({
+          name,
+          city,
+          country,
+          lang: "en",
+        });
+
+        const data = await apiGet(`/google/reviews?${qs.toString()}`);
+        if (!alive) return;
+        setGoogleData(data);
+      } catch (e) {
+        if (!alive) return;
+        setGoogleError(e?.message || String(e));
+        setGoogleData(null);
+      } finally {
+        if (alive) setGoogleLoading(false);
+      }
+    }
+
+    loadGoogle();
+
+    return () => {
+      alive = false;
+    };
+  }, [showDetailModal, selectedExperience?.id]);
+
   // ---- bloqueamos solo mientras carga TODO por primera vez
   if (initialLoading) {
     return (
@@ -502,6 +689,40 @@ export default function Explore() {
       </div>
     );
   }
+
+  const place = googleData?.place || null;
+  const reviews = Array.isArray(googleData?.reviews) ? googleData.reviews : [];
+
+  // --- compute whether we should show "Agregar al viaje" or "Crear viaje"
+  const tripIdForAdd = getTripId(tripContext);
+
+  const selectedLocId = Number(selectedExperience?.id);
+  const isAlreadyInTrip =
+    !!tripIdForAdd && Number.isFinite(selectedLocId) && tripPlaceLocationIds.has(selectedLocId);
+
+  const selectedCountry = selectedExperience?.raw?.country || null;
+  const selectedCity = selectedExperience?.raw?.city || null;
+
+  const sameCountry =
+    !!tripCountry && !!selectedCountry && normStr(tripCountry) === normStr(selectedCountry);
+
+  const sameCity =
+    !!tripCity && !!selectedCity && normStr(tripCity) === normStr(selectedCity);
+
+  // Only show "Agregar al viaje" if it can truly be added to the current trip.
+  const canAddToCurrentTrip =
+  !!tripIdForAdd &&
+  sameCity &&
+  !isAlreadyInTrip &&
+  (!tripCountry || sameCountry);
+
+  // Primary CTA (what you asked):
+  // - If not addable (city mismatch OR already in trip OR no trip) => show "Crear viaje"
+  const primaryCtaLabel = canAddToCurrentTrip
+    ? "Agregar al viaje"
+    : t("explore.createTripPlan");
+
+  const primaryCtaOnClick = canAddToCurrentTrip ? addSelectedToTrip : goCreateTripFromSelected;
 
   // ---- render principal
   return (
@@ -514,59 +735,54 @@ export default function Explore() {
           <div className="categories-section">
             <div className="categories-grid">
               <div
-                className={`category-card ${
-                  selectedCategorySlug === "todo" ? "active" : ""
-                }`}
+                className={`category-card ${selectedCategorySlug === "todo" ? "active" : ""}`}
                 onClick={() => onCategoryClick("todo")}
               >
                 <div className="category-icon">
                   <FaGlobe />
                 </div>
-                <div className="category-name">
-                  {t("explore.all")}
-                </div>
+                <div className="category-name">{t("explore.all")}</div>
               </div>
 
               {categories.map((cat) => {
-                const IconComponent =
-                  categoryIcons[cat.slug] || FaMapMarkerAlt;
+                const IconComponent = categoryIcons[cat.slug] || FaMapMarkerAlt;
                 const slug = cat.slug ?? String(cat.id ?? "");
-                const translatedTitle = translateCategory(
-                  t,
-                  slug,
-                  cat.title
-                );
+                const translatedTitle = translateCategory(t, slug, cat.title);
                 return (
                   <div
                     key={cat.slug ?? cat.id}
-                    className={`category-card ${
-                      selectedCategorySlug === cat.slug ? "active" : ""
-                    }`}
+                    className={`category-card ${selectedCategorySlug === cat.slug ? "active" : ""}`}
                     onClick={() => onCategoryClick(cat)}
                   >
                     <div className="category-icon">
                       <IconComponent />
                     </div>
-                    <div className="category-name">
-                      {translatedTitle}
-                    </div>
+                    <div className="category-name">{translatedTitle}</div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* SECCIÓN VIAJE ACTUAL / MÁS CERCANO */}
-          {tripExperiences.length > 0 && tripContextTitle && (
+          {/* SECCIÓN VIAJE ACTUAL / MÁS CERCANO (hide already added) */}
+          {tripContextTitle && tripCountry && (
             <div className="experiences-section">
               <div className="section-header">
-                <h2>
-                  Lugares para tu viaje a {tripContextTitle}
-                </h2>
+                <h2>Lugares para tu viaje a {tripContextTitle}</h2>
               </div>
 
-              {locationsLoading ? (
+              {tripPlacesLoading ? (
+                <div className="small-muted">Cargando lugares del viaje…</div>
+              ) : tripPlacesError ? (
+                <div className="small-muted" style={{ color: "#c33" }}>
+                  No se pudieron cargar lugares del viaje: {tripPlacesError}
+                </div>
+              ) : locationsLoading ? (
                 renderGridSkeleton(6)
+              ) : tripExperiences.length === 0 ? (
+                <div className="small-muted">
+                  No hay recomendaciones nuevas para este viaje (o ya agregaste las más relevantes).
+                </div>
               ) : (
                 <div className="experiences-grid">
                   {tripExperiences.map((exp, idx) => (
@@ -591,9 +807,7 @@ export default function Explore() {
                       </div>
                       <div className="card-content">
                         <h3 className="card-title">{exp.title}</h3>
-                        <p className="card-description">
-                          {exp.description}
-                        </p>
+                        <p className="card-description">{exp.description}</p>
                       </div>
                     </div>
                   ))}
@@ -611,7 +825,6 @@ export default function Explore() {
                   value={filterCountry}
                   onChange={(val) => {
                     setFilterCountry(val);
-                    // si cambia país, reseteamos ciudad
                     setFilterCity("");
                   }}
                   placeholder={t("explore.any")}
@@ -654,10 +867,7 @@ export default function Explore() {
               {filterCountry && (
                 <div className="filter-chip">
                   País: {filterCountry}
-                  <button
-                    className="chip-x"
-                    onClick={() => removeActiveFilter("country")}
-                  >
+                  <button className="chip-x" onClick={() => removeActiveFilter("country")}>
                     ✕
                   </button>
                 </div>
@@ -665,25 +875,15 @@ export default function Explore() {
               {filterCity && (
                 <div className="filter-chip">
                   Ciudad: {filterCity}
-                  <button
-                    className="chip-x"
-                    onClick={() => removeActiveFilter("city")}
-                  >
+                  <button className="chip-x" onClick={() => removeActiveFilter("city")}>
                     ✕
                   </button>
                 </div>
               )}
               {sortBy !== "relevance" && (
                 <div className="filter-chip">
-                  Orden:{" "}
-                  {
-                    sortOptions.find((o) => o.value === sortBy)
-                      ?.label
-                  }
-                  <button
-                    className="chip-x"
-                    onClick={() => removeActiveFilter("sort")}
-                  >
+                  Orden: {sortOptions.find((o) => o.value === sortBy)?.label}
+                  <button className="chip-x" onClick={() => removeActiveFilter("sort")}>
                     ✕
                   </button>
                 </div>
@@ -691,7 +891,7 @@ export default function Explore() {
             </div>
           </div>
 
-          {/* RESULTADOS PRINCIPALES (relevantes mundialmente + filtros) */}
+          {/* RESULTADOS PRINCIPALES */}
           <div className="experiences-section">
             <div className="section-header">
               <h2>
@@ -700,8 +900,7 @@ export default function Explore() {
                   : `Lugares de ${selectedCategoryTitle}`}
               </h2>
               <div className="small-muted">
-                {filteredExperiences.length}{" "}
-                {t("explore.resultsCount")}
+                {filteredExperiences.length} {t("explore.resultsCount")}
               </div>
             </div>
 
@@ -712,9 +911,7 @@ export default function Explore() {
             ) : (
               <div className="experiences-grid">
                 {filteredExperiences.length === 0 ? (
-                  <div className="muted">
-                    {t("explore.noPlacesForCategory")}
-                  </div>
+                  <div className="muted">{t("explore.noPlacesForCategory")}</div>
                 ) : (
                   filteredExperiences.map((exp, idx) => (
                     <div
@@ -738,9 +935,7 @@ export default function Explore() {
                       </div>
                       <div className="card-content">
                         <h3 className="card-title">{exp.title}</h3>
-                        <p className="card-description">
-                          {exp.description}
-                        </p>
+                        <p className="card-description">{exp.description}</p>
                       </div>
                     </div>
                   ))
@@ -749,7 +944,7 @@ export default function Explore() {
             )}
           </div>
 
-          {/* EXTRA: sección “populares” siguiendo igual idea de antes */}
+          {/* POPULARES */}
           <div className="experiences-section">
             <div className="section-header">
               <h2>{t("explore.popular")}</h2>
@@ -781,9 +976,7 @@ export default function Explore() {
                     </div>
                     <div className="card-content">
                       <h3 className="card-title">{exp.title}</h3>
-                      <p className="card-description">
-                        {exp.description}
-                      </p>
+                      <p className="card-description">{exp.description}</p>
                     </div>
                   </div>
                 ))}
@@ -793,53 +986,250 @@ export default function Explore() {
         </div>
       </main>
 
-      {/* MODAL */}
+      {/* DETAIL MODAL */}
       <Modal
         isOpen={showDetailModal && !!selectedExperience}
         onClose={() => setShowDetailModal(false)}
       >
         {selectedExperience && (
-          <>
-            <div className="modal-image">
-              {(selectedExperience.imageLarge ||
-                selectedExperience.image) && (
+          <div
+            className="explore-detail"
+            style={{
+              width: "min(1100px, 96vw)",
+              maxWidth: "96vw",
+              boxSizing: "border-box",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              overflowX: "hidden", // ✅ prevent horizontal scroll
+              borderRadius: 16,
+            }}
+          >
+            {(selectedExperience.imageLarge || selectedExperience.image) && (
+              <div style={{ position: "relative" }}>
                 <img
-                  src={
-                    selectedExperience.imageLarge ??
-                    selectedExperience.image
-                  }
+                  src={selectedExperience.imageLarge ?? selectedExperience.image}
                   alt={selectedExperience.title}
-                  srcSet={
-                    selectedExperience.imageSrcSet ?? undefined
-                  }
-                  sizes={
-                    selectedExperience.imageSrcSet
-                      ? defaultModalSizes
-                      : undefined
-                  }
+                  srcSet={selectedExperience.imageSrcSet ?? undefined}
+                  sizes={selectedExperience.imageSrcSet ? defaultModalSizes : undefined}
                   style={{
                     width: "100%",
-                    height: "auto",
-                    borderRadius: 8,
+                    height: "320px",
+                    objectFit: "cover",
+                    borderTopLeftRadius: 16,
+                    borderTopRightRadius: 16,
+                    display: "block",
                   }}
                 />
-              )}
-            </div>
-            <div className="modal-details glass-details">
-              <h2>{selectedExperience.title}</h2>
-              <p className="modal-description">
-                {selectedExperience.description}
-              </p>
-              <div className="modal-actions">
-                <ActionButton variant="create" onClick={handleCreateTrip}>
-                  {t("explore.createTripPlan")}
+
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 16,
+                    right: 16,
+                    bottom: 14,
+                    padding: "12px 14px",
+                    borderRadius: 14,
+                    background: "rgba(0,0,0,0.45)",
+                    backdropFilter: "blur(6px)",
+                    color: "white",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.1 }}>
+                    {selectedExperience.title}
+                  </div>
+
+                  <div style={{ marginTop: 6, fontSize: 14, opacity: 0.95 }}>
+                    {googleLoading ? (
+                      <span>Cargando rating…</span>
+                    ) : place?.rating ? (
+                      <>
+                        <span style={{ marginRight: 8 }}>
+                          <b>{place.rating}</b> / 5
+                        </span>
+                        <span style={{ marginRight: 10 }}>{renderStars(place.rating)}</span>
+                        <span style={{ opacity: 0.9 }}>({place.userRatingCount ?? 0})</span>
+                        {place.googleMapsUri ? (
+                          <>
+                            <span style={{ margin: "0 10px", opacity: 0.7 }}>·</span>
+                            <a
+                              href={place.googleMapsUri}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: "white", textDecoration: "underline" }}
+                            >
+                              Ver en Google Maps
+                            </a>
+                          </>
+                        ) : null}
+                      </>
+                    ) : (
+                      <span style={{ opacity: 0.9 }}>Rating no disponible</span>
+                    )}
+                  </div>
+
+                  {place?.formattedAddress ? (
+                    <div
+                      style={{
+                        marginTop: 6,
+                        fontSize: 13,
+                        opacity: 0.9,
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {place.formattedAddress}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )}
+
+            <div style={{ padding: 18, boxSizing: "border-box" }}>
+              <div style={{ marginBottom: 14 }}>
+                <div
+                  style={{
+                    fontSize: 16,
+                    lineHeight: 1.55,
+                    opacity: 0.95,
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {selectedExperience.description}
+                </div>
+              </div>
+
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>
+                  Reviews
+                </div>
+
+                {googleLoading ? (
+                  <div className="small-muted">Cargando reviews…</div>
+                ) : googleError ? (
+                  <div className="small-muted" style={{ color: "#c33" }}>
+                    No se pudieron cargar reviews: {googleError}
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="small-muted">No hay reviews disponibles.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: 12 }}>
+                    {reviews.slice(0, 3).map((r, idx) => (
+                      <div
+                        key={`rev-${idx}`}
+                        style={{
+                          padding: 14,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,0.06)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          maxWidth: "100%",
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          {r?.author?.photoUri ? (
+                            <img
+                              src={r.author.photoUri}
+                              alt={r.author?.name || "author"}
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                                flex: "0 0 auto",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: "50%",
+                                background: "rgba(255,255,255,0.10)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 700,
+                                flex: "0 0 auto",
+                              }}
+                            >
+                              {(r?.author?.name || "G").slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, lineHeight: 1.1 }}>
+                              {r?.author?.name || "Google user"}
+                            </div>
+                            <div style={{ fontSize: 13, opacity: 0.85 }}>
+                              {r?.rating ? (
+                                <>
+                                  <span style={{ marginRight: 8 }}>{renderStars(r.rating)}</span>
+                                  <span style={{ marginRight: 8 }}>{r.rating}/5</span>
+                                </>
+                              ) : null}
+                              {r?.relativeTime ? <span>{r.relativeTime}</span> : null}
+                            </div>
+                          </div>
+                        </div>
+
+                        {r?.text ? (
+                          <div
+                            style={{
+                              marginTop: 10,
+                              fontSize: 14,
+                              lineHeight: 1.5,
+                              overflowWrap: "anywhere",
+                              wordBreak: "break-word",
+                            }}
+                          >
+                            {r.text}
+                          </div>
+                        ) : (
+                          <div className="small-muted" style={{ marginTop: 10 }}>
+                            Sin texto
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="modal-actions"
+                style={{
+                  marginTop: 18,
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <ActionButton
+                  variant="create"
+                  onClick={primaryCtaOnClick}
+                  disabled={addLoading} // ✅ only disable while posting
+                >
+                  {addLoading ? "Agregando…" : primaryCtaLabel}
                 </ActionButton>
+
                 <ActionButton variant="share" onClick={handleShare}>
                   {t("explore.share")}
                 </ActionButton>
+
+                {/* Only show errors for real API failures now (no city/country mismatch text) */}
+                {addError ? (
+                  <div
+                    className="small-muted"
+                    style={{ color: "#c33", overflowWrap: "anywhere" }}
+                  >
+                    {addError}
+                  </div>
+                ) : null}
               </div>
             </div>
-          </>
+          </div>
         )}
       </Modal>
     </div>

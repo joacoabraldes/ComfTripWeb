@@ -328,6 +328,61 @@
   border: 2px solid var(--color-primary);
 }
 
+/* --- Owner info bubble (muted primary) --- */
+.owner-bubble{
+  margin: 12px 0 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+
+  /* fallback (if color-mix unsupported) */
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+}
+
+/* If the browser supports it, tint with the primary color */
+@supports (background: color-mix(in srgb, red 10%, transparent)) {
+  .owner-bubble{
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary) 14%, var(--color-bg-secondary)) 0%,
+      color-mix(in srgb, var(--color-primary) 8%,  var(--color-bg-secondary)) 100%
+    );
+    border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  }
+}
+
+.owner-bubble-text{
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--color-text-primary);
+  padding-left: 6px; /* so text doesn't touch accent */
+}
+
+/* button should look primary */
+.owner-bubble-btn{
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-text-white);
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.owner-bubble-btn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
 /* responsive */
 @media (max-width: 56.25rem) {
   .filters-section.compact .filters-row {

@@ -219,6 +219,117 @@ export default function Explore() {
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState(null);
 
+    // --- "Add location" modal state
+  const [showAddLocationModal, setShowAddLocationModal] = useState(false);
+  const [createLocLoading, setCreateLocLoading] = useState(false);
+  const [createLocError, setCreateLocError] = useState(null);
+
+  const [newLoc, setNewLoc] = useState({
+    titulo: "",
+    fk_interest: "", // category id
+    descripcion: "",
+    country: "",
+    city: "",
+    latitude: "",
+    longitude: "",
+    relevancia: "",
+    website: "",
+    opening_hours_raw: "",
+    imagenes_raw: "", // comma-separated URLs
+  });
+
+  // Keep fk_interest default in sync once categories load
+  useEffect(() => {
+    if (!newLoc.fk_interest && Array.isArray(categories) && categories.length > 0) {
+      setNewLoc((p) => ({ ...p, fk_interest: String(categories[0].id) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories]);
+
+  function parseImagesRaw(str) {
+    const s = (str || "").trim();
+    if (!s) return null;
+
+    // allow JSON array paste
+    if (s.startsWith("[") && s.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(s);
+        return Array.isArray(parsed) ? parsed : null;
+      } catch {
+        // fallthrough to comma parsing
+      }
+    }
+
+    const arr = s
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+    return arr.length ? arr : null;
+  }
+
+  async function submitNewLocation(e) {
+    e?.preventDefault?.();
+    setCreateLocError(null);
+
+    // Basic required fields (backend requires titulo + fk_interest)
+    if (!newLoc.titulo.trim() || !newLoc.fk_interest) {
+      setCreateLocError("Completá el nombre del lugar y una categoría.");
+      return;
+    }
+
+    const payload = {
+      titulo: newLoc.titulo.trim(),
+      fk_interest: Number(newLoc.fk_interest),
+      descripcion: newLoc.descripcion?.trim() || null,
+      country: newLoc.country?.trim() || null,
+      city: newLoc.city?.trim() || null,
+      latitude: newLoc.latitude !== "" ? Number(newLoc.latitude) : null,
+      longitude: newLoc.longitude !== "" ? Number(newLoc.longitude) : null,
+      relevancia: "0",
+      website: newLoc.website?.trim() || null,
+
+      // store as { raw: "Mo-Sa ..." } to match what your UI expects
+      opening_hours: newLoc.opening_hours_raw?.trim()
+        ? { raw: newLoc.opening_hours_raw.trim() }
+        : null,
+
+      imagenes: parseImagesRaw(newLoc.imagenes_raw),
+    };
+
+    setCreateLocLoading(true);
+    try {
+      const res = await apiPost("/locations", payload); // must be authenticated (auth middleware)
+      const created = res?.location || res?.data?.location;
+
+      if (created) {
+        // update UI list immediately
+        setAllLocations((prev) => sortByRelevanceDesc([created, ...(prev || [])]));
+      }
+
+      setShowAddLocationModal(false);
+      setNewLoc({
+        titulo: "",
+        fk_interest: String(categories?.[0]?.id || ""),
+        descripcion: "",
+        country: "",
+        city: "",
+        latitude: "",
+        longitude: "",
+        relevancia: "",
+        website: "",
+        opening_hours_raw: "",
+        imagenes_raw: "",
+      });
+    } catch (err) {
+      console.error("POST /locations error:", err);
+      setCreateLocError(err?.message || "No se pudo crear el lugar.");
+    } finally {
+      setCreateLocLoading(false);
+    }
+  }
+
+
   const scrollRoot =
     typeof document !== "undefined"
       ? document.querySelector(".explorar-main")
@@ -749,6 +860,21 @@ const qs = new URLSearchParams({
       <main className="explorar-main">
         <div className="explorar-container">
 
+          <div className="owner-bubble">
+            <div className="owner-bubble-text">
+              ¿Sos dueño/a o administrador/a de un lugar turístico? Publicalo en ComfTrip para que más viajeros lo encuentren.
+            </div>
+            <button
+              className="owner-bubble-btn"
+              onClick={() => {
+                setCreateLocError(null);
+                setShowAddLocationModal(true);
+              }}
+            >
+              Agregar lugar
+            </button>
+          </div>
+
           {/* SECCIÓN VIAJE ACTUAL / MÁS CERCANO (hide already added) */}
           {tripContextTitle && tripCountry && (
             <div className="experiences-section">
@@ -801,7 +927,7 @@ const qs = new URLSearchParams({
             </div>
           )}
 
-                    <h1 className="explorar-title">{t("explore.title")}</h1>
+          <h1 className="explorar-title">{t("explore.title")}</h1>
 
           {/* CATEGORÍAS */}
           <div className="categories-section">
@@ -1005,6 +1131,138 @@ const qs = new URLSearchParams({
           </div>
         </div>
       </main>
+
+            {/* ADD LOCATION MODAL */}
+      <Modal isOpen={showAddLocationModal} onClose={() => setShowAddLocationModal(false)}>
+        <div style={{ padding: 18, width: "min(720px, 92vw)" }}>
+          <h2 style={{ marginTop: 0 }}>Agregar un lugar</h2>
+          <div className="small-muted" style={{ marginBottom: 12 }}>
+            Completá los datos básicos. Podés pegar varias imágenes separadas por coma.
+          </div>
+
+          <form onSubmit={submitNewLocation} style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Nombre *</label>
+              <input
+                value={newLoc.titulo}
+                onChange={(e) => setNewLoc((p) => ({ ...p, titulo: e.target.value }))}
+                placeholder="Ej: Teatro Colón"
+              />
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Categoría *</label>
+              <select
+                value={newLoc.fk_interest}
+                onChange={(e) => setNewLoc((p) => ({ ...p, fk_interest: e.target.value }))}
+              >
+                {(categories || []).map((c) => (
+                  <option key={c.id} value={String(c.id)}>
+                    {translateCategory(t, c.slug, c.title)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Descripción</label>
+              <textarea
+                rows={3}
+                value={newLoc.descripcion}
+                onChange={(e) => setNewLoc((p) => ({ ...p, descripcion: e.target.value }))}
+                placeholder="Contanos qué hace especial este lugar…"
+              />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gap: 6 }}>
+                <label>País</label>
+                <input
+                  value={newLoc.country}
+                  onChange={(e) => setNewLoc((p) => ({ ...p, country: e.target.value }))}
+                  placeholder="Argentina"
+                />
+              </div>
+              <div style={{ display: "grid", gap: 6 }}>
+                <label>Ciudad</label>
+                <input
+                  value={newLoc.city}
+                  onChange={(e) => setNewLoc((p) => ({ ...p, city: e.target.value }))}
+                  placeholder="Buenos Aires"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gap: 6 }}>
+                <label>Latitud</label>
+                <input
+                  value={newLoc.latitude}
+                  onChange={(e) => setNewLoc((p) => ({ ...p, latitude: e.target.value }))}
+                  placeholder="-34.6010807"
+                />
+              </div>
+              <div style={{ display: "grid", gap: 6 }}>
+                <label>Longitud</label>
+                <input
+                  value={newLoc.longitude}
+                  onChange={(e) => setNewLoc((p) => ({ ...p, longitude: e.target.value }))}
+                  placeholder="-58.3831792"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Horarios (formato libre)</label>
+              <input
+                value={newLoc.opening_hours_raw}
+                onChange={(e) => setNewLoc((p) => ({ ...p, opening_hours_raw: e.target.value }))}
+                placeholder='Ej: "Mo-Sa 09:00-20:00; Su 09:00-17:00"'
+              />
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Sitio web</label>
+              <input
+                value={newLoc.website}
+                onChange={(e) => setNewLoc((p) => ({ ...p, website: e.target.value }))}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Imágenes (URLs separadas por coma)</label>
+              <textarea
+                rows={2}
+                value={newLoc.imagenes_raw}
+                onChange={(e) => setNewLoc((p) => ({ ...p, imagenes_raw: e.target.value }))}
+                placeholder="https://... , https://..."
+              />
+            </div>
+
+            {createLocError ? (
+              <div className="small-muted" style={{ color: "#c33" }}>
+                {createLocError}
+              </div>
+            ) : null}
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6 }}>
+              <button
+                type="button"
+                className="btn-clear"
+                onClick={() => setShowAddLocationModal(false)}
+                disabled={createLocLoading}
+              >
+                Cancelar
+              </button>
+              <ActionButton variant="create" type="submit" disabled={createLocLoading}>
+                {createLocLoading ? "Guardando…" : "Publicar lugar"}
+              </ActionButton>
+            </div>
+          </form>
+        </div>
+      </Modal>
+
 
       {/* DETAIL MODAL */}
       <WideModal

@@ -317,11 +317,11 @@ export default function Trips() {
                               variant="menu"
                             />}
 
-                            <IconButton
+                              {(isOwner || ( trip.share && !trip.share.mode==="viewer")) && <IconButton
                               icon={<FaEdit size={18} />}
                               onClick={() => { navigate(`/edit-trip/${trip.id}`); setMenuOpen(null); }}
                               variant="menu"
-                            />
+                            />}
 
                             <IconButton
                               icon={<FaTrash size={18} />}

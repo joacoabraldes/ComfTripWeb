@@ -102,6 +102,7 @@ export default function ShareTripModal({
             setSharedFriends(shared);
         } catch (err) {
             console.error("Error loading friends:", err);
+
             setFriends([]);
             setSharedFriends([]);
         } finally {

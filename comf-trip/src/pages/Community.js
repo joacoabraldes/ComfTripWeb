@@ -39,7 +39,7 @@ import { useSnackbar } from "../contexts/SnackbarContext";
 /* =========================
    LIGHTBOX (inline)
    ========================= */
-function ImageLightbox({ open, images, index, onClose, onPrev, onNext }) {
+export function ImageLightbox({ open, images, index, onClose, onPrev, onNext }) {
   if (!open) return null;
 
   const hasMany = (images?.length || 0) > 1;
@@ -954,8 +954,13 @@ export default function Community() {
                               {commentsByPost[post.id].length === 0 && (
                                 <p className="muted">{t('community.noCommentaries')}</p>
                               )}
-                              {commentsByPost[post.id].map((c) => (
-                                <div key={c.id} className="feed-comment-item">
+                                {commentsByPost[post.id].map((c) => (
+                                    <div key={c.id} className="feed-comment-item" style={{
+                                        borderColor:
+                                            Number(c.user_id) === Number(user.id)
+                                                ? 'var(--color-accent)'
+                                                : '',
+                                    }}>
                                   <div className="feed-comment-header">
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                                       <div className="avatar">

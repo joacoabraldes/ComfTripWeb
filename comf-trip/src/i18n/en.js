@@ -350,7 +350,13 @@ const en = {
         publicLink: 'Public link',
         shared: 'Shared',
 
-        memberSince: 'Member since'
+        memberSince: 'Miembro desde',
+        stopSharing: "Dejar de compartir",
+        stopSharingWithMe: "Dejar de recibir este viaje",
+        confirmUnshareTitle: "Confirmar acción",
+        confirmStopSharing: "¿Querés dejar de compartir este viaje con tu amigo?",
+        confirmStopSharingWithMe: "¿Querés que este amigo deje de compartirte este viaje?",
+        errorUnshare: "No se pudo dejar de compartir el viaje"
     },
 
 

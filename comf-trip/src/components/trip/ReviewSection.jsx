@@ -6,7 +6,7 @@ import { FaStar, FaEdit, FaPlus } from 'react-icons/fa';
 import ReviewForm from './ReviewForm';
 import '../../styles/review-section.css';
 
-export default function ReviewSection({ tripId, trip }) {
+export default function ReviewSection({ tripId, trip, isOwner }) {
   const { t } = useTranslation();
   const [review, setReview] = useState(trip?.review || null);
   const [loadingReview, setLoadingReview] = useState(false);
@@ -63,14 +63,14 @@ export default function ReviewSection({ tripId, trip }) {
         <div className="review-section-container">
           <div className="review-section-header">
             <h3 className="review-section-title">{t('review.title')}</h3>
-            <button
+              {isOwner && <button
               type="button"
               className="review-section-edit-button"
               onClick={() => setShowReviewForm(true)}
             >
               {review ? <FaEdit /> : <FaPlus />}
               <span>{review ? t('common.edit') : t('common.add')}</span>
-            </button>
+            </button>}
           </div>
           {loadingReview ? (
             <div className="review-section-loading">

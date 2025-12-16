@@ -8,15 +8,16 @@ import {
     togglePostLike
 } from '../services/socialService';
 import '../styles/friendProfile.css';
-import { apiGet } from './api';
+import {apiDelete, apiGet} from './api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
 import {formatDate, formatDateRange, formatDateTime} from '../utils/dateUtils';
 import LoadingSpinner from "../components/LoadingSpinner";
-import {FaComment, FaHeart, FaRegComment, FaRegHeart, FaTrash, FaUser} from "react-icons/fa";
+import {FaComment, FaHeart, FaRegComment, FaRegHeart, FaTrash, FaUser, FaArrowRight} from "react-icons/fa";
 import FilterSelect from "../components/FilterSelect";
-import {displayName, getPostImages, resolveImageUrl} from "./Community";
+import {displayName, getPostImages, ImageLightbox, resolveImageUrl} from "./Community";
 import {useSnackbar} from "../contexts/SnackbarContext";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function FriendProfile() {
     // NOTE: route in App.jsx is "/friend/:friendId"
@@ -28,6 +29,14 @@ export default function FriendProfile() {
   const [error, setError] = useState(null);
   const { t } = useTranslation();
   const { showError } = useSnackbar();
+
+    const [confirm, setConfirm] = useState({
+        open: false,
+        trip: null,
+        mode: null, // 'remove_me' | 'remove_friend'
+    });
+
+
 
     const [posts, setPosts] = useState([]);
     const [loadingPosts, setLoadingPosts] = useState(true);
@@ -112,6 +121,32 @@ export default function FriendProfile() {
         }
     }
 
+    function nextLightbox() {
+        setLightbox((prev) => {
+            const n = prev.images.length;
+            if (!n) return prev;
+            return { ...prev, index: (prev.index + 1) % n };
+        });
+    }
+    function prevLightbox() {
+        setLightbox((prev) => {
+            const n = prev.images.length;
+            if (!n) return prev;
+            return { ...prev, index: (prev.index - 1 + n) % n };
+        });
+    }
+
+    useEffect(() => {
+        function onKeyDown(e) {
+            if (!lightbox.open) return;
+            if (e.key === 'Escape') setLightbox({ open: false, images: [], index: 0 });
+            if (e.key === 'ArrowRight') nextLightbox();
+            if (e.key === 'ArrowLeft') prevLightbox();
+        }
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [lightbox.open]);
+
     // ========= FIX IMÁGENES =========
     // Tu API_BASE es .../api  -> para estáticos necesitamos el ORIGIN sin /api
     const BACKEND_ORIGIN = useMemo(() => {
@@ -127,6 +162,30 @@ export default function FriendProfile() {
             index: Number(index) || 0,
         });
     }
+
+    async function handleStopSharing() {
+        const { trip, mode } = confirm;
+        if (!trip?.share) return;
+
+        try {
+
+            if (mode === 'remove_me') {
+                // él deja de compartirme
+                await apiDelete(`/share/trip/${trip.share.share_uuid}/leave`);
+                setTripsSharedWithMe(prev => prev.filter(t => t.id !== trip.id));
+            } else {
+                // yo dejo de compartirle
+                await apiDelete(`/share/trip/${trip.id}/user/${friendId}`);
+                setTripsISent(prev => prev.filter(t => t.id !== trip.id));
+            }
+        } catch (err) {
+            console.error(err);
+            showError(t('friendProfile.errorUnshare'));
+        } finally {
+            setConfirm({ open: false, trip: null, mode: null });
+        }
+    }
+
 
     async function handleToggleLike(postId) {
         try {
@@ -201,9 +260,9 @@ export default function FriendProfile() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [friendId]);
 
-    function TripCard({ trip, navigate, t }) {
+    function TripCard({ trip, navigate, t, onUnshare, unshareLabel }) {
         return (
-            <div className="trip-card">
+            <div className="trip-card-friend">
                 <div className="trip-title">
                     {trip.destination || t('friendProfile.unknownDestination')}
                 </div>
@@ -218,22 +277,34 @@ export default function FriendProfile() {
                     <div className={`badge ${trip.share.public ? 'badge-primary' : 'badge-secondary'}`}>
                         {trip.share.public
                             ? t('friendProfile.publicLink')
-                            : t('friendProfile.shared')}
-                        {trip.share.mode ? ` (${trip.share.mode})` : ''}
+                            : t('friendProfile.shared')} ({trip.share.mode})
                     </div>
                 )}
 
-                <div style={{ marginTop: 8 }}>
+                {/* ACCIONES */}
+                <div className="trip-actions">
+                    {/* ❌ dejar de compartir */}
                     <button
-                        className="btn small"
+                        className="btn-friend icon danger"
+                        title={unshareLabel}
+                        onClick={onUnshare}
+                    >
+                        x
+                    </button>
+
+                    {/* ➡️ ver itinerario */}
+                    <button
+                        className="btn-friend icon"
+                        title={t('common.view')}
                         onClick={() => navigate(`/trip_itinerary/${trip.id}`)}
                     >
-                        {t('common.view')}
+                        <FaArrowRight size={15}/>
                     </button>
                 </div>
             </div>
         );
     }
+
 
     if (loading) {
         return (
@@ -269,7 +340,7 @@ export default function FriendProfile() {
         <div>
             <main className="friend-main">
                 <div className="friend-container">
-                    <div className="profile-card">
+                    <div className="profile-card" style={{marginTop:20}}>
                         <div className="profile-main">
                             <div className="profile-left">
                                 <div className="profile-photo">
@@ -315,32 +386,48 @@ export default function FriendProfile() {
                         <div className="friend-body">
                             {/* VIAJES QUE ME COMPARTIÓ */}
                             <h3>{t('friendProfile.sharedWithMe')}</h3>
-                            {tripsSharedWithMe.length === 0 ? (
-                                <div className="muted">{t('friendProfile.noTrips')}</div>
-                            ) : (
-                                <div className="friend-trips">
-                                    {tripsSharedWithMe.map(trip => (
-                                        <TripCard key={trip.id} trip={trip} navigate={navigate} t={t} />
-                                    ))}
-                                </div>
-                            )}
-                        </div></div>
+                            {tripsSharedWithMe.map(trip => (
+                                <TripCard
+                                    key={trip.id}
+                                    trip={trip}
+                                    navigate={navigate}
+                                    t={t}
+                                    unshareLabel={t('friendProfile.stopSharingWithMe')}
+                                    onUnshare={() =>
+                                        setConfirm({
+                                            open: true,
+                                            trip,
+                                            mode: 'remove_me',
+                                        })
+                                    }
+                                />
+                            ))}
+                        </div>
+                    </div>
                     <div className="friend-card">
                         <div className="friend-body">
                             {/* VIAJES QUE YO LE COMPARTÍ */}
                             <h3>{t('friendProfile.iShared')}</h3>
-                            {tripsISent.length === 0 ? (
-                                <div className="muted">{t('friendProfile.noTrips')}</div>
-                            ) : (
-                                <div className="friend-trips">
-                                    {tripsISent.map(trip => (
-                                        <TripCard key={trip.id} trip={trip} navigate={navigate} t={t} />
-                                    ))}
-                                </div>
-                            )}</div>
+                            {tripsISent.map(trip => (
+                                <TripCard
+                                    key={trip.id}
+                                    trip={trip}
+                                    navigate={navigate}
+                                    t={t}
+                                    unshareLabel={t('friendProfile.stopSharing')}
+                                    onUnshare={() =>
+                                        setConfirm({
+                                            open: true,
+                                            trip,
+                                            mode: 'remove_friend',
+                                        })
+                                    }
+                                />
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="friend-card">
+                    <div className="friend-card" style={{marginBottom:30}}>
 
                         <h3>{t('friendProfile.posts')}</h3>
 
@@ -449,7 +536,12 @@ export default function FriendProfile() {
                                                         <p className="muted">{t('community.noCommentaries')}</p>
                                                     )}
                                                     {commentsByPost[post.id].map((c) => (
-                                                        <div key={c.id} className="feed-comment-item">
+                                                        <div key={c.id} className="feed-comment-item" style={{
+                                                            borderColor:
+                                                                Number(c.user_id) === Number(user.id)
+                                                                    ? 'var(--color-accent)'
+                                                                    : '',
+                                                        }}>
                                                             <div className="feed-comment-header">
                                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                                     <div className="avatar">
@@ -516,6 +608,28 @@ export default function FriendProfile() {
 
                 </div>
             </main>
+            <ConfirmDialog
+                isOpen={confirm.open}
+                onClose={() => setConfirm({ open: false, trip: null, mode: null })}
+                onConfirm={handleStopSharing}
+                title={t('friendProfile.confirmUnshareTitle')}
+                message={
+                    confirm.mode === 'remove_me'
+                        ? t('friendProfile.confirmStopSharingWithMe')
+                        : t('friendProfile.confirmStopSharing')
+                }
+                confirmText={t('common.confirm')}
+                variant="primary"
+            />
+            <ImageLightbox
+                open={lightbox.open}
+                images={lightbox.images}
+                index={lightbox.index}
+                onClose={() => setLightbox({ open: false, images: [], index: 0 })}
+                onPrev={prevLightbox}
+                onNext={nextLightbox}
+            />
+
         </div>
     );
 }

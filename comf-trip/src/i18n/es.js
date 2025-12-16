@@ -350,7 +350,13 @@
         publicLink: 'Enlace público',
         shared: 'Compartido',
 
-        memberSince: 'Miembro desde'
+        memberSince: 'Member since',
+        stopSharing: 'Stop sharing',
+        stopSharingWithMe: 'Stop receiving this trip',
+        confirmUnshareTitle: 'Confirm action',
+        confirmStopSharing: 'Do you want to stop sharing this trip with your friend?',
+        confirmStopSharingWithMe: 'Do you want this friend to stop sharing this trip with you?',
+        errorUnshare: 'Could not stop sharing the trip'
     },
 
   // Protected Route

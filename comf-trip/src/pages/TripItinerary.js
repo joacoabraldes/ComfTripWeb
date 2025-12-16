@@ -23,6 +23,7 @@ import { normalizeDate, isTripPast } from "../utils/dateUtils";
 import FlightFinderItinerary from "../components/FlightFinderItinerary";
 import ReviewSection from "../components/trip/ReviewSection";
 import ConfirmDialog from "../components/ConfirmDialog";
+import { useAuth } from "../auth/AuthProvider";
 
 // NEW: summary + finder components
 import TripFlightSummary, {
@@ -49,12 +50,14 @@ export default function TripItinerary() {
   const { showError, showSuccess } = useSnackbar();
   const tripIdRaw = params.tripId ?? params.id ?? params?.tripId;
   const tripId = Number(tripIdRaw);
+    const { user } = useAuth();
 
   // loading / trip state
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState(null);
   const [error, setError] = useState(null);
   const [clickOnMap, setClickOnMap] = useState(false);
+  const [isOwner, setIsOwner]=useState(true)
 
   // map state
   const [viewState, setViewState] = useState({
@@ -283,6 +286,7 @@ export default function TripItinerary() {
         if (!mounted) return;
 
         setTrip(tripRes);
+        setIsOwner(Number(user.id)===Number(tripRes.user_id))
 
         const firstWithCoords = (tripRes.places || []).find((p) => {
           const loc = p.location || {};
@@ -1069,13 +1073,13 @@ export default function TripItinerary() {
 
           <section style={{ overflowY: "auto", paddingRight: 20 }}>
             {/* Flight card - show for all trips */}
-            {flightCard}
+            {isOwner && flightCard}
 
             {/* Review Section for completed trips */}
-            {isPast && <ReviewSection tripId={tripId} trip={trip} />}
+            {isPast && <ReviewSection tripId={tripId} trip={trip} isOwner={isOwner} />}
 
             {/* Add location from city card - only for current/upcoming trips */}
-            {!isPast && addLocationCard}
+            {!isPast && isOwner && addLocationCard}
 
             <h3 style={{ marginTop: 18, marginBottom: 8 }}>
               {t("tripItinerary.itineraryByDay")}
@@ -1175,7 +1179,7 @@ export default function TripItinerary() {
                             </button>
                           )}
 
-                          {!isPast && (
+                          {!isPast && isOwner && (
                             <button
                               className="btn-small"
                               onClick={(ev) => {
@@ -1371,7 +1375,7 @@ export default function TripItinerary() {
                                   </svg>
                                 </div>
 
-                                {!isPast && (
+                                {!isPast && isOwner && (
                                   <div
                                     className="trip-it-menu-wrapper"
                                     style={{ position: "relative" }}
@@ -1444,7 +1448,7 @@ export default function TripItinerary() {
               )}
             </div>
 
-            {!isPast && (
+            {!isPast && isOwner && (
               <div style={{ marginTop: 10 }}>
                 <button
                   onClick={() => navigate(`/add_place/${tripId}`)}

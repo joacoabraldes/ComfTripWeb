@@ -30,6 +30,12 @@ export default function Home() {
   const carouselAutoRef = useRef(null);
   const CAROUSEL_ANIMATION_MS = 280;
 
+  const normalizeCarouselIndex = (idx, len) => {
+    if (len <= 1) return 0;
+    const real = ((idx - 1) % len + len) % len; // 0..len-1
+    return real + 1; // 1..len
+  };
+
   const [currentTrip, setCurrentTrip] = useState(null);
 
   // keep ref in sync with state
@@ -104,22 +110,56 @@ export default function Home() {
     };
   }, []);
 
-  // simple auto-advance carousel (every 4s)
+  // auto-advance carousel (every 4s) + pause on hidden tabs + fix "white" bug
   useEffect(() => {
     if (carouselLen <= 1) return;
-    if (carouselAutoRef.current) clearInterval(carouselAutoRef.current);
 
-    carouselAutoRef.current = setInterval(() => {
-      if (carouselLen <= 1) return;
-      setIsCarouselAnimating(true);
-      setWithCarouselTransition(true);
-      setCarouselIndex((prev) => prev + 1);
-    }, 4000);
+    const stop = () => {
+      if (carouselAutoRef.current) {
+        clearInterval(carouselAutoRef.current);
+        carouselAutoRef.current = null;
+      }
+    };
+
+    const start = () => {
+      stop();
+      carouselAutoRef.current = setInterval(() => {
+        if (document.hidden) return; // don't advance while tab is hidden
+        setIsCarouselAnimating(true);
+        setWithCarouselTransition(true);
+        setCarouselIndex((prev) => prev + 1);
+      }, 4000);
+    };
+
+    const onVis = () => {
+      if (document.hidden) {
+        stop();
+        return;
+      }
+
+      // coming back: snap to a safe slide (prevents white screen)
+      setIsCarouselAnimating(false);
+      setWithCarouselTransition(false);
+      setCarouselIndex((prev) => {
+        const fixed = normalizeCarouselIndex(prev, carouselLen);
+        carouselIndexRef.current = fixed;
+        return fixed;
+      });
+
+      start();
+    };
+
+    start();
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onVis);
 
     return () => {
-      if (carouselAutoRef.current) clearInterval(carouselAutoRef.current);
+      stop();
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onVis);
     };
   }, [carouselLen]);
+
 
   const fmtHour = (timeStr) => {
     if (!timeStr) return "-";
@@ -152,17 +192,20 @@ export default function Home() {
     setIsCarouselAnimating(false);
     const current = carouselIndexRef.current;
 
-    // if we moved onto the "fake" slide after the last, jump back to first real
     if (current === carouselLen + 1) {
       setWithCarouselTransition(false);
       const target = 1;
       setCarouselIndex(target);
       carouselIndexRef.current = target;
-    }
-    // if we moved onto the "fake" slide before the first, jump to last real
-    else if (current === 0) {
+    } else if (current === 0) {
       setWithCarouselTransition(false);
       const target = carouselLen;
+      setCarouselIndex(target);
+      carouselIndexRef.current = target;
+    } else if (current < 0 || current > carouselLen + 1) {
+      // if we ever missed transitionend (tab blur), snap back
+      setWithCarouselTransition(false);
+      const target = normalizeCarouselIndex(current, carouselLen);
       setCarouselIndex(target);
       carouselIndexRef.current = target;
     }
@@ -433,7 +476,7 @@ export default function Home() {
             }}
           >
             <div>
-              <h1 style={{ margin: 0 }}>
+              <h1 style={{ marginTop: 10, marginBottom: 0 }}>
                 {currentTrip
                   ? t("home.currentTrip", { destination: currentTrip.destination })
                   : nextTrip

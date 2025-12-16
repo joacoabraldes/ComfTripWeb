@@ -1,6 +1,8 @@
 // src/components/social/CommentsSection.jsx
 import React, { useEffect, useState } from 'react';
 import { fetchComments, createComment } from '../services/socialService';
+import { useSnackbar } from '../contexts/SnackbarContext';
+import { useTranslation } from '../i18n';
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -9,6 +11,8 @@ function formatDate(dateStr) {
 }
 
 export default function CommentsSection({ postId }) {
+  const { t } = useTranslation();
+  const { showError } = useSnackbar();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
@@ -48,7 +52,7 @@ export default function CommentsSection({ postId }) {
       setNewComment('');
     } catch (err) {
       console.error(err);
-      alert('No se pudo publicar el comentario');
+      showError(t('socialFeed.errorPublishComment'));
     } finally {
       setSubmitting(false);
     }
@@ -71,18 +75,18 @@ export default function CommentsSection({ postId }) {
           marginBottom: 8,
         }}
       >
-        {showComments ? 'Ocultar comentarios' : 'Ver comentarios'}
+        {showComments ? t('socialFeed.hideComments') : t('socialFeed.viewComments')}
       </button>
 
       {showComments && (
         <>
           {loading ? (
-            <div style={{ fontSize: 13, color: '#777' }}>Cargando comentarios...</div>
+            <div style={{ fontSize: 13, color: '#777' }}>{t('socialFeed.loadingComments')}</div>
           ) : (
             <div style={{ marginBottom: 8 }}>
               {comments.length === 0 && (
                 <div style={{ fontSize: 13, color: '#777' }}>
-                  Aún no hay comentarios. Sé el primero en comentar.
+                  {t('socialFeed.beFirstToComment')}
                 </div>
               )}
               {comments.map((c) => (
@@ -96,7 +100,7 @@ export default function CommentsSection({ postId }) {
                   }}
                 >
                   <div style={{ fontSize: 13, fontWeight: 600 }}>
-                    {c.author_username ? `@${c.author_username}` : c.author_name || 'Usuario'}
+                    {c.author_username ? `@${c.author_username}` : c.author_name || t('socialFeed.user')}
                   </div>
                   <div style={{ fontSize: 13 }}>{c.content}</div>
                   <div style={{ fontSize: 11, color: '#999' }}>
@@ -112,7 +116,7 @@ export default function CommentsSection({ postId }) {
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Escribe un comentario..."
+              placeholder={t('socialFeed.writeComment')}
               rows={2}
               style={{
                 width: '100%',
@@ -138,7 +142,7 @@ export default function CommentsSection({ postId }) {
                   fontSize: 13,
                 }}
               >
-                {submitting ? 'Publicando...' : 'Comentar'}
+                {submitting ? t('socialFeed.publishing') : t('socialFeed.comment')}
               </button>
             </div>
           </form>

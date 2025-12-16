@@ -1,0 +1,112 @@
+/* src/styles/snackbar.css */
+.snackbar-container {
+  position: fixed;
+  top: calc(var(--header-height, 5rem) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.snackbar {
+  min-width: 300px;
+  max-width: 500px;
+  background-color: #323232;
+  color: #ffffff;
+  padding: 14px 16px;
+  border-radius: 4px;
+  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2),
+              0 6px 10px 0 rgba(0, 0, 0, 0.14),
+              0 1px 18px 0 rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+  animation: snackbar-slide-in 0.3s ease-out;
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.snackbar--exiting {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.snackbar--success {
+  background-color: #4caf50;
+}
+
+.snackbar--error {
+  background-color: #f44336;
+}
+
+.snackbar--warning {
+  background-color: #ff9800;
+}
+
+.snackbar--info {
+  background-color: #2196f3;
+}
+
+.snackbar__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.snackbar__message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.snackbar__close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.snackbar__close:hover {
+  opacity: 1;
+}
+
+.snackbar__close:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@keyframes snackbar-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .snackbar {
+    min-width: calc(100vw - 32px);
+    max-width: calc(100vw - 32px);
+    margin: 0 16px;
+  }
+}
+

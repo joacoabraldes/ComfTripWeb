@@ -9,6 +9,7 @@ import PhoneField from "../components/forms/PhoneField";
 import InputField from "../components/forms/InputField";
 import NationalityField from "../components/forms/NationalityField";
 import FilterSelect from "../components/FilterSelect";
+import { useSnackbar } from "../contexts/SnackbarContext";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -24,10 +25,10 @@ export default function Register() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
     const { t, language, setLanguage } = useTranslation();
+  const { showError } = useSnackbar();
   const { register } = useAuth();
   const [errorName, setErrorName]=useState(null)
     const [errorEmail, setErrorEmail]=useState(null)
@@ -37,7 +38,7 @@ export default function Register() {
     const [onEmail, setOnEmail]=useState(false)
     const [onPassword, setOnPassword]=useState(false)
     const [onConfirmPassword, setOnConfirmPassword]=useState(false)
-    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const EMAIL_REGEX = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/, []);
 
 
   const handleChange = (e) => {
@@ -98,7 +99,7 @@ export default function Register() {
                 setErrorEmail(null)
             }
         }
-    }, [form]);
+    }, [form, onName, onEmail, onPassword, onConfirmPassword, EMAIL_REGEX]);
 
   const isFormValid = useMemo(() => {
     return (
@@ -129,12 +130,11 @@ export default function Register() {
         if (form.confirmPassword.trim().length === 0) {
             setErrorConfirmPassword("auth.errors.confirmPasswordRequired")
         }
-      setMessage("auth.register.completeFields");
+      showError(t('auth.register.completeFields'));
       return
     }
-      if (!form.agree) return  setMessage("auth.register.agreeTermsError");
+      if (!form.agree) return  showError(t('auth.register.agreeTermsError'));
     setLoading(true);
-    setMessage("");
 
     try {
       // Combinar phoneCode y phoneNumber
@@ -153,9 +153,7 @@ export default function Register() {
 
       navigate("/interests");
     } catch (err) {
-      const errMsg =
-        err?.message || err?.error || (typeof err === "string" ? err : null);
-      setMessage(errMsg || "auth.register.error");
+      showError(t('auth.register.error'));
     } finally {
       setLoading(false);
     }
@@ -260,6 +258,7 @@ export default function Register() {
                 value={form.birthdate}
                 onChange={handleChange}
                 disabled={loading}
+                max={new Date().toISOString().split('T')[0]}
               />
             </div>
 
@@ -287,7 +286,7 @@ export default function Register() {
                 : t("auth.register.submit")}
             </button>
 
-            {message && <div className="message">{t(message)}</div>}
+          </form>
             <div className="footer-cta">
               <span>{t("auth.register.alreadyMember")}</span>
               <button
@@ -299,7 +298,6 @@ export default function Register() {
                 {t("auth.register.logIn")}
               </button>
             </div>
-          </form>
         </div>
 
         {/* RIGHT: art + logo */}

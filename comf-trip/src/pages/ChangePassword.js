@@ -5,7 +5,7 @@ import { apiPut } from "./api";
 import "../styles/changePassword.css";
 import "../styles/header.css";
 import { useTranslation } from "../i18n";
-import { FaArrowLeft } from "react-icons/fa";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import ActionButton from "../components/ActionButton";
 import InputField from "../components/forms/InputField";
 
@@ -21,6 +21,7 @@ export default function ChangePassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+  const { showError, showSuccess } = useSnackbar();
     const [errorCurrentPassword, setErrorCurrentPassword]=useState(null)
     const [errorNewPassword, setErrorNewPassword]=useState(null)
     const [errorConfirmPassword, setErrorConfirmPassword]=useState(null)
@@ -56,7 +57,7 @@ export default function ChangePassword() {
                 setErrorConfirmPassword(null)
             }
         }
-    }, [form]);
+    }, [form, onCurrentPassword, onNewPassword, onConfirmPassword]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -77,7 +78,7 @@ export default function ChangePassword() {
 
     const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
     if (!stored || !stored.id) {
-      alert(t('changePassword.userNotIdentified'));
+      showError(t('changePassword.userNotIdentified'));
       navigate("/login");
       return;
     }
@@ -107,11 +108,11 @@ export default function ChangePassword() {
       }
 
       if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
-          alert(t('changePassword.fillAllFields'));
+          showError(t('changePassword.fillAllFields'));
           return;
       }
       if (form.newPassword !== form.confirmPassword) {
-          alert(t('changePassword.passwordsDontMatch'));
+          showError(t('changePassword.passwordsDontMatch'));
           return;
       }
       if(invalid) return;
@@ -126,7 +127,7 @@ export default function ChangePassword() {
 
       // success
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      alert(t('changePassword.success'));
+      showSuccess(t('changePassword.success'));
       navigate("/profile");
     } catch (err) {
       // err may be object or string — normalize message
@@ -143,14 +144,14 @@ export default function ChangePassword() {
           message.toLowerCase().includes("no autorizado") ||
           message.toLowerCase().includes("401") ||
           message.toLowerCase().includes("403")) {
-        alert(t('changePassword.invalidSession'));
+        showError(t('changePassword.invalidSession'));
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         navigate("/login");
         return;
       }
 
-      alert(message);
+      showError(message);
     } finally {
       setLoading(false);
     }

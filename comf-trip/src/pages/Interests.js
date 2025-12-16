@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost } from "./api";
 import "../styles/interests.css";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import { translateCategory, translateCategoryDescription } from "../helpers/categoryTranslations";
 import OptimizedImage from "../components/OptimizedImage";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 // --- image loader: compatible Vite (import.meta.glob) y CRA/webpack (require.context)
 const imagesMap = (() => {
@@ -58,10 +60,12 @@ const PLACEHOLDER =
 export default function InterestsPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showError } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]=useState(false)
   const [interests, setInterests] = useState([]);
   const [selected, setSelected] = useState(new Set());
+  const [noInterestsConfirm, setNoInterestsConfirm] = useState(false);
   const scrollRoot = typeof document !== "undefined" ? document.querySelector(".explorar-main") : null;
 
   useEffect(() => {
@@ -74,13 +78,13 @@ export default function InterestsPage() {
         setInterests(Array.isArray(res) ? res : []);
       } catch (err) {
         console.error("Error loading interests:", err);
-        alert(t('interests.loadError'));
+        showError(t('interests.loadError'));
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
-  }, [t]);
+  }, [t, showError]);
 
   function toggle(id) {
     setSelected((s) => {
@@ -94,7 +98,7 @@ export default function InterestsPage() {
   async function submitInterests() {
     const stored = JSON.parse(localStorage.getItem("user") || "null");
     if (!stored || !stored.id) {
-      alert(t('interests.userNotAuthenticated'));
+      showError(t('interests.userNotAuthenticated'));
       navigate("/login");
       return;
     }
@@ -102,20 +106,25 @@ export default function InterestsPage() {
     const interestIds = Array.from(selected);
 
     if (!interestIds.length) {
-      const ok = window.confirm(t('interests.noInterestsSelected'));
-      if (!ok) return;
+      setNoInterestsConfirm(true);
+      return;
     }
 
+    saveInterests(userId, interestIds);
+  }
+
+  async function saveInterests(userId, interestIds) {
     try {
         setSaving(true);
       await apiPost(`/users/${userId}/interests`, { interestIds });
+      const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
       const newStored = { ...stored, interests: interestIds };
       localStorage.setItem("user", JSON.stringify(newStored));
       navigate("/home");
     } catch (err) {
       console.error("Error saving interests:", err);
-      const errMsg = err?.message || err?.error || "Error al guardar intereses";
-      alert(errMsg);
+      const errMsg = t('interests.saveError');
+      showError(errMsg);
     } finally {
         setSaving(false);
     }
@@ -187,6 +196,26 @@ export default function InterestsPage() {
           </button>
         </div>
       </main>
+
+      {/* Confirmación cuando no hay intereses seleccionados */}
+      <ConfirmDialog
+        isOpen={noInterestsConfirm}
+        onClose={() => setNoInterestsConfirm(false)}
+        onConfirm={() => {
+          const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
+          if (!stored || !stored.id) {
+            showError(t('interests.userNotIdentified'));
+            navigate("/login");
+            return;
+          }
+          const userId = stored.id;
+          saveInterests(userId, []);
+        }}
+        title={t('interests.noInterestsTitle')}
+        message={t('interests.noInterestsSelected')}
+        confirmText={t('common.confirm')}
+        variant="primary"
+      />
     </div>
   );
 }

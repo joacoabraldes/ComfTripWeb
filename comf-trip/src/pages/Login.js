@@ -5,6 +5,7 @@ import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
 import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import InputField from "../components/forms/InputField";
 import FilterSelect from "../components/FilterSelect";
 
@@ -15,7 +16,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { t, language, setLanguage } = useTranslation();
-    const [message, setMessage] = useState("");
+  const { showError } = useSnackbar();
     const [errorIdentifier, setErrorIdentifier]=useState(null)
     const [errorPassword, setErrorPassword]=useState(null)
     const [onEmail, setOnEmail]=useState(false)
@@ -52,7 +53,7 @@ export default function Login() {
                 setErrorIdentifier(null)
             }
         }
-    }, [form, t]);
+    }, [form, t, onEmail, onPassword]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -63,7 +64,7 @@ export default function Login() {
         if (form.email.trim().length === 0) {
             setErrorIdentifier("auth.errors.identifierRequired")
         }
-        setMessage("auth.register.completeFields");
+        showError(t("auth.register.completeFields"));
         return
     }
     setLoading(true);
@@ -78,7 +79,7 @@ export default function Login() {
       // on success, go to trips
       nav("/home");
     } catch (err) {
-      alert(err.message || JSON.stringify(err));
+      showError(err.message || JSON.stringify(err));
     } finally {
       setLoading(false);
     }
@@ -139,7 +140,6 @@ export default function Login() {
             <button type="submit" onClick={submit} className="auth-btn-primary login" disabled={loading}>
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
-              {message && <div className="message">{t(message)}</div>}
             <div className="footer-cta">
               <span>{t('auth.login.notRegistered')}</span>
               <button className="linkish" onClick={() => nav("/register")} style={{marginLeft:6, fontSize:"20px"}} disabled={loading}>{t('auth.login.register')}</button>

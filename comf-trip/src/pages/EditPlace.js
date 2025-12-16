@@ -8,11 +8,13 @@ import "../styles/auth.css";
 import { apiGet, apiPut } from "./api";
 import Map, {Marker, NavigationControl} from "react-map-gl/mapbox";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
 
 export default function EditPlace() {
     const { t } = useTranslation();
+    const { showError, showSuccess } = useSnackbar();
     const { tripId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
@@ -88,7 +90,7 @@ export default function EditPlace() {
             }
         })();
         return () => { mounted = false; };
-    }, [tripId, placeIndex]);
+    }, [tripId, placeIndex, t]);
 
     useEffect(() => {
         setStartHour("");
@@ -169,11 +171,11 @@ export default function EditPlace() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!date) {
-            alert(t('editPlace.selectDate'));
+            showError(t('editPlace.selectDate'));
             return;
         }
         if(!startHour || !endHour){
-            alert(t('editPlace.selectStartAndEndTime'));
+            showError(t('editPlace.selectStartAndEndTime'));
             return;
         }
 
@@ -203,6 +205,7 @@ export default function EditPlace() {
                 }))
             });
 
+            showSuccess(t('editPlace.saveSuccess'));
             navigate(`/trip_itinerary/${tripId}`);
         } catch (err) {
             console.error("Error actualizando lugar:", err);

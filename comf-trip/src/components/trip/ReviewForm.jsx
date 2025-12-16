@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../pages/api';
 import { useTranslation } from '../../i18n';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 import { FaStar } from 'react-icons/fa';
 import '../../styles/review-form.css';
 
 export default function ReviewForm({ tripId, existingReview, onSaved, onCancel }) {
   const { t } = useTranslation();
+  const { showError, showSuccess } = useSnackbar();
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [title, setTitle] = useState(existingReview?.title || '');
   const [comment, setComment] = useState(existingReview?.comment || '');
@@ -46,11 +48,11 @@ export default function ReviewForm({ tripId, existingReview, onSaved, onCancel }
 
   const handleSave = async () => {
     if (rating === 0) {
-      alert(t('review.ratingRequired'));
+      showError(t('review.ratingRequired'));
       return;
     }
     if (!title.trim()) {
-      alert(t('review.titleRequired'));
+      showError(t('review.titleRequired'));
       return;
     }
 
@@ -81,17 +83,17 @@ export default function ReviewForm({ tripId, existingReview, onSaved, onCancel }
 
       if (reviewExists) {
         await apiPut(`/trips/${tripId}/review`, reviewData);
-        alert(t('review.updateSuccess'));
+        showSuccess(t('review.updateSuccess'));
       } else {
         try {
           await apiPost(`/trips/${tripId}/review`, reviewData);
-          alert(t('review.saveSuccess'));
+          showSuccess(t('review.saveSuccess'));
         } catch (postErr) {
           // If POST fails with 409 (conflict), review was created between check and post
           // Try to update instead
           if (postErr?.status === 409) {
             await apiPut(`/trips/${tripId}/review`, reviewData);
-            alert(t('review.updateSuccess'));
+            showSuccess(t('review.updateSuccess'));
           } else {
             throw postErr;
           }
@@ -102,7 +104,7 @@ export default function ReviewForm({ tripId, existingReview, onSaved, onCancel }
     } catch (err) {
       console.error('Error saving review:', err);
       const message = err?.message || err?.error || t('review.saveError');
-      alert(message);
+      showError(message);
     } finally {
       setSaving(false);
     }

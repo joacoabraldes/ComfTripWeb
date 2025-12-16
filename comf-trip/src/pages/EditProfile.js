@@ -1,10 +1,11 @@
-import React, { useState,  useEffect, useMemo } from "react";
+import React, { useState,  useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPut } from "./api";
 import "../styles/editProfile.css";
 import { FaUser } from "react-icons/fa";
 import "../styles/header.css";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import ActionButton from "../components/ActionButton";
 import PhoneField from "../components/forms/PhoneField";
 import NationalityField from "../components/forms/NationalityField";
@@ -16,10 +17,11 @@ export default function EditProfile() {
     const [loading, setLoading] = useState(false);
     const [loadingInfo, setLoadingInfo]=useState(true);
     const { t } = useTranslation();
+    const { showError, showSuccess } = useSnackbar();
 
     const [errorName, setErrorName]=useState(null)
     const [errorEmail, setErrorEmail]=useState(null)
-    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const EMAIL_REGEX = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/, []);
     const [onName, setOnName]=useState(false)
     const [onEmail, setOnEmail]=useState(false)
 
@@ -59,7 +61,7 @@ export default function EditProfile() {
     }, []);
 
     // Función para parsear el teléfono y extraer código y número
-    const parsePhone = (phone) => {
+    const parsePhone = useCallback((phone) => {
         if (!phone || !phone.trim()) return { code: "+1", number: "" };
         
         const phoneTrimmed = phone.trim();
@@ -97,7 +99,7 @@ export default function EditProfile() {
         
         // Si no tiene código identificable, asumir que es solo el número
         return { code: "+1", number: phoneTrimmed };
-    };
+    }, [knownCountryCodes]);
 
     // cargar datos del perfil al montar
     useEffect(() => {
@@ -126,7 +128,7 @@ export default function EditProfile() {
                 setLoadingInfo(false);
             }
         })();
-    }, [navigate]);
+    }, [navigate, parsePhone]);
 
     useEffect(() => {
         if (onName) {
@@ -145,7 +147,7 @@ export default function EditProfile() {
                 setErrorEmail(null)
             }
         }
-    }, [form]);
+    }, [form, onName, onEmail, EMAIL_REGEX]);
 
     function handleChange(e) {
         const { name, value } = e.target;
@@ -166,7 +168,7 @@ export default function EditProfile() {
         e.preventDefault();
         const stored = JSON.parse(localStorage.getItem("user") || "null") || {};
         if (!stored || !stored.id) {
-            alert(t('editProfile.userNotIdentified'));
+            showError(t('editProfile.userNotIdentified'));
             navigate("/login");
             return;
         }
@@ -209,11 +211,11 @@ export default function EditProfile() {
             // actualizar localStorage
             localStorage.setItem("user", JSON.stringify(updatedUser));
 
-            alert(t('editProfile.success'));
+            showSuccess(t('editProfile.success'));
             navigate("/profile");
         } catch (err) {
             console.error("Error actualizando perfil:", err);
-            alert(t('editProfile.error'));
+            showError(t('editProfile.error'));
         } finally {
             setLoading(false);
         }
@@ -276,6 +278,7 @@ export default function EditProfile() {
                         placeholder={t('auth.register.birthdate')}
                         disabled={loading}
                         containerClassName="edit-field"
+                        max={new Date().toISOString().split('T')[0]}
                     />
 
                     <NationalityField

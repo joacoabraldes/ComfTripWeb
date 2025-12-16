@@ -29,6 +29,7 @@ import SocialFeedPage from "./pages/SocialFeedPage";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import { LanguageProvider } from "./i18n";
+import { SnackbarProvider } from "./contexts/SnackbarContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AddPlace from "./pages/AddPlace";
 import EditPlace from "./pages/EditPlace";
@@ -37,8 +38,9 @@ import Layout from "./components/Layout";
 function App() {
   return (
     <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
+      <SnackbarProvider>
+        <AuthProvider>
+          <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -142,6 +144,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       </AuthProvider>
+      </SnackbarProvider>
     </LanguageProvider>
   );
 }

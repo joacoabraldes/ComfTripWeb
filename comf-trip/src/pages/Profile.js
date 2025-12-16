@@ -10,6 +10,7 @@ import { useTranslation } from "../i18n";
 import LoadingSpinner from "../components/LoadingSpinner";
 import FilterSelect from "../components/FilterSelect";
 import {formatDate} from "../utils/dateUtils";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function ProfilePage() {
     birthdate: "",
     photo: ""
   });
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if(!hydrated) return;
@@ -72,9 +74,12 @@ export default function ProfilePage() {
   }, [user, token, hydrated, navigate, setUser]);
 
   function handleLogout() {
+    setLogoutConfirm(true);
+  }
+
+  function confirmLogout() {
     logout();
     navigate("/login");
-
   }
 
   if (loading) {
@@ -149,6 +154,17 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+
+      {/* Confirmación de cierre de sesión */}
+      <ConfirmDialog
+        isOpen={logoutConfirm}
+        onClose={() => setLogoutConfirm(false)}
+        onConfirm={confirmLogout}
+        title={t('profile.logoutTitle')}
+        message={t('profile.logoutConfirm')}
+        confirmText={t('profile.logout')}
+        variant="primary"
+      />
     </div>
   );
 }

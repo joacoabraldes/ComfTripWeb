@@ -15,12 +15,14 @@ import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 import flightsApi from "../services/flightsApi";
 import { Country } from "country-state-city";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import { FaMapMarkedAlt, FaEdit, FaTrash } from "react-icons/fa";
 import IconButton from "../components/IconButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { normalizeDate, isTripPast } from "../utils/dateUtils";
 import FlightFinderItinerary from "../components/FlightFinderItinerary";
 import ReviewSection from "../components/trip/ReviewSection";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 // NEW: summary + finder components
 import TripFlightSummary, {
@@ -44,6 +46,7 @@ export default function TripItinerary() {
   const params = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showError, showSuccess } = useSnackbar();
   const tripIdRaw = params.tripId ?? params.id ?? params?.tripId;
   const tripId = Number(tripIdRaw);
 
@@ -72,6 +75,10 @@ export default function TripItinerary() {
   // menu state for place items
   const [menuOpen, setMenuOpen] = useState(null); // stores place id when open
   const menuContainerRef = useRef(null);
+
+  // confirmation dialogs state
+  const [deletePlaceConfirm, setDeletePlaceConfirm] = useState({ isOpen: false, place: null });
+  const [removeFlightConfirm, setRemoveFlightConfirm] = useState(false);
 
   // flight/backend state (backend association + enriched details)
   const [backendFlight, setBackendFlight] = useState(null);
@@ -479,10 +486,13 @@ export default function TripItinerary() {
     }
   };
 
-  const handleRemoveFlight = async () => {
+  const handleRemoveFlight = () => {
+    setRemoveFlightConfirm(true);
+  };
+
+  const confirmRemoveFlight = async () => {
     const fid = backendFlight?.flight_id || backendFlight?.flightId;
     if (!fid) return;
-    if (!window.confirm(t("tripItinerary.removeFlightConfirm"))) return;
     try {
       await apiPut(`/flights/${encodeURIComponent(String(fid))}`, {
         trip_id: null,
@@ -536,26 +546,24 @@ export default function TripItinerary() {
     }
   }, [trip?.places]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleDeletePlace = async (ev, place) => {
+  const handleDeletePlace = (ev, place) => {
     ev.stopPropagation();
     if (!place || !place.id) return;
-    const ok = window.confirm(
-      t("tripItinerary.deletePlaceConfirm", {
-        placeTitle: place.title || place.location?.titulo || "",
-      })
-    );
-    if (!ok) {
-      setMenuOpen(null);
-      return;
-    }
+    setDeletePlaceConfirm({ isOpen: true, place });
+    setMenuOpen(null);
+  };
+
+  const confirmDeletePlace = async () => {
+    const place = deletePlaceConfirm.place;
+    if (!place || !place.id) return;
     try {
       await apiDelete(`/trips/${tripId}/places/${place.id}`);
       const fresh = await apiGet(`/trips/${tripId}`);
       setTrip(fresh);
-      setMenuOpen(null);
+      showSuccess(t("tripItinerary.deletePlaceSuccess"));
     } catch (err) {
       console.error("Error eliminando punto:", err);
-      alert(t("tripItinerary.deletePlaceError"));
+      showError(t("tripItinerary.deletePlaceError"));
     }
   };
 
@@ -1694,6 +1702,30 @@ export default function TripItinerary() {
           </div>
         </section>
       </main>
+
+      {/* Confirmación de eliminación de lugar */}
+      <ConfirmDialog
+        isOpen={deletePlaceConfirm.isOpen}
+        onClose={() => setDeletePlaceConfirm({ isOpen: false, place: null })}
+        onConfirm={confirmDeletePlace}
+        title={t("tripItinerary.deletePlace")}
+        message={t("tripItinerary.deletePlaceConfirm", {
+          placeTitle: deletePlaceConfirm.place?.title || deletePlaceConfirm.place?.location?.titulo || "",
+        })}
+        confirmText={t("common.delete")}
+        variant="primary"
+      />
+
+      {/* Confirmación de remover vuelo */}
+      <ConfirmDialog
+        isOpen={removeFlightConfirm}
+        onClose={() => setRemoveFlightConfirm(false)}
+        onConfirm={confirmRemoveFlight}
+        title={t("tripItinerary.removeFlight")}
+        message={t("tripItinerary.removeFlightConfirm")}
+        confirmText={t("common.confirm")}
+        variant="primary"
+      />
     </div>
   );
 }

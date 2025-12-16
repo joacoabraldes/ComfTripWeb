@@ -1,9 +1,10 @@
 // src/pages/RecoverPassword.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 import LogoSvg from "../components/LogoSvg";
 import { useTranslation } from "../i18n";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import { apiPost } from "./api";
 import InputField from "../components/forms/InputField";
 
@@ -17,26 +18,26 @@ export default function RecoverPassword() {
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [message, setMessage] = useState('');
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showSuccess, showError } = useSnackbar();
 
     const [errorCode, setErrorCode]=useState(null)
     const [errorEmail, setErrorEmail]=useState(null)
     const [errorPassword, setErrorPassword]=useState(null)
     const [errorConfirmPassword, setErrorConfirmPassword]=useState(null)
-    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const EMAIL_REGEX = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/, []);
 
   // Validate email format function
-  const validateEmail = (email) => {
+  const validateEmail = useCallback((email) => {
     return EMAIL_REGEX.test(email);
-  };
+  }, [EMAIL_REGEX]);
 
   // Validate email format
   const isEmailValid = useMemo(() => {
     if (!email.trim()) return false;
     return validateEmail(email);
-  }, [email]);
+  }, [email, validateEmail]);
 
   // Validate form - all fields must be filled and passwords must match
   const isFormValid = useMemo(() => {
@@ -71,19 +72,18 @@ export default function RecoverPassword() {
     if (resendCooldown > 0) return;
 
     setSendingCode(true);
-    setMessage('');
     try {
       const res = await apiPost('/auth/forgot-password', { email: email.trim().toLowerCase() });
       const data = res.data ?? res;
       
       if (data?.message || data?.success || res.data !== undefined) {
         setResendCooldown(30); // 30 seconds cooldown
-        setMessage(t('auth.recoverPassword.codeSent') || 'Código enviado');
+        showSuccess(t('auth.recoverPassword.codeSent'));
       }
     } catch (err) {
       console.error('Send code error', err);
-      const msg = (err && err.message) || (err && err.error) || JSON.stringify(err) || t('auth.recoverPassword.requestFailed');
-      setMessage(msg);
+      const msg = t('auth.recoverPassword.requestFailed');
+      showError(msg);
     } finally {
       setSendingCode(false);
     }
@@ -116,12 +116,11 @@ export default function RecoverPassword() {
       }
 
       if(!isFormValid){
-          setMessage( 'auth.recoverPassword.completeAllFields' || 'Por favor completa todos los campos');
+          showError(t('auth.recoverPassword.completeAllFields'));
           return
       }
 
     setLoading(true);
-    setMessage('');
     try {
       const res = await apiPost('/auth/reset-password', {
         email: email.trim().toLowerCase(),
@@ -131,13 +130,13 @@ export default function RecoverPassword() {
       const data = res.data ?? res;
       
       if (data?.message || data?.success || res.data !== undefined) {
-        alert(t('auth.recoverPassword.passwordResetSuccess') || 'Tu contraseña ha sido actualizada correctamente');
+        showSuccess(t('auth.recoverPassword.passwordResetSuccess'));
         navigate("/login");
       }
     } catch (err) {
       console.error('Reset password error', err);
-      const msg = (err && err.message) || (err && err.error) || JSON.stringify(err) || t('auth.recoverPassword.resetFailed') || 'Error al restablecer la contraseña';
-      setMessage(msg);
+      const msg = t('auth.recoverPassword.resetFailed');
+      showError(msg);
     } finally {
       setLoading(false);
     }
@@ -185,11 +184,11 @@ export default function RecoverPassword() {
                           }}
                       >
                           {sendingCode ? (
-                              t('auth.recoverPassword.sendingButton') || 'Enviando...'
+                              t('auth.recoverPassword.sendingButton')
                           ) : (
                               resendCooldown > 0
-                                  ? (t('auth.recoverPassword.resendIn') || 'Reenviar ({seconds}s)').replace('{seconds}', resendCooldown.toString())
-                                  : t('auth.recoverPassword.sendButton') || 'Enviar'
+                                  ? t('auth.recoverPassword.resendIn', { seconds: resendCooldown })
+                                  : t('auth.recoverPassword.sendButton')
                           )}
                       </button>
                   </div>
@@ -230,7 +229,7 @@ export default function RecoverPassword() {
             />
 
             <InputField
-              label={t('auth.recoverPassword.confirmPassword') || 'Confirmar contraseña'}
+              label={t('auth.recoverPassword.confirmPassword')}
               value={confirmPassword}
               onChange={(e) => {
                   setConfirmPassword(e.target.value)
@@ -238,7 +237,7 @@ export default function RecoverPassword() {
                   else if (newPassword !== e.target.value) setErrorConfirmPassword('auth.recoverPassword.passwordsDoNotMatch')
                   else setErrorConfirmPassword(null)
               }}
-              placeholder={t('auth.recoverPassword.confirmPassword') || 'Confirmar contraseña'}
+              placeholder={t('auth.recoverPassword.confirmPassword')}
               showPasswordToggle
               showPassword={showConfirmPassword}
               onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -252,11 +251,10 @@ export default function RecoverPassword() {
               className="auth-btn-primary"
             >
               {loading
-                ? (t('auth.recoverPassword.changing') || 'Cambiando...')
-                : t('auth.recoverPassword.confirmButton') || 'Confirmar'}
+                ? t('auth.recoverPassword.changing')
+                : t('auth.recoverPassword.confirmButton')}
             </button>
 
-            {message && <div className="message">{t(message)}</div>}
             <div className="footer-cta">
               <button
                 type="button"

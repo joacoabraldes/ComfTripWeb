@@ -715,6 +715,7 @@
     loading: 'Cargando mapa…',
     locations: 'Localidades',
     filterByCategory: 'Filtrar por categoría',
+    filterByCity: 'Filtrar por ciudad',
     all: 'Todas',
     loadingLocations: 'Cargando...',
     loadError: 'No se pudieron cargar las localidades',

@@ -1,7 +1,7 @@
 // src/pages/Map.jsx
-import React, { useEffect, useState, useCallback } from "react";
-// keep using the explicit mapbox entrypoint you already have
-import Map, { Marker, NavigationControl, Popup } from "react-map-gl/mapbox";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
+// ✅ rename Map component so we don't shadow JS built-in Map()
+import MapGL, { Marker, NavigationControl, Popup } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "../styles/map.css";
 import "../styles/header.css";
@@ -12,53 +12,145 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { translateCategory } from "../helpers/categoryTranslations";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "";
-const API_URL_RAW = (process.env.REACT_APP_API_URL || "").replace(/\/$/, ""); // user-provided base
+const API_URL_RAW = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
-// try a few candidate endpoints (order matters)
-const INTERESTS_CANDIDATES = [
-  "/interests",
-  "/users/interests",
-  "/api/interests",
-  "/api/users/interests"
-];
+/**
+ * Build a stable /api/* URL even if REACT_APP_API_URL is either:
+ *  - https://domain.tld
+ *  - https://domain.tld/api
+ */
+function buildApiUrl(pathAfterApi) {
+  const base = API_URL_RAW || "";
+  if (!base) return `/api/${pathAfterApi}`;
+  if (base.endsWith("/api")) return `${base}/${pathAfterApi}`;
+  return `${base}/api/${pathAfterApi}`;
+}
 
-const LOCATIONS_CANDIDATES = [
-  "/locations",
-  "/api/locations",
-  "/public/locations", // supabase-like
-  "/users/locations"
-];
+// ✅ user-provided route (stable)
+const INTERESTS_URL = buildApiUrl("interests");
+const LOCATIONS_URL = buildApiUrl("locations");
 
-// small helper to safely parse imagenes column (some rows might be stringified)
+// small helper to safely parse imagenes/images (some rows might be stringified)
 function parseImagesField(imgField) {
   if (!imgField) return [];
-  if (Array.isArray(imgField)) return imgField;
+  if (Array.isArray(imgField)) {
+    return imgField
+      .map((x) => {
+        if (!x) return null;
+        if (typeof x === "string") return x;
+        if (typeof x === "object") return x.url || x.src || x.image || null;
+        return null;
+      })
+      .filter(Boolean);
+  }
+
   try {
     if (typeof imgField === "string") {
       const trimmed = imgField.trim();
-      // if it's like '["url"]' or '"..."' JSON.parse works
-      if ((trimmed.startsWith("[") && trimmed.endsWith("]")) || (trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+      if (
+        (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith('"') && trimmed.endsWith('"'))
+      ) {
         const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) return parsed;
-        if (typeof parsed === "object") return [parsed];
+        return parseImagesField(parsed);
       }
-      // fallback: split by commas (very tolerant)
-      return trimmed.replace(/^\[|$/g, "").replace(/(^"|"$)/g, "").split(",").map(s => s.trim()).filter(Boolean);
+      return trimmed
+        .replace(/^\[|]$/g, "")
+        .replace(/(^"|"$)/g, "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     }
   } catch (e) {
-    // fallback splitting
-    return String(imgField).replace(/^\[|$/g, "").replace(/"/g, "").split(",").map(s => s.trim()).filter(Boolean);
+    return String(imgField)
+      .replace(/^\[|]$/g, "")
+      .replace(/"/g, "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
+
   return [];
+}
+
+function parseNumberLoose(v) {
+  if (typeof v === "number") return Number.isFinite(v) ? v : NaN;
+  if (typeof v === "string") {
+    const s = v.trim().replace(",", ".");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : NaN;
+  }
+  return NaN;
+}
+
+function normalizeLocation(l) {
+  const latitude = parseNumberLoose(l.latitude ?? l.lat);
+  const longitude = parseNumberLoose(l.longitude ?? l.lng ?? l.lon);
+
+  const title = l.title ?? l.titulo ?? l.name ?? "";
+  const description = l.description ?? l.descripcion ?? "";
+  const images = parseImagesField(l.images ?? l.imagenes ?? l.image_urls ?? l.image_url);
+
+  const interestKeyRaw =
+    l.interest ??
+    l.fk_interest ??
+    l.interest_id ??
+    l.category ??
+    l.category_id ??
+    l.interestId ??
+    "";
+
+  const interestKey =
+    interestKeyRaw === null || interestKeyRaw === undefined ? "" : String(interestKeyRaw);
+
+  return {
+    ...l,
+    id: String(l.id ?? l.location_id ?? title ?? Math.random()),
+    title,
+    description,
+    images,
+    interestKey,
+    city: l.city ?? l.ciudad ?? "",
+    country: l.country ?? l.pais ?? "",
+    website: l.website ?? l.web ?? "",
+    opening_hours: l.opening_hours ?? l.horario ?? null,
+    latitude,
+    longitude,
+  };
+}
+
+/**
+ * ✅ Pin that is *geometrically* anchored at the tip.
+ * The classic pin path’s “tip” is at y=22, so we use viewBox height 22.
+ * Rendering at height=24 scales the tip to y=24 (the element bottom),
+ * so Marker anchor="bottom" is exact at ANY zoom level.
+ */
+function PinSvg({ color = "#1978c8", size = 24 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 22"
+      style={{ display: "block", cursor: "pointer" }}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+        fill={color}
+      />
+      <circle cx="12" cy="9" r="2.5" fill="#fff" />
+    </svg>
+  );
 }
 
 export default function MapPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // picker marker (draggable)
-  // NOTE: using [lat, lng] tuple throughout for pickerPos (consistent with existing code)
-  const [pickerPos, setPickerPos] = useState([-34.6037, -58.3816]); // [lat, lng]
+  // picker marker (draggable) — using [lat, lng]
+  const [pickerPos, setPickerPos] = useState([-34.6037, -58.3816]);
 
   // map camera
   const [viewState, setViewState] = useState({
@@ -70,142 +162,194 @@ export default function MapPage() {
   });
 
   // data & UI state
-  const [locations, setLocations] = useState([]);
+  const [allLocations, setAllLocations] = useState([]); // ✅ after interest filter, before city filter
+  const [locations, setLocations] = useState([]); // ✅ visible after city filter
   const [interests, setInterests] = useState([]);
   const [selectedInterest, setSelectedInterest] = useState("");
+  const [selectedCity, setSelectedCity] = useState(""); // ✅ city filter
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingInterests, setLoadingInterests] = useState(true);
   const [error, setError] = useState(null);
 
-  // resolved endpoints (detected at runtime)
-  const [endpoints, setEndpoints] = useState({
-    interests: null,
-    locations: null,
-  });
+  // auto-center behavior
+  const userMovedRef = useRef(false);
+  const geoCenteredRef = useRef(false);
 
-  // utility: test a URL and return json if ok
-  const tryFetchJson = async (url) => {
-    try {
-      const res = await fetch(url, { method: "GET" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // trying to parse as JSON (interests/locations return arrays)
-      const ct = res.headers.get("content-type") || "";
-      if (!ct.includes("application/json")) {
-        // still attempt to parse, but warn
-        const txt = await res.text();
-        try {
-          return JSON.parse(txt);
-        } catch (e) {
-          throw new Error("Not JSON response");
-        }
-      }
-      return await res.json();
-    } catch (err) {
-      throw err;
-    }
-  };
+  // interests maps (for label + matching)
+  const interestById = useMemo(() => {
+    const m = new Map();
+    (interests || []).forEach((it) => {
+      if (it?.id !== undefined && it?.id !== null) m.set(String(it.id), it);
+      if (it?.slug) m.set(String(it.slug), it);
+      if (it?.title) m.set(String(it.title), it);
+    });
+    return m;
+  }, [interests]);
 
-  // Auto-detect working endpoints for interests and locations
+  // Fetch interests
   useEffect(() => {
     let mounted = true;
     (async () => {
-      setError(null);
-      const base = API_URL_RAW || ""; // could be empty
-      // function to try candidates list and return the first that works
-      const detect = async (candidates) => {
-        const errors = [];
-        for (const cand of candidates) {
-          // build candidate URL: if base is empty, try cand as absolute path on same host
-          const url = base ? `${base}${cand}` : cand;
-          try {
-            const data = await tryFetchJson(url);
-            return { url, data };
-          } catch (err) {
-            errors.push({ url, err: err.message });
-          }
-        }
-        return { url: null, errors };
-      };
-
-      // detect interests
-      const intRes = await detect(INTERESTS_CANDIDATES);
-      if (!mounted) return;
-      if (intRes.url) {
-        // set interests immediately from returned data
-        setInterests(Array.isArray(intRes.data) ? intRes.data : []);
-        setEndpoints((e) => ({ ...e, interests: intRes.url }));
-      } else {
-        console.warn("Interests detection failed", intRes.errors);
-        // keep interests empty
-        setEndpoints((e) => ({ ...e, interests: null }));
-      }
-
-      // detect locations (we won't prefetch here; only detect and store)
-      const locRes = await detect(LOCATIONS_CANDIDATES);
-      if (!mounted) return;
-      if (locRes.url) {
-        setEndpoints((e) => ({ ...e, locations: locRes.url }));
-      } else {
-        console.warn("Locations detection failed", locRes.errors);
-        setEndpoints((e) => ({ ...e, locations: null }));
+      setLoadingInterests(true);
+      try {
+        const res = await fetch(INTERESTS_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status} @ ${INTERESTS_URL}`);
+        const data = await res.json();
+        if (!mounted) return;
+        setInterests(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("fetchInterests error:", err);
+        if (!mounted) return;
+        setInterests([]);
+      } finally {
+        if (mounted) setLoadingInterests(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // fetch locations (optionally with interest slug)
-  const fetchLocations = useCallback(async (interest = "") => {
-    setError(null);
-    try {
-      let baseUrl = endpoints.locations;
-      if (!baseUrl) {
-        // endpoints not detected yet — try the raw default first
-        baseUrl = API_URL_RAW ? `${API_URL_RAW}/locations` : "/locations";
-      }
-      const q = interest ? `?interest=${encodeURIComponent(interest)}` : "";
-      const url = `${baseUrl}${q}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status} @ ${url}`);
-      const data = await res.json();
+  const matchesSelectedInterest = useCallback(
+    (loc, sel) => {
+      if (!sel) return true;
+      const selStr = String(sel);
 
-      // NORMALIZE and FILTER invalid coordinates
-      const normalized = (data || []).map((l) => {
-        const latitude = Number(l.latitude);
-        const longitude = Number(l.longitude);
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-          console.warn('Descartando location por coords inválidas:', l);
-          return null;
+      if (loc.interestKey && String(loc.interestKey) === selStr) return true;
+
+      const selIt = interestById.get(selStr);
+      if (selIt) {
+        const selId = selIt.id != null ? String(selIt.id) : null;
+        const selSlug = selIt.slug != null ? String(selIt.slug) : null;
+        const selTitle = selIt.title != null ? String(selIt.title) : null;
+
+        if (selId && String(loc.interestKey) === selId) return true;
+        if (selSlug && String(loc.interestKey) === selSlug) return true;
+        if (selTitle && String(loc.interestKey) === selTitle) return true;
+
+        if (
+          loc.interest &&
+          (String(loc.interest) === selId ||
+            String(loc.interest) === selSlug ||
+            String(loc.interest) === selTitle)
+        ) {
+          return true;
         }
-        return {
-          ...l,
-          imagenes: parseImagesField(l.imagenes),
-          latitude,
-          longitude,
-        };
-      }).filter(Boolean);
-
-      console.log('Locations normalizadas:', normalized);
-      setLocations(normalized);
-
-      if (normalized.length === 0) {
-        // no results is valid; show message but not as error
       }
-    } catch (err) {
-      console.error("fetchLocations error:", err);
-      setError(String(err.message || err));
-      setLocations([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [endpoints.locations]);
 
-  // initial fetch when endpoints resolved or when selectedInterest changes
+      if (loc.fk_interest && String(loc.fk_interest) === selStr) return true;
+      if (loc.interest_id && String(loc.interest_id) === selStr) return true;
+      if (loc.category && String(loc.category) === selStr) return true;
+
+      return false;
+    },
+    [interestById]
+  );
+
+  // fetch locations
+  const fetchLocations = useCallback(
+    async (interest = "") => {
+      setLoading(true);
+      setError(null);
+
+      const sel = interest ? String(interest) : "";
+      const paramAttempts = sel ? ["interest", "interest_id", "fk_interest", "category"] : [null];
+
+      try {
+        let data = null;
+        let lastErr = null;
+
+        for (const p of paramAttempts) {
+          const url = p ? `${LOCATIONS_URL}?${p}=${encodeURIComponent(sel)}` : LOCATIONS_URL;
+
+          try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status} @ ${url}`);
+            const json = await res.json();
+            data = Array.isArray(json) ? json : [];
+            if (!sel || data.length > 0) break;
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+
+        if (!data) throw lastErr || new Error("Failed to load locations");
+
+        const normalized = (data || [])
+          .map(normalizeLocation)
+          .filter((l) => Number.isFinite(l.latitude) && Number.isFinite(l.longitude));
+
+        const filteredByInterest = sel
+          ? normalized.filter((l) => matchesSelectedInterest(l, sel))
+          : normalized;
+
+        setAllLocations(filteredByInterest);
+      } catch (err) {
+        console.error("fetchLocations error:", err);
+        setError(String(err.message || err));
+        setAllLocations([]);
+        setLocations([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [matchesSelectedInterest]
+  );
+
+  // refetch when interest changes
   useEffect(() => {
-    // If endpoints are unknown, wait until detection finishes (endpoints.locations === null or string)
-    // A null means detection failed, undefined means not set yet - we still attempt once.
-    // We'll attempt whenever endpoints.locations changes.
+    // changing interest should clear selectedLocation (could disappear)
+    setSelectedLocation(null);
+    // and reset city if it no longer exists (we’ll keep it but filtering will yield 0)
     fetchLocations(selectedInterest);
-  }, [fetchLocations, selectedInterest, endpoints.locations]);
+  }, [fetchLocations, selectedInterest]);
+
+  // apply city filter client-side (and optionally auto-center)
+  useEffect(() => {
+    const citySel = (selectedCity || "").trim().toLowerCase();
+
+    const visible = !citySel
+      ? allLocations
+      : allLocations.filter((l) => String(l.city || "").trim().toLowerCase() === citySel);
+
+    setLocations(visible);
+
+    // if selectedLocation is no longer visible, close popup
+    if (selectedLocation) {
+      const stillThere = visible.some((l) => String(l.id) === String(selectedLocation.id));
+      if (!stillThere) setSelectedLocation(null);
+    }
+
+    // ✅ If user hasn't moved the map manually, re-center to first visible result
+    if (visible.length > 0 && !userMovedRef.current && !geoCenteredRef.current) {
+      const first = visible[0];
+      setViewState((v) => ({
+        ...v,
+        latitude: first.latitude,
+        longitude: first.longitude,
+        zoom: Math.max(v.zoom || 0, 11),
+        pitch: v.pitch || 0,
+        bearing: v.bearing || 0,
+      }));
+    }
+  }, [allLocations, selectedCity]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // derive city options from current interest-filtered set
+  const cityOptions = useMemo(() => {
+    const set = new Map(); // key: lower, value: display
+    (allLocations || []).forEach((l) => {
+      const raw = String(l.city || "").trim();
+      if (!raw) return;
+      const key = raw.toLowerCase();
+      if (!set.has(key)) set.set(key, raw);
+    });
+
+    const arr = Array.from(set.values()).sort((a, b) => a.localeCompare(b));
+    return [{ value: "", label: t("map.all") || "All" }].concat(
+      arr.map((c) => ({ value: c, label: c }))
+    );
+  }, [allLocations, t]);
 
   // try to center on user's location
   useEffect(() => {
@@ -215,289 +359,318 @@ export default function MapPage() {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            geoCenteredRef.current = true;
             setPickerPos([lat, lng]);
-            setViewState((v) => ({ 
-              ...v, 
-              latitude: lat, 
-              longitude: lng, 
+            setViewState((v) => ({
+              ...v,
+              latitude: lat,
+              longitude: lng,
               zoom: 13,
               pitch: v.pitch || 0,
               bearing: v.bearing || 0,
             }));
           }
         },
-        () => { /* ignore */ }
+        () => {}
       );
     }
   }, []);
 
-  // keep view centered on picker (optional) - REMOVED to prevent conflicts with geolocation
-  // useEffect(() => {
-  //   if (Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1])) {
-  //     setViewState((v) => ({ ...v, latitude: pickerPos[0], longitude: pickerPos[1] }));
-  //   } else {
-  //     console.warn("pickerPos inválido, no centrar view:", pickerPos);
-  //   }
-  // }, [pickerPos]);
-
-  // color helper
-  const colorForCategory = (slug) => {
-    if (!slug) return "#1978c8";
+  const colorForCategory = (interestKey) => {
+    const key = interestKey ? String(interestKey) : "default";
     let h = 0;
-    for (let i = 0; i < slug.length; i++) h = (h << 5) - h + slug.charCodeAt(i);
+    for (let i = 0; i < key.length; i++) h = (h << 5) - h + key.charCodeAt(i);
     const hue = Math.abs(h) % 360;
     return `hsl(${hue} 70% 45%)`;
   };
-  if (loading){
-      return (
-        <div className="map-root">
 
-            <LoadingSpinner message={t('map.loading')} fullScreen />
+  const labelForLocationInterest = (loc) => {
+    const it =
+      interestById.get(String(loc.interestKey)) || interestById.get(String(loc.fk_interest)) || null;
+    if (it) {
+      const slug = it.slug ?? String(it.id ?? "");
+      return translateCategory(t, slug, it.title ?? slug);
+    }
+    if (loc.interestKey) return translateCategory(t, String(loc.interestKey), String(loc.interestKey));
+    return "";
+  };
 
-        </div>
-      )
+  if (loading && locations.length === 0) {
+    return (
+      <div className="map-root">
+        <LoadingSpinner message={t("map.loading")} fullScreen />
+      </div>
+    );
   }
 
   return (
     <div className="map-root">
       <main className="map-main">
         <section className="map-left">
-          <h2>{t('map.locations')}</h2>
+          <h2>{t("map.locations")}</h2>
 
-          <label htmlFor="interest-select" style={{ display: "block", marginBottom: 15 }}>{t('map.filterByCategory')}</label>
-            <div style={{marginBottom:20}}>
+          {/* Category filter */}
+          <label htmlFor="interest-select" style={{ display: "block", marginBottom: 10 }}>
+            {t("map.filterByCategory")}
+          </label>
+          <div style={{ marginBottom: 14 }}>
             <Select
-                className="dropdown-select"
-                classNamePrefix="react-select"
-                options={[{value: "", label: t('map.all')},
-                    ...interests.map(it => {
-                    const slug = it.slug ?? String(it.id ?? "");
-                    const translatedTitle = translateCategory(t, slug, it.title);
-                    return {
-                    value: it.slug ?? it.id ?? it.title,
-                    label: translatedTitle
-                }})]}
-                value={
-                    selectedInterest
-                        ? {
-                            value: selectedInterest,
-                            label:
-                                (() => {
-                                    const found = interests.find(i =>
-                                        i.slug === selectedInterest ||
-                                        i.id === selectedInterest ||
-                                        i.title === selectedInterest
-                                    );
-                                    if (found) {
-                                        const slug = found.slug ?? String(found.id ?? "");
-                                        return translateCategory(t, slug, found.title);
-                                    }
-                                    return selectedInterest;
-                                })()
-                        }:{value: "", label: t('map.all')}
-                }
-                onChange={(option) => setSelectedInterest(option.value)}
-                isSearchable={false}
-            /> </div>
+              className="dropdown-select"
+              classNamePrefix="react-select"
+              isLoading={loadingInterests}
+              isSearchable={false}
+              options={[
+                { value: "", label: t("map.all") },
+                ...(interests || []).map((it) => {
+                  const slug = it.slug ?? String(it.id ?? "");
+                  const translatedTitle = translateCategory(t, slug, it.title ?? slug);
+                  return {
+                    value: it.id != null ? String(it.id) : it.slug ?? it.title ?? "",
+                    label: translatedTitle,
+                  };
+                }),
+              ]}
+              value={
+                selectedInterest
+                  ? {
+                      value: selectedInterest,
+                      label: (() => {
+                        const found = interestById.get(String(selectedInterest));
+                        if (found) {
+                          const slug = found.slug ?? String(found.id ?? "");
+                          return translateCategory(t, slug, found.title ?? slug);
+                        }
+                        return selectedInterest;
+                      })(),
+                    }
+                  : { value: "", label: t("map.all") }
+              }
+              onChange={(option) => {
+                const v = option?.value ?? "";
+                setSelectedInterest(String(v));
+              }}
+            />
+          </div>
 
-
-            {/*<div style={{ marginBottom: 12 , marginTop:20, display:"flex", gap:3}}>
-            <button className="map-btn-primary" onClick={() => fetchLocations(selectedInterest)} style={{ marginRight: 8 }}>
-              Aplicar
-            </button>
-            <button className="map-btn-secondary" onClick={() => { setSelectedInterest(""); fetchLocations(""); }}>
-              Mostrar todo
-            </button>
-          </div>*/}
+          {/* ✅ City filter */}
+          <label htmlFor="city-select" style={{ display: "block", marginBottom: 10 }}>
+            {t("map.filterByCity") || "Filter by city"}
+          </label>
+          <div style={{ marginBottom: 18 }}>
+            <Select
+              className="dropdown-select"
+              classNamePrefix="react-select"
+              isSearchable
+              options={cityOptions}
+              value={
+                selectedCity
+                  ? { value: selectedCity, label: selectedCity }
+                  : { value: "", label: t("map.all") || "All" }
+              }
+              onChange={(option) => {
+                const v = option?.value ?? "";
+                setSelectedCity(String(v));
+              }}
+              noOptionsMessage={() => t("map.noCities") || "No cities"}
+            />
+          </div>
 
           <div style={{ maxHeight: "60vh", overflow: "auto" }}>
-            {loading && <p>{t('map.loadingLocations')}</p>}
             {error && (
               <div>
-                <p style={{ color: "red" }}>{t('map.loadError')}</p>
+                <p style={{ color: "red" }}>{t("map.loadError")}</p>
                 <small style={{ color: "#aa0000", whiteSpace: "pre-wrap" }}>{error}</small>
               </div>
             )}
-            {!loading && !error && locations.length === 0 && <p>{t('map.noLocations')}</p>}
+            {!loading && !error && locations.length === 0 && <p>{t("map.noLocations")}</p>}
 
-              {!loading && <ul style={{ listStyle: "none", padding: 0 }}>
+            <ul style={{ listStyle: "none", padding: 0 }}>
               {locations.map((loc) => (
                 <li
                   key={loc.id}
                   style={{ marginBottom: 10, cursor: "pointer" }}
                   onClick={() => {
                     if (Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
-                      setViewState((v) => ({ 
-                        ...v, 
-                        latitude: loc.latitude, 
-                        longitude: loc.longitude, 
+                      setViewState((v) => ({
+                        ...v,
+                        latitude: loc.latitude,
+                        longitude: loc.longitude,
                         zoom: 14,
                         pitch: v.pitch || 0,
                         bearing: v.bearing || 0,
                       }));
                       setSelectedLocation(loc);
-                    } else {
-                      console.warn("Intento de centrar en location con coords inválidas:", loc);
                     }
                   }}
                 >
-                  <strong>{loc.titulo}</strong>
-                  <div style={{ fontSize: 13, color: "#666" }}>{loc.fk_interest}</div>
+                  <strong>{loc.title}</strong>
+                  <div style={{ fontSize: 13, color: "#666" }}>
+                    {labelForLocationInterest(loc)}
+                    {loc.city || loc.country
+                      ? ` • ${[loc.city, loc.country].filter(Boolean).join(", ")}`
+                      : ""}
+                  </div>
                 </li>
               ))}
-            </ul> }
+            </ul>
           </div>
         </section>
 
         <section className="map-canvas">
           {!MAPBOX_TOKEN ? (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", color: "red" }}>
-              <p>{t('map.noToken') || 'Mapbox token no configurado'}</p>
-            </div>
-          ) : MAPBOX_TOKEN && viewState && Number.isFinite(viewState.latitude) && Number.isFinite(viewState.longitude) ? (
-          <Map
-            {...viewState}
-            onMove={(evt) => {
-              if (!evt || !evt.viewState) {
-                console.warn('onMove sin viewState válido', evt);
-                return;
-              }
-              const newViewState = evt.viewState;
-              // Validate viewState before setting
-              if (newViewState && 
-                  Number.isFinite(newViewState.latitude) && 
-                  Number.isFinite(newViewState.longitude) &&
-                  Number.isFinite(newViewState.zoom)) {
-                setViewState({
-                  ...newViewState,
-                  pitch: newViewState.pitch || 0,
-                  bearing: newViewState.bearing || 0,
-                });
-              }
-            }}
-            style={{ width: "100%", height: "100%" }}
-            mapStyle="mapbox://styles/mapbox/streets-v11"
-            mapboxAccessToken={MAPBOX_TOKEN}
-          >
-            <div style={{ position: "absolute", right: "0.625rem", top: "0.625rem", zIndex: 1 }}>
-              <NavigationControl showCompass showZoom />
-            </div>
-
-            {locations.map((loc) => (
-              Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude) ? (
-                <Marker
-                  key={`loc-${loc.id}`}
-                  longitude={loc.longitude}
-                  latitude={loc.latitude}
-                  anchor="bottom"
-                  onClick={(e) => {
-                    e?.originalEvent && e.originalEvent.stopPropagation();
-                    setSelectedLocation(loc);
-                  }}
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    style={{ transform: "translate(-0.75rem,-1.5rem)", cursor: "pointer" }}
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={colorForCategory(loc.fk_interest)} />
-                    <circle cx="12" cy="9" r="2.5" fill="#fff" />
-                  </svg>
-                </Marker>
-              ) : null
-            ))}
-
-            {selectedLocation && Number.isFinite(selectedLocation.latitude) && Number.isFinite(selectedLocation.longitude) && (
-              <Popup
-                longitude={selectedLocation.longitude}
-                latitude={selectedLocation.latitude}
-                anchor="left"
-                onClose={() => setSelectedLocation(null)}
-                closeOnClick={false}
-                offset={[-5, -43]}
-              >
-                <div style={{ maxWidth: 260}}>
-                  <h3 style={{ margin: "0 0 0.375rem 0" }}>{selectedLocation.titulo}</h3>
-                  <div style={{ fontSize: "0.8125rem", color: "#444", marginBottom: "0.375rem" }}>
-                    {selectedLocation.descripcion?.slice(0, 200)}
-                  </div>
-                  {selectedLocation.imagenes && selectedLocation.imagenes.length > 0 && (
-                    <img
-                      src={selectedLocation.imagenes[0]}
-                      alt={selectedLocation.titulo}
-                      style={{ width: "100%", height: "auto", maxHeight:150, borderRadius: 6 }}
-                      onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    />
-                  )}
-                </div>
-              </Popup>
-            )}
-
-            {/* draggable picker */}
-            {Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1]) && (
-            <Marker
-              longitude={pickerPos[1]}
-              latitude={pickerPos[0]}
-              anchor="bottom"
-              draggable
-              onDragEnd={(evt) => {
-                // evt.lngLat puede ser array [lng, lat] o objeto { lng, lat }
-                const raw = evt?.lngLat ?? evt?.lngLatRaw ?? evt?.point ?? null;
-                let lng, lat;
-
-                // different shapes handled defensively
-                if (Array.isArray(raw) && raw.length >= 2) {
-                  [lng, lat] = raw;
-                } else if (raw && typeof raw === "object") {
-                  if (typeof raw.lng === "number" && typeof raw.lat === "number") {
-                    lng = raw.lng;
-                    lat = raw.lat;
-                  } else if (typeof raw[0] === "number" && typeof raw[1] === "number") {
-                    [lng, lat] = raw;
-                  }
-                }
-
-                if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-                  console.warn("onDragEnd: lngLat inválido:", evt?.lngLat, "raw:", raw);
-                  return;
-                }
-
-                // pickerPos uses [lat, lng]
-                setPickerPos([lat, lng]);
-                setSelectedLocation(null);
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+                color: "red",
               }}
             >
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                style={{ transform: "translate(-0.875rem,-1.75rem)" }}
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M12 2C8.1 2 5 5.1 5 9c0 5 7 12 7 12s7-7 7-12c0-3.9-3.1-7-7-7z" fill="#ff7a45" />
-                <circle cx="12" cy="9" r="2.3" fill="#fff" />
-              </svg>
-            </Marker>
-            )}
+              <p>{t("map.noToken") || "Mapbox token no configurado"}</p>
+            </div>
+          ) : viewState && Number.isFinite(viewState.latitude) && Number.isFinite(viewState.longitude) ? (
+            <MapGL
+              {...viewState}
+              onMove={(evt) => {
+                if (!evt || !evt.viewState) return;
+                userMovedRef.current = true;
 
-            {Array.isArray(pickerPos) && Number.isFinite(pickerPos[0]) && Number.isFinite(pickerPos[1]) && (
-              <Popup
-                longitude={pickerPos[1]}
-                latitude={pickerPos[0]}
-                anchor="bottom"
-                onClose={() => {}}
-                closeButton={false}
-                closeOnClick={false}
-              >
-                <div style={{ fontSize: 12 }}>
-                  {`${t('map.latitude')} ${pickerPos[0].toFixed(5)}`} <br />
-                  {`${t('map.longitude')} ${pickerPos[1].toFixed(5)}`}
-                </div>
-              </Popup>
-            )}
-          </Map>
+                const newViewState = evt.viewState;
+                if (
+                  newViewState &&
+                  Number.isFinite(newViewState.latitude) &&
+                  Number.isFinite(newViewState.longitude) &&
+                  Number.isFinite(newViewState.zoom)
+                ) {
+                  setViewState({
+                    ...newViewState,
+                    pitch: newViewState.pitch || 0,
+                    bearing: newViewState.bearing || 0,
+                  });
+                }
+              }}
+              style={{ width: "100%", height: "100%" }}
+              mapStyle="mapbox://styles/mapbox/streets-v11"
+              mapboxAccessToken={MAPBOX_TOKEN}
+            >
+              <div style={{ position: "absolute", right: "0.625rem", top: "0.625rem", zIndex: 1 }}>
+                <NavigationControl showCompass showZoom />
+              </div>
+
+              {/* ✅ LOCATION MARKERS: anchor bottom + tip-aligned SVG => accurate at ALL zoom levels */}
+              {locations.map((loc) =>
+                Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude) ? (
+                  <Marker
+                    key={`loc-${loc.id}`}
+                    longitude={loc.longitude}
+                    latitude={loc.latitude}
+                    anchor="bottom"
+                    onClick={(e) => {
+                      e?.originalEvent && e.originalEvent.stopPropagation();
+                      setSelectedLocation(loc);
+                    }}
+                  >
+                    <PinSvg color={colorForCategory(loc.interestKey)} size={24} />
+                  </Marker>
+                ) : null
+              )}
+
+              {selectedLocation &&
+                Number.isFinite(selectedLocation.latitude) &&
+                Number.isFinite(selectedLocation.longitude) && (
+                  <Popup
+                    longitude={selectedLocation.longitude}
+                    latitude={selectedLocation.latitude}
+                    anchor="left"
+                    onClose={() => setSelectedLocation(null)}
+                    closeOnClick={false}
+                    offset={10}
+                  >
+                    <div style={{ maxWidth: 280 }}>
+                      <h3 style={{ margin: "0 0 0.375rem 0" }}>{selectedLocation.title}</h3>
+
+                      <div style={{ fontSize: "0.8125rem", color: "#444", marginBottom: "0.375rem" }}>
+                        {labelForLocationInterest(selectedLocation)}
+                        {(selectedLocation.city || selectedLocation.country) && (
+                          <>
+                            {" "}
+                            • {[selectedLocation.city, selectedLocation.country].filter(Boolean).join(", ")}
+                          </>
+                        )}
+                      </div>
+
+                      <div style={{ fontSize: "0.8125rem", color: "#444", marginBottom: "0.5rem" }}>
+                        {selectedLocation.description?.slice(0, 220)}
+                        {selectedLocation.description && selectedLocation.description.length > 220 ? "…" : ""}
+                      </div>
+
+                      {selectedLocation.images && selectedLocation.images.length > 0 && (
+                        <img
+                          src={selectedLocation.images[0]}
+                          alt={selectedLocation.title}
+                          style={{ width: "100%", height: "auto", maxHeight: 160, borderRadius: 6 }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                    </div>
+                  </Popup>
+                )}
+
+              {/* draggable picker (tip-aligned SVG as well) */}
+              {Array.isArray(pickerPos) &&
+                Number.isFinite(pickerPos[0]) &&
+                Number.isFinite(pickerPos[1]) && (
+                  <Marker
+                    longitude={pickerPos[1]}
+                    latitude={pickerPos[0]}
+                    anchor="bottom"
+                    draggable
+                    onDragEnd={(evt) => {
+                      const raw = evt?.lngLat ?? null;
+                      let lng, lat;
+
+                      if (raw && typeof raw === "object") {
+                        if (typeof raw.lng === "number" && typeof raw.lat === "number") {
+                          lng = raw.lng;
+                          lat = raw.lat;
+                        } else if (typeof raw[0] === "number" && typeof raw[1] === "number") {
+                          lng = raw[0];
+                          lat = raw[1];
+                        }
+                      }
+
+                      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+                      setPickerPos([lat, lng]);
+                      setSelectedLocation(null);
+                    }}
+                  >
+                    <PinSvg color="#ff7a45" size={28} />
+                  </Marker>
+                )}
+
+              {Array.isArray(pickerPos) &&
+                Number.isFinite(pickerPos[0]) &&
+                Number.isFinite(pickerPos[1]) && (
+                  <Popup
+                    longitude={pickerPos[1]}
+                    latitude={pickerPos[0]}
+                    anchor="bottom"
+                    onClose={() => {}}
+                    closeButton={false}
+                    closeOnClick={false}
+                    offset={16}
+                  >
+                    <div style={{ fontSize: 12 }}>
+                      {`${t("map.latitude")} ${pickerPos[0].toFixed(5)}`} <br />
+                      {`${t("map.longitude")} ${pickerPos[1].toFixed(5)}`}
+                    </div>
+                  </Popup>
+                )}
+            </MapGL>
           ) : null}
         </section>
       </main>

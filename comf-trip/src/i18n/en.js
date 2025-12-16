@@ -717,6 +717,7 @@ const en = {
     loading: 'Loading map…',
     locations: 'Locations',
     filterByCategory: 'Filter by category',
+    filterByCity: 'Filter by city',
     all: 'All',
     loadingLocations: 'Loading...',
     loadError: 'Could not load locations',

@@ -597,7 +597,6 @@ export default function AddTrip() {
                 className="textarea"
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                placeholder={t("addTrip.notesPlaceholder")}
               />
             </section>
 

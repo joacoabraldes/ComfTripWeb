@@ -501,5 +501,5 @@ export default function ShareTripModal({
         variant="primary"
       />
     </Modal>
-  );
+  ); 
 }
